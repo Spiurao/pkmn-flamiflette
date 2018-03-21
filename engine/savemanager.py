@@ -1,6 +1,5 @@
 import msgpack
 import os
-import sys
 
 class SaveManager:
 
@@ -53,7 +52,9 @@ class SaveManager:
 
         try:
             data = msgpack.packb(SaveManager.__saveData, use_bin_type=True)
+            SaveManager.__saveFile.seek(0)
             SaveManager.__saveFile.write(data)
+            SaveManager.__saveFile.flush()
             return True
         except Exception as e:
             print(e)
@@ -160,7 +161,12 @@ class SaveManager:
 
             SaveManager.__saveFile = open(filePath, "r+b")
             SaveManager.__currentSlot = slot
-            SaveManager.__saveData = msgpack.unpackb(SaveManager.__saveFile.read(), raw=False)
+
+            SaveManager.__saveFile.seek(0)
+            data = SaveManager.__saveFile.read()
+
+            SaveManager.__saveData = msgpack.unpackb(data, raw=False)
+
             return True
         except Exception as e:
             print("Cannot load save slot " + slot + " : ", e)
