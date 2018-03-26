@@ -40,25 +40,26 @@ class Engine:
 
         # main loop
         while self.__running:
-            # tick tock
+
             try:
+                # tick tock
                 dt = self.__clock.tick(self.__framerate)
+            
+                # pygame events
+                events = pygame.event.get()
+                for event in events:
+                    if event.type == pygame.QUIT:
+                        self.exit()
+
+                # scenes update and draw
+                self.__window.fill((0, 0, 0))
+
+                self.update(dt, events)
+                self.draw()
+
+                pygame.display.flip()
             except KeyboardInterrupt:
                 self.exit()
-
-            # pygame events
-            events = pygame.event.get()
-            for event in events:
-                if event.type == pygame.QUIT:
-                    self.exit()
-
-            # scenes update and draw
-            self.__window.fill((0, 0, 0))
-
-            self.update(dt, events)
-            self.draw()
-
-            pygame.display.flip()
 
         # exit
         print("Quitting game...")
