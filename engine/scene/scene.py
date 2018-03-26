@@ -1,7 +1,7 @@
 class Scene:
 
-	def __init__(self):
-		pass
+	def __init__(self, engine):
+		self.__engine = engine
 
 	def load():
 		pass
@@ -14,3 +14,6 @@ class Scene:
 
 	def update():
 		pass
+
+	def transitionOut():
+		return False
