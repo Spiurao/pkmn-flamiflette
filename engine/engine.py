@@ -4,10 +4,14 @@ class Engine:
     TRANSITION_ACTION_POP = 1
 
     def __init__(self):
+        # data init
         self.__sceneStack = []
         self.__pendingScene = None
         self.__transitionScene = None
         self.__transitionAction = None
+
+        # main loop
+            # TODO
 
     def update(self):
         if self.__transitionScene is None and self.__sceneStack.count() > 0:
