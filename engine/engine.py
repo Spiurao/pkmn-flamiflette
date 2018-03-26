@@ -1,7 +1,11 @@
+import pygame
+
 class Engine:
 
     TRANSITION_ACTION_PUSH = 0
     TRANSITION_ACTION_POP = 1
+
+    FRAMERATE = 30
 
     def __init__(self):
         # data init
@@ -9,18 +13,28 @@ class Engine:
         self.__pendingScene = None
         self.__transitionScene = None
         self.__transitionAction = None
+        self.__clock = pygame.time.Clock()
+        self.__running = True
 
         # main loop
-            # TODO
+        while self.__running:
+            self.update()
+            self.draw()
+
+            # click clock
+            self.__clock.tick(Engine.FRAMERATE)
+
+    def exit(self):
+        self.__running = False
 
     def update(self):
-        if self.__transitionScene is None and self.__sceneStack.count() > 0:
+        if self.__transitionScene is None and len(self.__sceneStack) > 0:
             self.__sceneStack[-1].update()
-        else:
+        elif self.__transitionScene is not None:
             self.__transitionScene.update()
 
     def draw(self):
-        if self.__sceneStack.count() > 0:
+        if len(self.__sceneStack) > 0:
             for i in self.__sceneStack:
                 self.__sceneStack[i].draw()
 
@@ -47,7 +61,7 @@ class Engine:
             # we now wait for onTransitionFinish()
         else:
             # pause the current active scene
-            if self.__sceneStack.count() > 0:
+            if len(self.__sceneStack) > 0:
                 self.__sceneStack[-1].onPause()
 
             # load and push the new one
@@ -61,11 +75,11 @@ class Engine:
             # we now wait for onTransitionFinish()
         else:
             # unload and pop the current scene
-            if self.__sceneStack.count() > 0:
+            if len(self.__sceneStack) > 0:
                 self.__sceneStack[-1].unload()
                 self.__sceneStack.pop()
 
                 # if the stack contains at least one scene
                 # after popping, we resume it
-                if self.__sceneStack.count() > 0:
+                if len(self.__sceneStack) > 0:
                     self.__sceneStack[-1].onResume()

@@ -5,3 +5,4 @@ Pokémon Flamiflette &amp; Tartikueche
 * Python 3.5
 * Modules Python
     * `msgpack`
+    * `pygame`
