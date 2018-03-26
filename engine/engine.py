@@ -50,8 +50,6 @@ class Engine:
             scene.load()
             self.__sceneStack.append(scene)
 
-        pass
-
     def popScene(self, transition):
         if transition is not None:
             self.__transitionAction = Engine.TRANSITION_ACTION_POP
@@ -67,5 +65,3 @@ class Engine:
                 # after popping, we resume it
                 if self.__sceneStack.count() > 0:
                     self.__sceneStack[-1].onResume()
-
-        pass
