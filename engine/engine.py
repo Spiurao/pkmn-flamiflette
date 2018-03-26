@@ -5,7 +5,10 @@ class Engine:
     TRANSITION_ACTION_PUSH = 0
     TRANSITION_ACTION_POP = 1
 
-    def __init__(self, framerate):
+    GAME_VARIANT_1 = 0
+    GAME_VARIANT_2 = 1
+
+    def __init__(self, framerate, resolution, variant):
         # data init
         self.__sceneStack = []
         self.__pendingScene = None
@@ -14,15 +17,45 @@ class Engine:
         self.__clock = pygame.time.Clock()
         self.__running = True
         self.__framerate = framerate
+        self.__resolution = resolution
+        self.__variant = variant
+
+    def getVariant(self):
+        return self.__variant
+
+    def getResolution(self):
+        return self.__resolution
+
+    def getWindow(self):
+        return self.__window
 
     def run(self):
+        # pygame display
+        pygame.display.init()
+        from data.constants import Constants
+        pygame.display.set_caption(Constants.WINDOW_TITLE[self.__variant])
+        self.__window = pygame.display.set_mode(self.__resolution)
+
         # main loop
         while self.__running:
             # tick tock
             dt = self.__clock.tick(self.__framerate)
 
+            # pygame events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.exit()
+
+            # scenes update and draw
+            self.__window.fill((0, 0, 0))
+
             self.update(dt)
             self.draw()
+
+            pygame.display.flip()
+
+        # exit
+        pygame.display.quit()
 
     def exit(self):
         self.__running = False
