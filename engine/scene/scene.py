@@ -15,6 +15,9 @@ class Scene:
     def update(self, dt):
         pass
 
+    def getEngine(self):
+        return self.__engine
+
     def transitionOut(self):
         return False
 
