@@ -6,8 +6,6 @@ class SaveManager:
     __currentSlot = None
     __saveData = None
 
-    __saveFile = None
-
     """
     Returns the current save's value for the given key or None if no save is loaded / the key is empty
     """
@@ -47,14 +45,12 @@ class SaveManager:
     """
     @staticmethod
     def save():
-        if SaveManager.__saveFile is None:
-            return False
-
         try:
             data = msgpack.packb(SaveManager.__saveData, use_bin_type=True)
-            SaveManager.__saveFile.seek(0)
-            SaveManager.__saveFile.write(data)
-            SaveManager.__saveFile.flush()
+            with open(SaveManager.getSavePathForSlot(SaveManager.__currentSlot), "r+b") as file:
+                file.write(data)
+                file.flush()
+
             return True
         except Exception as e:
             print(e)
@@ -97,9 +93,8 @@ class SaveManager:
 
             path = SaveManager.getSavePathForSlot(slot)
 
-            os.mknod(path)
+            with open(path, "w+"): pass  # file creation
 
-            SaveManager.__saveFile = open(path, "r+b")
             SaveManager.__saveData = {}
             SaveManager.__currentSlot = slot
 
@@ -159,12 +154,10 @@ class SaveManager:
             if not os.path.exists(filePath):
                 return False
 
-            SaveManager.__saveFile = open(filePath, "r+b")
+            with open(filePath, "r+b") as file:
+                data = file.read()
+
             SaveManager.__currentSlot = slot
-
-            SaveManager.__saveFile.seek(0)
-            data = SaveManager.__saveFile.read()
-
             SaveManager.__saveData = msgpack.unpackb(data, raw=False)
 
             return True
@@ -180,6 +173,3 @@ class SaveManager:
     def unloadCurrentSave():
         SaveManager.__currentSlot = None
         SaveManager.__saveData = None
-
-        if SaveManager.__saveData is not None:
-            SaveManager.__saveData.close()
