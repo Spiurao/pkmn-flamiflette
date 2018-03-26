@@ -5,7 +5,7 @@ class Engine:
     TRANSITION_ACTION_PUSH = 0
     TRANSITION_ACTION_POP = 1
 
-    def __init__(self, framerate, firstScene):
+    def __init__(self, framerate):
         # data init
         self.__sceneStack = []
         self.__pendingScene = None
@@ -13,32 +13,36 @@ class Engine:
         self.__transitionAction = None
         self.__clock = pygame.time.Clock()
         self.__running = True
+        self.__framerate = framerate
 
-        # first scene
-        if firstScene is not None:
-            self.pushScene(firstScene, None)
-
+    def run(self):
         # main loop
         while self.__running:
-            self.update()
-            self.draw()
-
             # tick tock
-            self.__clock.tick(framerate)
+            dt = self.__clock.tick(self.__framerate)
+
+            self.update(dt)
+            self.draw()
 
     def exit(self):
         self.__running = False
 
-    def update(self):
+    def update(self, dt):
         if self.__transitionScene is None and len(self.__sceneStack) > 0:
-            self.__sceneStack[-1].update()
+            self.__sceneStack[-1].update(dt)
         elif self.__transitionScene is not None:
-            self.__transitionScene.update()
+            self.__transitionScene.update(dt)
 
     def draw(self):
         if len(self.__sceneStack) > 0:
-            for i in self.__sceneStack:
-                self.__sceneStack[i].draw()
+            toDraw = []
+            for scene in self.__sceneStack[::-1]:
+                toDraw.append(scene)
+                if not scene.shouldDrawUnderlyingScenes():
+                    break
+
+            for scene in toDraw:
+                scene.draw()
 
         if self.__transitionScene is not None:
             self.__transitionScene.draw()

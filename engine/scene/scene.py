@@ -12,14 +12,17 @@ class Scene:
     def draw(self):
         pass
 
-    def update(self):
+    def update(self, dt):
         pass
 
     def transitionOut(self):
         return False
 
-	def onPause(self):
-		pass
+    def onPause(self):
+        pass
 
-	def onResume(self):
-		pass
+    def onResume(self):
+        pass
+
+    def shouldDrawUnderlyingScenes(self):
+        return True
