@@ -12,7 +12,7 @@ class Scene:
     def draw(self):
         pass
 
-    def update(self, dt):
+    def update(self, dt, events):
         pass
 
     def getEngine(self):

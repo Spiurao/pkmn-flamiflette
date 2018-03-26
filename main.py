@@ -11,7 +11,4 @@ if __name__ == '__main__':
     scene1 = TestScene(engine, 1)
     engine.pushScene(scene1, None)
 
-    scene2 = TestScene(engine, 2)
-    engine.pushScene(scene2, None)
-
     engine.run()

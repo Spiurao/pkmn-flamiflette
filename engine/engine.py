@@ -42,14 +42,15 @@ class Engine:
             dt = self.__clock.tick(self.__framerate)
 
             # pygame events
-            for event in pygame.event.get():
+            events = pygame.event.get()
+            for event in events:
                 if event.type == pygame.QUIT:
                     self.exit()
 
             # scenes update and draw
             self.__window.fill((0, 0, 0))
 
-            self.update(dt)
+            self.update(dt, events)
             self.draw()
 
             pygame.display.flip()
@@ -60,11 +61,11 @@ class Engine:
     def exit(self):
         self.__running = False
 
-    def update(self, dt):
+    def update(self, dt, events):
         if self.__transitionScene is None and len(self.__sceneStack) > 0:
-            self.__sceneStack[-1].update(dt)
+            self.__sceneStack[-1].update(dt, events)
         elif self.__transitionScene is not None:
-            self.__transitionScene.update(dt)
+            self.__transitionScene.update(dt, events)
 
     def draw(self):
         if len(self.__sceneStack) > 0:
@@ -74,7 +75,7 @@ class Engine:
                 if not scene.shouldDrawUnderlyingScenes():
                     break
 
-            for scene in toDraw:
+            for scene in toDraw[::-1]:
                 scene.draw()
 
         if self.__transitionScene is not None:
