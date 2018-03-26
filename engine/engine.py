@@ -30,6 +30,8 @@ class Engine:
         return self.__window
 
     def run(self):
+        print("Running game...")
+
         # pygame display
         pygame.display.init()
         from data.constants import Constants
@@ -39,7 +41,10 @@ class Engine:
         # main loop
         while self.__running:
             # tick tock
-            dt = self.__clock.tick(self.__framerate)
+            try:
+                dt = self.__clock.tick(self.__framerate)
+            except KeyboardInterrupt:
+                self.exit()
 
             # pygame events
             events = pygame.event.get()
@@ -56,6 +61,7 @@ class Engine:
             pygame.display.flip()
 
         # exit
+        print("Quitting game...")
         pygame.display.quit()
 
     def exit(self):
