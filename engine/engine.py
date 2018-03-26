@@ -5,9 +5,7 @@ class Engine:
     TRANSITION_ACTION_PUSH = 0
     TRANSITION_ACTION_POP = 1
 
-    FRAMERATE = 30
-
-    def __init__(self):
+    def __init__(self, framerate, firstScene):
         # data init
         self.__sceneStack = []
         self.__pendingScene = None
@@ -16,13 +14,17 @@ class Engine:
         self.__clock = pygame.time.Clock()
         self.__running = True
 
+        # first scene
+        if firstScene is not None:
+            self.pushScene(firstScene, None)
+
         # main loop
         while self.__running:
             self.update()
             self.draw()
 
             # tick tock
-            self.__clock.tick(Engine.FRAMERATE)
+            self.__clock.tick(framerate)
 
     def exit(self):
         self.__running = False
