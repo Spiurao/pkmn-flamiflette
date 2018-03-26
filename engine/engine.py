@@ -21,7 +21,7 @@ class Engine:
             self.update()
             self.draw()
 
-            # click clock
+            # tick tock
             self.__clock.tick(Engine.FRAMERATE)
 
     def exit(self):
