@@ -10,13 +10,13 @@ RESOLUTION = (800, 608)
 VARIANT = Constants.GAME_VARIANT_FLAMIFLETTE
 
 if __name__ == '__main__':
-    
+
     Textures.load()
     print(Textures.getTextures())
 
     engine = Engine(FRAMERATE, RESOLUTION, VARIANT)
 
-    scene1 = TestScene(engine, 1)
+    scene1 = TestScene(engine, 0)
     engine.pushScene(scene1, None)
 
     engine.run()
