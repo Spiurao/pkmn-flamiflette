@@ -1,5 +1,6 @@
 from data.savedatafields import SaveDataFields
 from engine.engine import *
+from engine.scene.testmapscene import TestMapScene
 from engine.scene.testscene import *
 from data.constants import *
 from data.textures import *
@@ -15,7 +16,7 @@ if __name__ == '__main__':
 
         engine = Engine(FRAMERATE, RESOLUTION, VARIANT)
 
-        scene1 = TestScene(engine, 0)
+        scene1 = TestMapScene(engine, "test")
         engine.pushScene(scene1, None)
 
         engine.run()
