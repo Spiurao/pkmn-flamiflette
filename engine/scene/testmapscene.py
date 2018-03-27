@@ -1,6 +1,8 @@
 import json
 import os
 
+import pygame
+
 from data.constants import Constants
 from data.textures import Textures
 from engine.scene.scene import Scene
@@ -14,6 +16,8 @@ class TestMapScene(Scene):
         self.__mapSize = (0,0)
         self.__mapTilesSize = 0
         self.__mapTiles = []  # array of tileNumber -> coordinates in the texture : 0 : (0,0), 1 : (0,16), etc...
+        self.__offsetX = 0
+        self.__offsetY = 0
 
     def load(self):
         # We load the map
@@ -23,9 +27,6 @@ class TestMapScene(Scene):
         # Load the data
         if self.__mapData["tileheight"] != self.__mapData["tilewidth"]:
             raise Exception("The map " + self.__map + " has different tile width and height")
-
-        #if self.__mapData["renderorder"] != "right-down":
-        #    raise Exception("The map must have a render order of right-down")
 
         self.__mapTilesSize = self.__mapData["tilewidth"]
         self.__mapSize = (self.__mapData["width"], self.__mapData["height"])
@@ -37,36 +38,47 @@ class TestMapScene(Scene):
         width, height = get_image_size(os.path.join(Constants.IMG_PATH, mapTexture.replace(".", os.path.sep) + ".png"))
         tilesWidth = int(width / self.__mapTilesSize)
         tilesHeight = int(height / self.__mapTilesSize)
-
-        for x in range(tilesWidth+1):
-            for y in range(tilesHeight+1):
-                rect = (x * self.__mapTilesSize, y * self.__mapTilesSize, self.__mapTilesSize, self.__mapTilesSize)
-                self.__mapTiles.append(rect)
+        for y in range(tilesHeight):
+            for x in range(tilesWidth):
+                data = (x * self.__mapTilesSize, y * self.__mapTilesSize, self.__mapTilesSize, self.__mapTilesSize)
+                self.__mapTiles.append(data)
 
         print("Loaded map '" + self.__map + "' with size " + str(self.__mapSize) + ", tile size " + str(self.__mapTilesSize) + ", texture " + mapTexture + ", texture size " + str(width) + "x" + str(height))
 
+    def update(self, dt, events):
+        for e in events:
+            if e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_DOWN:
+                    self.__offsetY -= self.__mapTilesSize
+                elif e.key == pygame.K_UP:
+                    self.__offsetY += self.__mapTilesSize
+                elif e.key == pygame.K_LEFT:
+                    self.__offsetX += self.__mapTilesSize
+                elif e.key == pygame.K_RIGHT:
+                    self.__offsetX -= self.__mapTilesSize
     def draw(self):
         # TODO Draw window x*y tiles based on camera position instead of iterating over the whole tiles
-        tileCount = 0
-        for x in range(self.__mapSize[0]):
+        for l in self.__mapData["layers"]:
+            tileCount = 0
             for y in range(self.__mapSize[1]):
-                # TODO Iterate over all layers
-                tileToDraw = (self.__mapData["layers"][0]["data"][tileCount])
+                for x in range(self.__mapSize[0]):
+                    tileToDraw = l["data"][tileCount]
 
-                # because 0 is transparent tile
-                if tileToDraw == 0:
-                    continue
+                    # because 0 is transparent tile
+                    if tileToDraw == 0:
+                        tileCount += 1
+                        continue
 
-                tileToDraw += 1
+                    tileToDraw -= 1
 
-                drawCoordinateX = x * self.__mapTilesSize
-                drawCoordinateY = y * self.__mapTilesSize
+                    drawCoordinateX = x * self.__mapTilesSize + self.__offsetX
+                    drawCoordinateY = y * self.__mapTilesSize + self.__offsetY
 
-                coordinatesOnTexture = self.__mapTiles[tileToDraw]
+                    coordinatesOnTexture = self.__mapTiles[tileToDraw]
 
-                self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
+                    self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
 
-                tileCount += 1
+                    tileCount += 1
 
     def unload(self):
         # Unload the map
