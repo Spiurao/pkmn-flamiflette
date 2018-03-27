@@ -31,10 +31,10 @@ class TestMapScene(Scene):
         self.__mapSize = (self.__mapData["width"], self.__mapData["height"])
 
         # Get map texture
-        mapTexture = "maps/" + self.__mapData["tilesets"][0]["source"][:-4]
+        mapTexture = "maps." + self.__mapData["tilesets"][0]["source"][:-4]
 
         # Load image metadata
-        width, height = get_image_size(os.path.join(Constants.IMG_PATH, mapTexture + ".png"))
+        width, height = get_image_size(os.path.join(Constants.IMG_PATH, mapTexture.replace(".", os.path.sep) + ".png"))
         tilesWidth = int(width / self.__mapTilesSize)
         tilesHeight = int(height / self.__mapTilesSize)
 
@@ -56,7 +56,7 @@ class TestMapScene(Scene):
                 drawCoordinateY = y * self.__mapTilesSize
                 coordinatesOnTexture = self.__mapTiles[tileToDraw]
 
-                self.getEngine().getWindow().blit(Textures.getTextures()["maps/" + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
+                self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
 
                 tileCount += 1
 
