@@ -24,8 +24,8 @@ class TestMapScene(Scene):
         if self.__mapData["tileheight"] != self.__mapData["tilewidth"]:
             raise Exception("The map " + self.__map + " has different tile width and height")
 
-        if self.__mapData["renderorder"] != "right-down":
-            raise Exception("The map must have a render order of right-down")
+        #if self.__mapData["renderorder"] != "right-down":
+        #    raise Exception("The map must have a render order of right-down")
 
         self.__mapTilesSize = self.__mapData["tilewidth"]
         self.__mapSize = (self.__mapData["width"], self.__mapData["height"])

@@ -58,7 +58,7 @@
         }],
  "nextobjectid":5,
  "orientation":"orthogonal",
- "renderorder":"right-down",
+ "renderorder":"left-up",
  "tiledversion":"1.1.3",
  "tileheight":32,
  "tilesets":[
