@@ -31,15 +31,15 @@ class TestMapScene(Scene):
         self.__mapSize = (self.__mapData["width"], self.__mapData["height"])
 
         # Get map texture
-        mapTexture = "maps." + self.__mapData["tilesets"][0]["source"][:-4]
+        mapTexture = "maps." + self.__mapData["tilesets"][0]["source"][17:-4]
 
         # Load image metadata
         width, height = get_image_size(os.path.join(Constants.IMG_PATH, mapTexture.replace(".", os.path.sep) + ".png"))
         tilesWidth = int(width / self.__mapTilesSize)
         tilesHeight = int(height / self.__mapTilesSize)
 
-        for y in range(tilesHeight + 1):
-            for x in range(tilesWidth + 1):
+        for x in range(tilesWidth+1):
+            for y in range(tilesHeight+1):
                 rect = (x * self.__mapTilesSize, y * self.__mapTilesSize, self.__mapTilesSize, self.__mapTilesSize)
                 self.__mapTiles.append(rect)
 
@@ -51,7 +51,13 @@ class TestMapScene(Scene):
         for x in range(self.__mapSize[0]):
             for y in range(self.__mapSize[1]):
                 # TODO Iterate over all layers
-                tileToDraw = self.__mapData["layers"][0]["data"][tileCount]
+                tileToDraw = (self.__mapData["layers"][0]["data"][tileCount])
+
+                # because 0 is transparent tile
+                if tileToDraw == 0:
+                    continue
+
+                tileToDraw += 1
 
                 drawCoordinateX = x * self.__mapTilesSize
                 drawCoordinateY = y * self.__mapTilesSize
