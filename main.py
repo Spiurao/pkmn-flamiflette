@@ -11,15 +11,13 @@ VARIANT = Constants.GAME_VARIANT_FLAMIFLETTE
 
 if __name__ == '__main__':
 
-    Textures.load()
-    print(Textures.getTextures())
+        Textures.load()
 
-    engine = Engine(FRAMERATE, RESOLUTION, VARIANT)
+        engine = Engine(FRAMERATE, RESOLUTION, VARIANT)
 
-    scene1 = TestScene(engine, 0)
-    engine.pushScene(scene1, None)
+        scene1 = TestScene(engine, 0)
+        engine.pushScene(scene1, None)
 
-    engine.run()
+        engine.run()
 
-    Textures.unload()
-
+        Textures.unload()

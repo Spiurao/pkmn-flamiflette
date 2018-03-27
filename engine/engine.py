@@ -44,7 +44,7 @@ class Engine:
             try:
                 # tick tock
                 dt = self.__clock.tick(self.__framerate)
-            
+
                 # pygame events
                 events = pygame.event.get()
                 for event in events:
