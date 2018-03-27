@@ -38,14 +38,15 @@ class TestMapScene(Scene):
         tilesWidth = int(width / self.__mapTilesSize)
         tilesHeight = int(height / self.__mapTilesSize)
 
-        for x in range(tilesWidth+1):
-            for y in range(tilesHeight+1):
+        for y in range(tilesHeight + 1):
+            for x in range(tilesWidth + 1):
                 rect = (x * self.__mapTilesSize, y * self.__mapTilesSize, self.__mapTilesSize, self.__mapTilesSize)
                 self.__mapTiles.append(rect)
 
         print("Loaded map '" + self.__map + "' with size " + str(self.__mapSize) + ", tile size " + str(self.__mapTilesSize) + ", texture " + mapTexture + ", texture size " + str(width) + "x" + str(height))
 
     def draw(self):
+        # TODO Draw window x*y tiles based on camera position instead of iterating over the whole tiles
         tileCount = 0
         for x in range(self.__mapSize[0]):
             for y in range(self.__mapSize[1]):
@@ -54,6 +55,7 @@ class TestMapScene(Scene):
 
                 drawCoordinateX = x * self.__mapTilesSize
                 drawCoordinateY = y * self.__mapTilesSize
+
                 coordinatesOnTexture = self.__mapTiles[tileToDraw]
 
                 self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
