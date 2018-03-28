@@ -14,7 +14,7 @@ from lib.get_image_size import get_image_size
 
 class TestMapScene(Scene):
 
-    CAMERA_MOVEMENT_DELAY = 150
+    CAMERA_MOVEMENT_DURATION = 150
 
     def __init__(self, engine, map):
         super().__init__(engine)
@@ -32,7 +32,11 @@ class TestMapScene(Scene):
         self.__cameraOffsetY = TweenSubject(0)  # camera y offset in px
         self.__inputsBlocked = False  # self-explanatory
 
+        self.__characterX = TweenSubject(10)  # x position of the character in tiles
+        self.__characterY = TweenSubject(10)  # y position of the character in tiles
+
         self.__cameraTween = None
+        self.__playerTween = None
 
     def load(self):
         # We load the map
@@ -84,50 +88,86 @@ class TestMapScene(Scene):
         super().update(dt, events)
 
         self.updateTween(self.__cameraTween, dt)
+        self.updateTween(self.__playerTween, dt)
+
+        # TODO Make a working character : move the character OR the camera, but never both at the same time ?
 
         if not self.__inputsBlocked:
             keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                #self.__playerTween = self.createTween(TweenParameters("pl", self.__characterX, self.__characterX.getValue() - 1, TestMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear))
+                if self.__offsetX > 0:
+                    self.__cameraTween = self.createTween(TweenParameters("cq", self.__cameraOffsetX,
+                                                                          self.__cameraOffsetX.getValue() + self.__mapTilesSize,
+                                                                          TestMapScene.CAMERA_MOVEMENT_DURATION,
+                                                                          Easing.easingLinear))
+                    self.__inputsBlocked = True
+            elif keys[pygame.K_RIGHT]:
+                #self.__playerTween = self.createTween(TweenParameters("pr", self.__characterX, self.__characterX.getValue() + 1, TestMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear))
+                if self.__offsetX + self.__windowTilesWidth < self.__mapSize[1]:
+                    self.__cameraTween = self.createTween(TweenParameters("cd", self.__cameraOffsetX,
+                                                                          self.__cameraOffsetX.getValue() - self.__mapTilesSize,
+                                                                          TestMapScene.CAMERA_MOVEMENT_DURATION,
+                                                                          Easing.easingLinear))
+                    self.__inputsBlocked = True
+            elif keys[pygame.K_UP]:
+                #self.__playerTween = self.createTween(TweenParameters("pu", self.__characterY, self.__characterY.getValue() - 1, TestMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear))
+                if self.__offsetY > 0:
+                    self.__cameraTween = self.createTween(TweenParameters("cz", self.__cameraOffsetY,
+                                                                          self.__cameraOffsetY.getValue() + self.__mapTilesSize,
+                                                                          TestMapScene.CAMERA_MOVEMENT_DURATION,
+                                                                          Easing.easingLinear))
+                    self.__inputsBlocked = True
+            elif keys[pygame.K_DOWN]:
+                #self.__playerTween = self.createTween(TweenParameters("pd", self.__characterY, self.__characterY.getValue() + 1, TestMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear))
+                if self.__offsetY + self.__windowTilesHeight < self.__mapSize[0]:
+                    self.__cameraTween = self.createTween(TweenParameters("cs", self.__cameraOffsetY,
+                                                                          self.__cameraOffsetY.getValue() - self.__mapTilesSize,
+                                                                          TestMapScene.CAMERA_MOVEMENT_DURATION,
+                                                                          Easing.easingLinear))
+                    self.__inputsBlocked = True
+
+            '''
             if keys[pygame.K_UP]:
                 if self.__offsetY > 0:
-                    self.__cameraTween = self.createTween(TweenParameters("z", self.__cameraOffsetY, self.__cameraOffsetY.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                    self.__cameraTween = self.createTween(TweenParameters("cz", self.__cameraOffsetY, self.__cameraOffsetY.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
                                             Easing.easingLinear))
                     self.__inputsBlocked = True
             elif keys[pygame.K_DOWN]:
                 if self.__offsetY + self.__windowTilesHeight < self.__mapSize[0]:
-                    self.__cameraTween = self.createTween(TweenParameters("s", self.__cameraOffsetY, self.__cameraOffsetY.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                    self.__cameraTween = self.createTween(TweenParameters("cs", self.__cameraOffsetY, self.__cameraOffsetY.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
                                             Easing.easingLinear))
                     self.__inputsBlocked = True
             elif keys[pygame.K_LEFT]:
                 if self.__offsetX > 0:
-                    self.__cameraTween = self.createTween(TweenParameters("q", self.__cameraOffsetX, self.__cameraOffsetX.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                    self.__cameraTween = self.createTween(TweenParameters("cq", self.__cameraOffsetX, self.__cameraOffsetX.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
                                             Easing.easingLinear))
                     self.__inputsBlocked = True
             elif keys[pygame.K_RIGHT]:
                 if self.__offsetX + self.__windowTilesWidth < self.__mapSize[1]:
-                    self.__cameraTween = self.createTween(TweenParameters("d", self.__cameraOffsetX, self.__cameraOffsetX.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                    self.__cameraTween = self.createTween(TweenParameters("cd", self.__cameraOffsetX, self.__cameraOffsetX.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
                                             Easing.easingLinear))
                     self.__inputsBlocked = True
-
+            '''
     def onTweenFinished(self, tag):
         super().onTweenFinished(tag)
-        if tag == "s":
+        if tag == "cs":
             self.__offsetY += 1
             self.__cameraOffsetY.setValue(0)
-            self.__inputsBlocked = False
-        elif tag == "z":
+        elif tag == "cz":
             self.__offsetY -= 1
             self.__cameraOffsetY.setValue(0)
-            self.__inputsBlocked = False
-        elif tag == "q":
+        elif tag == "cq":
             self.__offsetX -= 1
             self.__cameraOffsetX.setValue(0)
-            self.__inputsBlocked = False
-        elif tag == "d":
+        elif tag == "cd":
             self.__offsetX += 1
             self.__cameraOffsetX.setValue(0)
-            self.__inputsBlocked = False
+
+        self.__inputsBlocked = False
 
     def draw(self):
+        # Draw the map
         for y in range(self.__windowTilesHeight + 2):
             for x in range(self.__windowTilesWidth + 2):
                 for l in range(self.__layersCount):
@@ -150,3 +190,6 @@ class TestMapScene(Scene):
                     coordinatesOnTexture = self.__mapTiles[tileToDraw]
 
                     self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
+
+        # Draw the character
+        self.getEngine().getWindow().blit(Textures.getTextures()["ash"], (self.__characterX.getValue() * self.__mapTilesSize, self.__characterY.getValue() * self.__mapTilesSize))
