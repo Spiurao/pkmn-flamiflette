@@ -13,3 +13,6 @@ class Constants:
         GAME_VARIANT_FLAMIFLETTE : "Pokémon Version Flamiflette",
         GAME_VARIANT_TARTIKEUCHE : "Pokémon Version Tartikeuche"
     }
+
+    FRAMERATE = 60
+    RESOLUTION = (800, 608)

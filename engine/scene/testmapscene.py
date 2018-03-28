@@ -12,16 +12,20 @@ from lib.get_image_size import get_image_size
 class TestMapScene(Scene):
     def __init__(self, engine, map):
         super().__init__(engine)
-        self.__map = map
-        self.__mapSize = (0,0)
-        self.__mapTilesSize = 0
-        self.__mapTiles = []  # array of tileNumber -> coordinates in the texture : 0 : (0,0), 1 : (0,16), etc...
-        self.__offsetX = 0
-        self.__offsetY = 0
+        self.__map = map  # map name
+        self.__mapSize = (0,0)  # map size in tiles
+        self.__mapTilesSize = 0  # size in px of one tile
+        self.__mapTiles = []  # array of tileId -> coordinates in the texture : 0 : (0,0), 1 : (0,16), etc...
+        self.__tilesMatrix = []  # tilesMatri[layer][y][x] = tileId
+        self.__windowTilesWidth = 0  # width of the window in tiles
+        self.__windowTilesHeight = 0  # height of the window in tiles
+        self.__layersCount = 0  # layers count
+        self.__offsetX = 0  # camera x offset
+        self.__offsetY = 0  # camera y offset
 
     def load(self):
         # We load the map
-        with open(os.path.join(Constants.MAPS_PATH, self.__map + ".map"), "r") as f:
+        with open(os.path.join(Constants.MAPS_PATH, self.__map + ".json"), "r") as f:
             self.__mapData = json.loads(f.read())
 
         # Load the data
@@ -43,21 +47,67 @@ class TestMapScene(Scene):
                 data = (x * self.__mapTilesSize, y * self.__mapTilesSize, self.__mapTilesSize, self.__mapTilesSize)
                 self.__mapTiles.append(data)
 
+        # Prepare tiles matrix
+        tileCount = 0
+        self.__layersCount = 0
+        for l in self.__mapData["layers"]:
+            self.__tilesMatrix.append([])
+
+            for y in range(self.__mapSize[1]):
+                self.__tilesMatrix[self.__layersCount].append([])
+
+                for x in range(self.__mapSize[0]):
+                    self.__tilesMatrix[self.__layersCount][y].append(l["data"][tileCount])
+                    tileCount += 1
+
+            self.__layersCount += 1
+            tileCount = 0
+
+        # Tiles count in the window
+        self.__windowTilesWidth = int(self.getEngine().getResolution()[0] / self.__mapTilesSize)
+        self.__windowTilesHeight = int(self.getEngine().getResolution()[1] / self.__mapTilesSize)
+
         print("Loaded map '" + self.__map + "' with size " + str(self.__mapSize) + ", tile size " + str(self.__mapTilesSize) + ", texture " + mapTexture + ", texture size " + str(width) + "x" + str(height))
 
     def update(self, dt, events):
+        super().update(dt, events)
         for e in events:
             if e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_DOWN:
-                    self.__offsetY -= self.__mapTilesSize
+                    self.__offsetY += 1
                 elif e.key == pygame.K_UP:
-                    self.__offsetY += self.__mapTilesSize
+                    self.__offsetY -= 1
                 elif e.key == pygame.K_LEFT:
-                    self.__offsetX += self.__mapTilesSize
+                    self.__offsetX -= 1
                 elif e.key == pygame.K_RIGHT:
-                    self.__offsetX -= self.__mapTilesSize
+                    self.__offsetX += 1
     def draw(self):
-        # TODO Draw window x*y tiles based on camera position instead of iterating over the whole tiles
+        # TODO Offset camera
+        for y in range(self.__windowTilesHeight):
+            for x in range(self.__windowTilesWidth):
+                for l in range(self.__layersCount):
+
+                    yInMatrix = y + self.__offsetY
+                    xInMatrix = x + self.__offsetX
+
+                    if yInMatrix < 0 or xInMatrix < 0 or yInMatrix > len(self.__tilesMatrix[l])-1 or xInMatrix > len(self.__tilesMatrix[l][y])-1:
+                        tileToDraw = 0
+                    else:
+                        tileToDraw = self.__tilesMatrix[l][yInMatrix][xInMatrix]
+
+                    if tileToDraw == 0:
+                        continue
+
+                    tileToDraw -= 1
+
+                    drawCoordinateX = x * self.__mapTilesSize
+                    drawCoordinateY = y * self.__mapTilesSize
+
+                    coordinatesOnTexture = self.__mapTiles[tileToDraw]
+
+                    self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
+
+        '''
         for l in self.__mapData["layers"]:
             tileCount = 0
             for y in range(self.__mapSize[1]):
@@ -79,7 +129,7 @@ class TestMapScene(Scene):
                     self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
 
                     tileCount += 1
-
+        '''
     def unload(self):
         # Unload the map
         self.__mapData = None

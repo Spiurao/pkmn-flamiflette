@@ -9,6 +9,7 @@ class TestScene(Scene):
         self.__tex = Textures.getTextures()[choice(list(Textures.getTextures().keys()))]
 
     def update(self, dt, events):
+        super().update(dt, events)
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:

@@ -1,5 +1,8 @@
 import pygame
 
+from engine.tween.InternalTween import InternalTween
+
+
 class Engine:
 
     TRANSITION_ACTION_PUSH = 0
