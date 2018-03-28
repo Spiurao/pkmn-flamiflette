@@ -13,6 +13,9 @@ from lib.get_image_size import get_image_size
 
 
 class TestMapScene(Scene):
+
+    CAMERA_MOVEMENT_DELAY = 150
+
     def __init__(self, engine, map):
         super().__init__(engine)
         self.__map = map  # map name
@@ -25,8 +28,9 @@ class TestMapScene(Scene):
         self.__layersCount = 0  # layers count
         self.__offsetX = 0  # camera x offset in tiles
         self.__offsetY = 0  # camera y offset in tiles
-        self.__cameraOffsetX = TweenSubject(0)
-        self.__cameraOffsetY = TweenSubject(0)
+        self.__cameraOffsetX = TweenSubject(0)  # camera x offset in px
+        self.__cameraOffsetY = TweenSubject(0)  # camera y offset in px
+        self.__inputsBlocked = False  # self-explanatory
 
     def load(self):
         # We load the map
@@ -76,54 +80,60 @@ class TestMapScene(Scene):
 
     def update(self, dt, events):
         super().update(dt, events)
-        for e in events:
-            if e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_DOWN:
-                    self.__offsetY += 1
-                elif e.key == pygame.K_UP:
-                    self.__offsetY -= 1
-                elif e.key == pygame.K_LEFT:
-                    self.__offsetX -= 1
-                elif e.key == pygame.K_RIGHT:
-                    self.__offsetX += 1
-                elif e.key == pygame.K_z:
-                    tween = TweenEntry("z", self.__cameraOffsetY, self.__cameraOffsetY.getValue() + 32, 100, Easing.easingLinear)
+        if not self.__inputsBlocked:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_UP]:
+                if self.__offsetY > 0:
+                    tween = TweenEntry("z", self.__cameraOffsetY, self.__cameraOffsetY.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                                       Easing.easingLinear)
                     self.pushTween(tween)
-                elif e.key == pygame.K_s:
-                    tween = TweenEntry("s", self.__cameraOffsetY, self.__cameraOffsetY.getValue() - 32, 100, Easing.easingLinear)
+                    self.__inputsBlocked = True
+            elif keys[pygame.K_DOWN]:
+                if self.__offsetY + self.__windowTilesHeight < self.__mapSize[0]:
+                    tween = TweenEntry("s", self.__cameraOffsetY, self.__cameraOffsetY.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                                       Easing.easingLinear)
                     self.pushTween(tween)
-                elif e.key == pygame.K_q:
-                    tween = TweenEntry("q", self.__cameraOffsetX, self.__cameraOffsetX.getValue() + 32, 100, Easing.easingLinear)
+                    self.__inputsBlocked = True
+            elif keys[pygame.K_LEFT]:
+                if self.__offsetX > 0:
+                    tween = TweenEntry("q", self.__cameraOffsetX, self.__cameraOffsetX.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                                       Easing.easingLinear)
                     self.pushTween(tween)
-                elif e.key == pygame.K_d:
-                    tween = TweenEntry("d", self.__cameraOffsetX, self.__cameraOffsetX.getValue() - 32, 100, Easing.easingLinear)
+                    self.__inputsBlocked = True
+            elif keys[pygame.K_RIGHT]:
+                if self.__offsetX + self.__windowTilesWidth < self.__mapSize[1]:
+                    tween = TweenEntry("d", self.__cameraOffsetX, self.__cameraOffsetX.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                                       Easing.easingLinear)
                     self.pushTween(tween)
+                    self.__inputsBlocked = True
 
     def onTweenFinished(self, tag):
         super().onTweenFinished(tag)
         if tag == "s":
             self.__offsetY += 1
             self.__cameraOffsetY.setValue(0)
+            self.__inputsBlocked = False
         elif tag == "z":
             self.__offsetY -= 1
             self.__cameraOffsetY.setValue(0)
+            self.__inputsBlocked = False
         elif tag == "q":
             self.__offsetX -= 1
             self.__cameraOffsetX.setValue(0)
+            self.__inputsBlocked = False
         elif tag == "d":
             self.__offsetX += 1
             self.__cameraOffsetX.setValue(0)
+            self.__inputsBlocked = False
 
     def draw(self):
-        # TODO Offset camera
-        for y in range(self.__windowTilesHeight):
-            for x in range(self.__windowTilesWidth):
+        for y in range(self.__windowTilesHeight + 2):
+            for x in range(self.__windowTilesWidth + 2):
                 for l in range(self.__layersCount):
+                    yInMatrix = (y-1) + self.__offsetY
+                    xInMatrix = (x-1) + self.__offsetX
 
-                    yInMatrix = y + self.__offsetY
-                    xInMatrix = x + self.__offsetX
-
-                    if yInMatrix < 0 or xInMatrix < 0 or yInMatrix > len(self.__tilesMatrix[l])-1 or xInMatrix > len(self.__tilesMatrix[l][y])-1:
+                    if yInMatrix < 0 or xInMatrix < 0 or yInMatrix > len(self.__tilesMatrix[l])-1 or xInMatrix > len(self.__tilesMatrix[l][y-1])-1:
                         tileToDraw = 0
                     else:
                         tileToDraw = self.__tilesMatrix[l][yInMatrix][xInMatrix]
@@ -133,36 +143,12 @@ class TestMapScene(Scene):
 
                     tileToDraw -= 1
 
-                    drawCoordinateX = x * self.__mapTilesSize + self.__cameraOffsetX.getValue()
-                    drawCoordinateY = y * self.__mapTilesSize + self.__cameraOffsetY.getValue()
+                    drawCoordinateX = (x-1) * self.__mapTilesSize + self.__cameraOffsetX.getValue()
+                    drawCoordinateY = (y-1) * self.__mapTilesSize + self.__cameraOffsetY.getValue()
 
                     coordinatesOnTexture = self.__mapTiles[tileToDraw]
 
                     self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
-
-        '''
-        for l in self.__mapData["layers"]:
-            tileCount = 0
-            for y in range(self.__mapSize[1]):
-                for x in range(self.__mapSize[0]):
-                    tileToDraw = l["data"][tileCount]
-
-                    # because 0 is transparent tile
-                    if tileToDraw == 0:
-                        tileCount += 1
-                        continue
-
-                    tileToDraw -= 1
-
-                    drawCoordinateX = x * self.__mapTilesSize + self.__offsetX
-                    drawCoordinateY = y * self.__mapTilesSize + self.__offsetY
-
-                    coordinatesOnTexture = self.__mapTiles[tileToDraw]
-
-                    self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
-
-                    tileCount += 1
-        '''
     def unload(self):
         # Unload the map
         self.__mapData = None
