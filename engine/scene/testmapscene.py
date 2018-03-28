@@ -6,6 +6,9 @@ import pygame
 from data.constants import Constants
 from data.textures import Textures
 from engine.scene.scene import Scene
+from engine.tween.Easing import Easing
+from engine.tween.TweenEntry import TweenEntry
+from engine.tween.TweenSubject import TweenSubject
 from lib.get_image_size import get_image_size
 
 
@@ -20,8 +23,10 @@ class TestMapScene(Scene):
         self.__windowTilesWidth = 0  # width of the window in tiles
         self.__windowTilesHeight = 0  # height of the window in tiles
         self.__layersCount = 0  # layers count
-        self.__offsetX = 0  # camera x offset
-        self.__offsetY = 0  # camera y offset
+        self.__offsetX = 0  # camera x offset in tiles
+        self.__offsetY = 0  # camera y offset in tiles
+        self.__cameraOffsetX = TweenSubject(0)
+        self.__cameraOffsetY = TweenSubject(0)
 
     def load(self):
         # We load the map
@@ -81,6 +86,34 @@ class TestMapScene(Scene):
                     self.__offsetX -= 1
                 elif e.key == pygame.K_RIGHT:
                     self.__offsetX += 1
+                elif e.key == pygame.K_z:
+                    tween = TweenEntry("z", self.__cameraOffsetY, self.__cameraOffsetY.getValue() + 32, 100, Easing.easingLinear)
+                    self.pushTween(tween)
+                elif e.key == pygame.K_s:
+                    tween = TweenEntry("s", self.__cameraOffsetY, self.__cameraOffsetY.getValue() - 32, 100, Easing.easingLinear)
+                    self.pushTween(tween)
+                elif e.key == pygame.K_q:
+                    tween = TweenEntry("q", self.__cameraOffsetX, self.__cameraOffsetX.getValue() + 32, 100, Easing.easingLinear)
+                    self.pushTween(tween)
+                elif e.key == pygame.K_d:
+                    tween = TweenEntry("d", self.__cameraOffsetX, self.__cameraOffsetX.getValue() - 32, 100, Easing.easingLinear)
+                    self.pushTween(tween)
+
+    def onTweenFinished(self, tag):
+        super().onTweenFinished(tag)
+        if tag == "s":
+            self.__offsetY += 1
+            self.__cameraOffsetY.setValue(0)
+        elif tag == "z":
+            self.__offsetY -= 1
+            self.__cameraOffsetY.setValue(0)
+        elif tag == "q":
+            self.__offsetX -= 1
+            self.__cameraOffsetX.setValue(0)
+        elif tag == "d":
+            self.__offsetX += 1
+            self.__cameraOffsetX.setValue(0)
+
     def draw(self):
         # TODO Offset camera
         for y in range(self.__windowTilesHeight):
@@ -100,8 +133,8 @@ class TestMapScene(Scene):
 
                     tileToDraw -= 1
 
-                    drawCoordinateX = x * self.__mapTilesSize
-                    drawCoordinateY = y * self.__mapTilesSize
+                    drawCoordinateX = x * self.__mapTilesSize + self.__cameraOffsetX.getValue()
+                    drawCoordinateY = y * self.__mapTilesSize + self.__cameraOffsetY.getValue()
 
                     coordinatesOnTexture = self.__mapTiles[tileToDraw]
 

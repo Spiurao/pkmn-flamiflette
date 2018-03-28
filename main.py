@@ -15,8 +15,8 @@ if __name__ == '__main__':
 
     engine = Engine(Constants.FRAMERATE, Constants.RESOLUTION, VARIANT)
 
-    #scene1 = TestMapScene(engine, "test")
-    scene1 = TweenScene(engine)
+    scene1 = TestMapScene(engine, "test")
+    #scene1 = TweenScene(engine)
     engine.pushScene(scene1, None)
 
     engine.run()
