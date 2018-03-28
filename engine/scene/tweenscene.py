@@ -2,7 +2,7 @@ import pygame
 
 from engine.scene.scene import Scene
 from engine.tween.Easing import Easing
-from engine.tween.TweenEntry import TweenEntry
+from engine.tween.TweenParameters import TweenParameters
 from engine.tween.TweenSubject import TweenSubject
 
 
@@ -12,7 +12,7 @@ class TweenScene(Scene):
         super().update(dt, events)
         for e in events:
             if e.type == pygame.KEYDOWN:
-                tweenEntry = TweenEntry("test", self.__posX, 500, 1000, Easing.easingOutSine)
+                tweenEntry = TweenParameters("test", self.__posX, 500, 1000, Easing.easingOutSine)
                 self.pushTween(tweenEntry)
 
     def load(self):

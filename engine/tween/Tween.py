@@ -1,4 +1,4 @@
-class InternalTween:
+class Tween:
     def __init__(self, alive, duration, runningSince, initialValue, targetValue, subject, tag, easing):
         self.alive = alive
         self.duration = duration

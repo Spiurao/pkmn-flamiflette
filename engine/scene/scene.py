@@ -1,4 +1,4 @@
-from engine.tween.InternalTween import InternalTween
+from engine.tween.Tween import Tween
 
 
 class Scene:
@@ -35,8 +35,8 @@ class Scene:
         return True
 
 
-    def pushTween(self, tweenEntry):
-        tween = InternalTween(True, tweenEntry.getDuration(), 0, tweenEntry.getSubject().getValue(), tweenEntry.getTargetValue(), tweenEntry.getSubject(), tweenEntry.getTag(), tweenEntry.getEasing())
+    def pushTween(self, parameters):
+        tween = self.createTween(parameters)
 
         # ignore born-dead tweens
         if tween.duration == 0 or tween.initialValue == tween.targetValue:
@@ -49,29 +49,36 @@ class Scene:
     def onTweenFinished(self, tag):
         pass
 
+    def updateTween(self, tween, dt):
+        if not tween or not tween.alive:
+            return
+
+        tween.runningSince += dt
+
+        tween.subject.setValue(
+            tween.easing(
+                tween.runningSince,
+                tween.initialValue,
+                tween.targetValue - tween.initialValue,
+                tween.duration
+            )
+        )
+
+        if tween.runningSince >= tween.duration:
+            tween.subject.setValue(
+                tween.targetValue
+            )
+            tween.alive = False
+            self.onTweenFinished(tween.tag)
+
+    def createTween(self, parameters):
+        return Tween(True, parameters.getDuration(), 0, parameters.getSubject().getValue(), parameters.getTargetValue(), parameters.getSubject(), parameters.getTag(), parameters.getEasing())
+
     def updateTweens(self, dt):
         toRemove = []
         for tween in self.__tweenList:
+            self.updateTween(tween, dt)
             if not tween.alive:
-                continue
-
-            tween.runningSince += dt
-
-            tween.subject.setValue(
-                tween.easing(
-                    tween.runningSince,
-                    tween.initialValue,
-                    tween.targetValue - tween.initialValue,
-                    tween.duration
-                )
-            )
-
-            if tween.runningSince >= tween.duration:
-                tween.subject.setValue(
-                    tween.targetValue
-                )
-                tween.alive = False
-                self.onTweenFinished(tween.tag)
                 toRemove.append(tween)
 
         for tween in toRemove:

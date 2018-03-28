@@ -1,4 +1,4 @@
-class TweenEntry:
+class TweenParameters:
     def __init__(self, tag, subject, targetValue, duration, easing):
         self.__tag = tag
         self.__subject = subject

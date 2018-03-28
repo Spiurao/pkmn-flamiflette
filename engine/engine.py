@@ -1,6 +1,6 @@
 import pygame
 
-from engine.tween.InternalTween import InternalTween
+from engine.tween.Tween import Tween
 
 
 class Engine:

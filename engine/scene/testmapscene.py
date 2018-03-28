@@ -7,7 +7,7 @@ from data.constants import Constants
 from data.textures import Textures
 from engine.scene.scene import Scene
 from engine.tween.Easing import Easing
-from engine.tween.TweenEntry import TweenEntry
+from engine.tween.TweenParameters import TweenParameters
 from engine.tween.TweenSubject import TweenSubject
 from lib.get_image_size import get_image_size
 
@@ -31,6 +31,8 @@ class TestMapScene(Scene):
         self.__cameraOffsetX = TweenSubject(0)  # camera x offset in px
         self.__cameraOffsetY = TweenSubject(0)  # camera y offset in px
         self.__inputsBlocked = False  # self-explanatory
+
+        self.__cameraTween = None
 
     def load(self):
         # We load the map
@@ -80,31 +82,30 @@ class TestMapScene(Scene):
 
     def update(self, dt, events):
         super().update(dt, events)
+
+        self.updateTween(self.__cameraTween, dt)
+
         if not self.__inputsBlocked:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_UP]:
                 if self.__offsetY > 0:
-                    tween = TweenEntry("z", self.__cameraOffsetY, self.__cameraOffsetY.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
-                                       Easing.easingLinear)
-                    self.pushTween(tween)
+                    self.__cameraTween = self.createTween(TweenParameters("z", self.__cameraOffsetY, self.__cameraOffsetY.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                                            Easing.easingLinear))
                     self.__inputsBlocked = True
             elif keys[pygame.K_DOWN]:
                 if self.__offsetY + self.__windowTilesHeight < self.__mapSize[0]:
-                    tween = TweenEntry("s", self.__cameraOffsetY, self.__cameraOffsetY.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
-                                       Easing.easingLinear)
-                    self.pushTween(tween)
+                    self.__cameraTween = self.createTween(TweenParameters("s", self.__cameraOffsetY, self.__cameraOffsetY.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                                            Easing.easingLinear))
                     self.__inputsBlocked = True
             elif keys[pygame.K_LEFT]:
                 if self.__offsetX > 0:
-                    tween = TweenEntry("q", self.__cameraOffsetX, self.__cameraOffsetX.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
-                                       Easing.easingLinear)
-                    self.pushTween(tween)
+                    self.__cameraTween = self.createTween(TweenParameters("q", self.__cameraOffsetX, self.__cameraOffsetX.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                                            Easing.easingLinear))
                     self.__inputsBlocked = True
             elif keys[pygame.K_RIGHT]:
                 if self.__offsetX + self.__windowTilesWidth < self.__mapSize[1]:
-                    tween = TweenEntry("d", self.__cameraOffsetX, self.__cameraOffsetX.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
-                                       Easing.easingLinear)
-                    self.pushTween(tween)
+                    self.__cameraTween = self.createTween(TweenParameters("d", self.__cameraOffsetX, self.__cameraOffsetX.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
+                                            Easing.easingLinear))
                     self.__inputsBlocked = True
 
     def onTweenFinished(self, tag):
@@ -149,6 +150,3 @@ class TestMapScene(Scene):
                     coordinatesOnTexture = self.__mapTiles[tileToDraw]
 
                     self.getEngine().getWindow().blit(Textures.getTextures()["maps." + self.__map], (drawCoordinateX, drawCoordinateY), coordinatesOnTexture)
-    def unload(self):
-        # Unload the map
-        self.__mapData = None
