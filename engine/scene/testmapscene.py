@@ -171,10 +171,13 @@ class TestMapScene(Scene):
         for y in range(self.__windowTilesHeight + 2):
             for x in range(self.__windowTilesWidth + 2):
                 for l in range(self.__layersCount):
-                    yInMatrix = (y-1) + self.__offsetY
-                    xInMatrix = (x-1) + self.__offsetX
+                    trueX = x-1
+                    trueY = y-1
 
-                    if yInMatrix < 0 or xInMatrix < 0 or yInMatrix > len(self.__tilesMatrix[l])-1 or xInMatrix > len(self.__tilesMatrix[l][y-1])-1:
+                    yInMatrix = (trueY) + self.__offsetY
+                    xInMatrix = (trueX) + self.__offsetX
+
+                    if yInMatrix < 0 or xInMatrix < 0 or yInMatrix > len(self.__tilesMatrix[l])-1 or xInMatrix > len(self.__tilesMatrix[l][trueY])-1:
                         tileToDraw = 0
                     else:
                         tileToDraw = self.__tilesMatrix[l][yInMatrix][xInMatrix]
@@ -184,8 +187,8 @@ class TestMapScene(Scene):
 
                     tileToDraw -= 1
 
-                    drawCoordinateX = (x-1) * self.__mapTilesSize + self.__cameraOffsetX.getValue()
-                    drawCoordinateY = (y-1) * self.__mapTilesSize + self.__cameraOffsetY.getValue()
+                    drawCoordinateX = (trueX) * self.__mapTilesSize + self.__cameraOffsetX.getValue()
+                    drawCoordinateY = (trueY) * self.__mapTilesSize + self.__cameraOffsetY.getValue()
 
                     coordinatesOnTexture = self.__mapTiles[tileToDraw]
 

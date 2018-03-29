@@ -1,7 +1,6 @@
 from data.savedatafields import SaveDataFields
 from engine.engine import *
 from engine.scene.testmapscene import TestMapScene
-from engine.scene.testscene import *
 from data.constants import *
 from data.textures import *
 from engine.savemanager import *
