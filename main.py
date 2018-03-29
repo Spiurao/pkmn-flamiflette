@@ -1,11 +1,5 @@
-from data.savedatafields import SaveDataFields
-from engine.engine import *
-from engine.scene.testmapscene import TestMapScene
-from data.constants import *
 from data.textures import *
-from engine.savemanager import *
-from engine.scene.tweenscene import TweenScene
-from engine.tween.Easing import Easing
+from engine.scene.testmapscene import TestMapScene
 
 VARIANT = Constants.GAME_VARIANT_FLAMIFLETTE
 
