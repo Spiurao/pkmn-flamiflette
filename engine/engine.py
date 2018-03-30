@@ -60,7 +60,7 @@ class Engine:
                 self.update(dt, events)
                 self.draw()
 
-                pygame.display.flip()
+                pygame.display.update()
             except KeyboardInterrupt:
                 self.exit()
 
