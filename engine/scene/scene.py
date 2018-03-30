@@ -55,7 +55,7 @@ class Scene:
 
         tween.runningSince += dt
 
-        tween.subject.setValue(
+        tween.subject.value = (
             tween.easing(
                 tween.runningSince,
                 tween.initialValue,
@@ -65,14 +65,14 @@ class Scene:
         )
 
         if tween.runningSince >= tween.duration:
-            tween.subject.setValue(
+            tween.subject.value = (
                 tween.targetValue
             )
             tween.alive = False
             self.onTweenFinished(tween.tag)
 
-    def createTween(self, parameters):
-        return Tween(True, parameters.getDuration(), 0, parameters.getSubject().getValue(), parameters.getTargetValue(), parameters.getSubject(), parameters.getTag(), parameters.getEasing())
+    def createTween(self, tag, subject, targetValue, duration, easing):
+        return Tween(True, duration, 0, subject.value, targetValue, subject, tag, easing)
 
     def updateTweens(self, dt):
         toRemove = []

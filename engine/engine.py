@@ -13,15 +13,34 @@ class Engine:
 
     def __init__(self, framerate, resolution, variant):
         # data init
-        self.__sceneStack = []
-        self.__pendingScene = None
-        self.__transitionScene = None
-        self.__transitionAction = None
-        self.__clock = pygame.time.Clock()
-        self.__running = True
-        self.__framerate = framerate
-        self.__resolution = resolution
-        self.__variant = variant
+        self.__sceneStack = []  # scene stack
+        self.__sceneDrawOrder = []  # pre-computed list of scenes to draw in the right order
+        self.__pendingScene = None  # the scene to push after a transition
+        self.__transitionScene = None  # the current transition
+        self.__transitionAction = None  # what should we do after the transition ? TRANSITION_ACTION_PUSH or TRANSITION_ACTION_POP
+        self.__clock = pygame.time.Clock()  # the main loop clock
+        self.__running = True  # is the game running ?
+        self.__framerate = framerate  # the framerate in FPS
+        self.__resolution = resolution  # the game window resolution
+        self.__variant = variant  # the game variant : GAME_VARIANT_1 or GAME_VARIANT_2
+
+        # pygame display
+        pygame.display.init()
+        from data.constants import Constants
+        pygame.display.set_caption(Constants.WINDOW_TITLE[self.__variant])
+        self.__window = pygame.display.set_mode(self.__resolution)
+
+    def invalidateDrawOrder(self):
+        if len(self.__sceneStack) > 0:
+            toDraw = []
+            for scene in self.__sceneStack[::-1]:
+                toDraw.append(scene)
+                if not scene.shouldDrawUnderlyingScenes():
+                    break
+
+            self.__sceneDrawOrder = toDraw[::-1]
+        else:
+            self.__sceneDrawOrder = []
 
     def getVariant(self):
         return self.__variant
@@ -34,12 +53,6 @@ class Engine:
 
     def run(self):
         print("Running game...")
-
-        # pygame display
-        pygame.display.init()
-        from data.constants import Constants
-        pygame.display.set_caption(Constants.WINDOW_TITLE[self.__variant])
-        self.__window = pygame.display.set_mode(self.__resolution)
 
         # main loop
         while self.__running:
@@ -55,8 +68,6 @@ class Engine:
                         self.exit()
 
                 # scenes update and draw
-                self.__window.fill((0, 0, 0))
-
                 self.update(dt, events)
                 self.draw()
 
@@ -78,15 +89,8 @@ class Engine:
             self.__transitionScene.update(dt, events)
 
     def draw(self):
-        if len(self.__sceneStack) > 0:
-            toDraw = []
-            for scene in self.__sceneStack[::-1]:
-                toDraw.append(scene)
-                if not scene.shouldDrawUnderlyingScenes():
-                    break
-
-            for scene in toDraw[::-1]:
-                scene.draw()
+        for scene in self.__sceneDrawOrder:
+            scene.draw()
 
         if self.__transitionScene is not None:
             self.__transitionScene.draw()
@@ -118,6 +122,9 @@ class Engine:
             scene.load()
             self.__sceneStack.append(scene)
 
+            # invalidate draw order
+            self.invalidateDrawOrder()
+
     def popScene(self, transition):
         if transition is not None:
             self.__transitionAction = Engine.TRANSITION_ACTION_POP
@@ -133,3 +140,6 @@ class Engine:
                 # after popping, we resume it
                 if len(self.__sceneStack) > 0:
                     self.__sceneStack[-1].onResume()
+
+                # invalidate draw order
+                self.invalidateDrawOrder()
