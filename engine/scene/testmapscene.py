@@ -39,7 +39,7 @@ class TestMapScene(Scene):
         self.__cameraTween = None
         self.__playerTween = None
 
-        self.__mapTexture = Textures.getTextures()["maps." + self.__map]
+        self.__mapTexture = Textures.getTextures()["tilesets." + self.__map]
         self.__characterTexture = Textures.getTextures()["ash"]
 
         self.__window = self.getEngine().getWindow()
@@ -57,7 +57,7 @@ class TestMapScene(Scene):
         self.__mapSize = (self.__mapData["width"], self.__mapData["height"])
 
         # Get map texture
-        mapTexture = "maps." + self.__mapData["tilesets"][0]["source"][17:-4]
+        mapTexture = "tilesets." + self.__mapData["tilesets"][0]["source"][17:-4]
 
         # Load image metadata
         width, height = get_image_size(os.path.join(Constants.IMG_PATH, mapTexture.replace(".", os.path.sep) + ".png"))
@@ -184,14 +184,12 @@ class TestMapScene(Scene):
                     xInMatrix = (trueX) + self.__offsetX
 
                     try:
-                        tileToDraw = self.__tilesMatrix[l][yInMatrix][xInMatrix]
+                        tileToDraw = self.__tilesMatrix[l][yInMatrix][xInMatrix] - 1
                     except IndexError:
                         tileToDraw = 0
 
-                    if tileToDraw == 0:
+                    if tileToDraw == 0:  # can be 0 because of IndexError or just because there isn't a tile there
                         continue
-
-                    tileToDraw -= 1
 
                     drawCoordinateX = (trueX) * self.__mapTilesSize + self.__cameraOffsetX.value
                     drawCoordinateY = (trueY) * self.__mapTilesSize + self.__cameraOffsetY.value

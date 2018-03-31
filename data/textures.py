@@ -6,7 +6,7 @@ import pygame
 class Textures:
 
     COLOR_KEYS = {
-        "maps.test" : (255, 255, 255)
+        "tilesets.overworld" : (255, 255, 255)
     }
 
     __textures = {}
@@ -22,7 +22,10 @@ class Textures:
 
         # Apply color keys when necessary
         for c in Textures.COLOR_KEYS:
-            Textures.__textures[c].set_colorkey(Textures.COLOR_KEYS[c])
+            if c in Textures.__textures:
+                Textures.__textures[c].set_colorkey(Textures.COLOR_KEYS[c])
+            else:
+                print("Error while applying color key to texture " + c + " : texture does not exist")
 
 
     @staticmethod

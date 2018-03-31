@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" tiledversion="1.1.3" orientation="orthogonal" renderorder="left-up" width="50" height="50" tilewidth="32" tileheight="32" infinite="0" nextobjectid="5">
- <tileset firstgid="1" source="test.tsx"/>
+ <tileset firstgid="1" source="../tilesets/overworld.tsx"/>
  <layer name="Terrain" width="50" height="50">
   <data encoding="csv">
 506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,506,
