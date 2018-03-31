@@ -35,8 +35,8 @@ class Scene:
         return True
 
 
-    def pushTween(self, parameters):
-        tween = self.createTween(parameters)
+    def pushTween(self, tag, subject, targetValue, duration, easing):
+        tween = self.createTween(tag, subject, targetValue, duration, easing)
 
         # ignore born-dead tweens
         if tween.duration == 0 or tween.initialValue == tween.targetValue:
