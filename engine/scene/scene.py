@@ -55,24 +55,26 @@ class Scene:
 
         tween.runningSince += dt
 
-        tween.subject.value = (
-            tween.easing(
-                tween.runningSince,
-                tween.initialValue,
-                tween.targetValue - tween.initialValue,
-                tween.duration
+        if tween.subject is not None:
+            tween.subject.value = (
+                tween.easing(
+                    tween.runningSince,
+                    tween.initialValue,
+                    tween.targetValue - tween.initialValue,
+                    tween.duration
+                )
             )
-        )
 
         if tween.runningSince >= tween.duration:
-            tween.subject.value = (
-                tween.targetValue
-            )
+            if tween.subject is not None:
+                tween.subject.value = (
+                    tween.targetValue
+                )
             tween.alive = False
             self.onTweenFinished(tween.tag)
 
     def createTween(self, tag, subject, targetValue, duration, easing):
-        return Tween(True, duration, 0, subject.value, targetValue, subject, tag, easing)
+        return Tween(True, duration, 0, None if subject is None else subject.value, targetValue, subject, tag, easing)
 
     def updateTweens(self, dt):
         toRemove = []

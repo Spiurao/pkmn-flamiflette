@@ -7,9 +7,9 @@
  <tile id="112" type="aboveEvents"/>
  <tile id="113" type="aboveEvents"/>
  <tile id="114" type="aboveEvents"/>
- <tile id="120" type="aboveEvents">
+ <tile id="120">
   <properties>
-   <property name="collision" value=""/>
+   <property name="collision" value="top;bottom;right;left"/>
   </properties>
  </tile>
  <tile id="121">
@@ -17,14 +17,14 @@
    <property name="collision" value="top;bottom;right;left"/>
   </properties>
  </tile>
- <tile id="122" type="aboveEvents">
+ <tile id="122">
   <properties>
-   <property name="collision" value=""/>
+   <property name="collision" value="top;bottom;right;left"/>
   </properties>
  </tile>
  <tile id="128">
   <properties>
-   <property name="collision" value=""/>
+   <property name="collision" value="top;bottom;right;left"/>
   </properties>
  </tile>
  <tile id="129">
@@ -34,20 +34,20 @@
  </tile>
  <tile id="130">
   <properties>
-   <property name="collision" value=""/>
+   <property name="collision" value="top;bottom;right;left"/>
   </properties>
  </tile>
- <tile id="136" type="aboveEvents">
+ <tile id="136">
   <properties>
    <property name="collision" value="top;bottom;right;left"/>
   </properties>
  </tile>
- <tile id="137" type="aboveEvents">
+ <tile id="137">
   <properties>
    <property name="collision" value="top;bottom;right;left"/>
   </properties>
  </tile>
- <tile id="138" type="aboveEvents">
+ <tile id="138">
   <properties>
    <property name="collision" value="top;bottom;right;left"/>
   </properties>

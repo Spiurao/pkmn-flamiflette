@@ -11,7 +11,7 @@
     {
      "120":
         {
-         "collision":""
+         "collision":"top;bottom;right;left"
         },
      "121":
         {
@@ -19,11 +19,11 @@
         },
      "122":
         {
-         "collision":""
+         "collision":"top;bottom;right;left"
         },
      "128":
         {
-         "collision":""
+         "collision":"top;bottom;right;left"
         },
      "129":
         {
@@ -31,7 +31,7 @@
         },
      "130":
         {
-         "collision":""
+         "collision":"top;bottom;right;left"
         },
      "136":
         {
@@ -294,26 +294,6 @@
          "type":"aboveEvents"
         },
      "114":
-        {
-         "type":"aboveEvents"
-        },
-     "120":
-        {
-         "type":"aboveEvents"
-        },
-     "122":
-        {
-         "type":"aboveEvents"
-        },
-     "136":
-        {
-         "type":"aboveEvents"
-        },
-     "137":
-        {
-         "type":"aboveEvents"
-        },
-     "138":
         {
          "type":"aboveEvents"
         }
