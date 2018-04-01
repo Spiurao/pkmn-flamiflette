@@ -18,7 +18,7 @@ class Tile:
 
     def __init__(self):
         self.surface = None  # the surface of this tile
-        # TODO Add animation, collision...
+        self.collision = (False, False, False, False)  # Can the player enter from Top, Right, Bottom, Left
 
 class TestNotSlowMapScene(Scene):
 
@@ -52,8 +52,12 @@ class TestNotSlowMapScene(Scene):
         self.__cameraTween = None  # the camera tween
         self.__characterTween = None  # the player tween
 
-        self.__characterX = 12  # x position of the character in tiles
-        self.__characterY = 9  # y position of the character in tiles
+        self.__characterX = 12
+        self.__characterY = 9
+
+        # TODO Initialize this properly / be able to spawn player at any given position and place camera accordingly
+        self.__characterXOnScreen = self.__characterX # x position of the character in tiles
+        self.__characterYOnScreen = self.__characterY  # y position of the character in tiles
 
         self.__drawRectX = 0  # draw rect x position in the map
         self.__drawRectY = 0  # draw rect y position in the map
@@ -155,6 +159,7 @@ class TestNotSlowMapScene(Scene):
                 # Tile data allocation
                 tile0 = Tile()
                 tile0.surface = pygame.Surface([self.__tileSize, self.__tileSize])
+
                 self.__tilesMatrix0[y][x] = tile0
 
                 tile1 = Tile()
@@ -184,11 +189,30 @@ class TestNotSlowMapScene(Scene):
 
                     # Blit on the correct tile
                     if above:
-                        toBlit = self.__tilesMatrix1[y][x].surface
+                        tile = self.__tilesMatrix1[y][x]
                     else:
-                        toBlit = self.__tilesMatrix0[y][x].surface
+                        tile = self.__tilesMatrix0[y][x]
 
-                    toBlit.blit(self.__tilesetTexture, (0, 0), tileCoords)
+                    tile.surface.blit(self.__tilesetTexture, (0, 0), tileCoords)
+
+                    # Collision flags
+                    if strTileId in tilesetData["tileproperties"]:
+                        tileProperties = tilesetData["tileproperties"][strTileId]
+                        if "collision" in tileProperties:
+                            collisionStr = tileProperties["collision"]
+
+                            if len(collisionStr) > 0:
+                                for flag in collisionStr.split(";"):
+                                    if flag == "top":
+                                        tile.collision = (True, tile.collision[1], tile.collision[2], tile.collision[3])
+                                    elif flag == "right":
+                                        tile.collision = (tile.collision[0], True, tile.collision[2], tile.collision[3])
+                                    elif flag == "bottom":
+                                        tile.collision = (tile.collision[0], tile.collision[1], True, tile.collision[3])
+                                    elif flag == "left":
+                                        tile.collision = (tile.collision[0], tile.collision[1], tile.collision[2], True)
+                                    else:
+                                        raise Exception("Unknown collision parameter : " + flag)
 
                 tileCount += 1
 
@@ -204,7 +228,7 @@ class TestNotSlowMapScene(Scene):
         self.drawMatrix(self.__tilesMatrix0)
 
         # Events
-        self.__window.blit(self.__characterTexture, (self.__characterX * self.__tileSize + self.__characterOffsetX.value, self.__characterY * self.__tileSize + self.__characterOffsetY.value))
+        self.__window.blit(self.__characterTexture, (self.__characterXOnScreen * self.__tileSize + self.__characterOffsetX.value, self.__characterYOnScreen * self.__tileSize + self.__characterOffsetY.value))
 
         # Second layer
         self.drawMatrix(self.__tilesMatrix1)
@@ -221,6 +245,30 @@ class TestNotSlowMapScene(Scene):
     def canCameraMoveDown(self):
         return self.__drawRectY + self.__windowHeight < self.__mapHeight
 
+    def canCharacterMoveLeft(self):
+        try:
+            return not self.__tilesMatrix0[self.__characterY][self.__characterX-1].collision[1]
+        except IndexError:
+            return False
+
+    def canCharacterMoveRight(self):
+        try:
+            return not self.__tilesMatrix0[self.__characterY][self.__characterX+1].collision[3]
+        except IndexError:
+            return False
+
+    def canCharacterMoveTop(self):
+        try:
+            return not self.__tilesMatrix0[self.__characterY - 1][self.__characterX].collision[2]
+        except IndexError:
+            return False
+
+    def canCharacterMoveBottom(self):
+        try:
+            return not self.__tilesMatrix0[self.__characterY + 1][self.__characterX].collision[0]
+        except IndexError:
+            return False
+
     def update(self, dt, events):
         super().update(dt, events)
 
@@ -230,13 +278,13 @@ class TestNotSlowMapScene(Scene):
         if not self.__inputsBlocked:
             keys = pygame.key.get_pressed()
 
-            playerPosXOnScreen = self.__characterX - self.__cameraOffsetX.value
-            playerPosYOnScreen = self.__characterY - self.__cameraOffsetY.value
+            playerPosXOnScreen = self.__characterXOnScreen - self.__cameraOffsetX.value
+            playerPosYOnScreen = self.__characterYOnScreen - self.__cameraOffsetY.value
 
             isPlayerInCameraScrollRectX = (playerPosXOnScreen >= self.__cameraMovementRectX[0]) and (playerPosXOnScreen <= self.__cameraMovementRectX[1])
             isPlayerInCameraScrollRectY = (playerPosYOnScreen >= self.__cameraMovementRectY[0]) and (playerPosYOnScreen <= self.__cameraMovementRectY[1])
 
-            if keys[pygame.K_LEFT]:
+            if keys[pygame.K_LEFT] and self.canCharacterMoveLeft():
                 if isPlayerInCameraScrollRectX and self.canCameraMoveLeft():
                     self.__cameraTween = self.createTween("cq", self.__cameraOffsetX,
                                                                           self.__cameraOffsetX.value + self.__tileSize,
@@ -245,7 +293,7 @@ class TestNotSlowMapScene(Scene):
                 else:
                     self.__characterTween = self.createTween("pq", self.__characterOffsetX, self.__characterOffsetX.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                 self.__inputsBlocked = True
-            elif keys[pygame.K_RIGHT]:
+            elif keys[pygame.K_RIGHT] and self.canCharacterMoveRight():
                 if isPlayerInCameraScrollRectX and self.canCameraMoveRight():
                     self.__cameraTween = self.createTween("cd", self.__cameraOffsetX,
                                                                           self.__cameraOffsetX.value - self.__tileSize,
@@ -254,7 +302,7 @@ class TestNotSlowMapScene(Scene):
                 else:
                     self.__characterTween = self.createTween("pd", self.__characterOffsetX, self.__characterOffsetX.value + self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                 self.__inputsBlocked = True
-            elif keys[pygame.K_UP]:
+            elif keys[pygame.K_UP] and self.canCharacterMoveTop():
                 if isPlayerInCameraScrollRectY and self.canCameraMoveUp():
                     self.__cameraTween = self.createTween("cz", self.__cameraOffsetY,
                                                                           self.__cameraOffsetY.value + self.__tileSize,
@@ -263,7 +311,7 @@ class TestNotSlowMapScene(Scene):
                 else:
                     self.__characterTween = self.createTween("pz", self.__characterOffsetY, self.__characterOffsetY.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                 self.__inputsBlocked = True
-            elif keys[pygame.K_DOWN]:
+            elif keys[pygame.K_DOWN] and self.canCharacterMoveBottom():
                 if isPlayerInCameraScrollRectY and self.canCameraMoveDown():
                     self.__cameraTween = self.createTween("cs", self.__cameraOffsetY,
                                                                           self.__cameraOffsetY.value - self.__tileSize,
@@ -292,29 +340,38 @@ class TestNotSlowMapScene(Scene):
 
     def onTweenFinished(self, tag):
         super().onTweenFinished(tag)
+
         if tag == "cs":
             self.__drawRectY += 1
             self.__cameraOffsetY.value = 0
+            self.__characterY += 1
         elif tag == "cz":
             self.__drawRectY -= 1
             self.__cameraOffsetY.value = 0
+            self.__characterY -= 1
         elif tag == "cq":
             self.__drawRectX -= 1
             self.__cameraOffsetX.value = 0
+            self.__characterX -= 1
         elif tag == "cd":
             self.__drawRectX += 1
             self.__cameraOffsetX.value = 0
+            self.__characterX += 1
         elif tag == "pq":
             self.__characterOffsetX.value = 0
+            self.__characterXOnScreen -= 1
             self.__characterX -= 1
         elif tag == "pd":
             self.__characterOffsetX.value = 0
+            self.__characterXOnScreen += 1
             self.__characterX += 1
         elif tag == "pz":
             self.__characterOffsetY.value = 0
+            self.__characterYOnScreen -= 1
             self.__characterY -= 1
         elif tag == "ps":
             self.__characterOffsetY.value = 0
+            self.__characterYOnScreen += 1
             self.__characterY += 1
 
         self.__inputsBlocked = False
