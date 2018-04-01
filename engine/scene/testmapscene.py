@@ -16,6 +16,7 @@ class TestMapScene(Scene):
     CAMERA_MOVEMENT_DURATION = 150
 
     # TODO Add tile caching to reduce the number of blits per frame
+    # TODO Add player spawn position to __init__
 
     def __init__(self, engine, map):
         super().__init__(engine)
@@ -33,8 +34,11 @@ class TestMapScene(Scene):
         self.__cameraOffsetY = TweenSubject(0)  # camera y offset in px
         self.__inputsBlocked = False  # self-explanatory
 
-        self.__characterX = TweenSubject(10)  # x position of the character in tiles
-        self.__characterY = TweenSubject(10)  # y position of the character in tiles
+        self.__characterX = 10  # x position of the character in tiles
+        self.__characterY = 10  # y position of the character in tiles
+
+        self.__characterOffsetX = TweenSubject(0)  # offset x of the character in px
+        self.__characterOffsetY = TweenSubject(0)  # offset y of the character in px
 
         self.__cameraTween = None
         self.__playerTween = None
@@ -132,29 +136,6 @@ class TestMapScene(Scene):
                                                                           TestMapScene.CAMERA_MOVEMENT_DURATION,
                                                                           Easing.easingLinear)
                     self.__inputsBlocked = True
-
-            '''
-            if keys[pygame.K_UP]:
-                if self.__offsetY > 0:
-                    self.__cameraTween = self.createTween("cz", self.__cameraOffsetY, self.__cameraOffsetY.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
-                                            Easing.easingLinear)
-                    self.__inputsBlocked = True
-            elif keys[pygame.K_DOWN]:
-                if self.__offsetY + self.__windowTilesHeight < self.__mapSize[0]:
-                    self.__cameraTween = self.createTween("cs", self.__cameraOffsetY, self.__cameraOffsetY.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
-                                            Easing.easingLinear)
-                    self.__inputsBlocked = True
-            elif keys[pygame.K_LEFT]:
-                if self.__offsetX > 0:
-                    self.__cameraTween = self.createTween("cq", self.__cameraOffsetX, self.__cameraOffsetX.getValue() + self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
-                                            Easing.easingLinear)
-                    self.__inputsBlocked = True
-            elif keys[pygame.K_RIGHT]:
-                if self.__offsetX + self.__windowTilesWidth < self.__mapSize[1]:
-                    self.__cameraTween = self.createTween("cd", self.__cameraOffsetX, self.__cameraOffsetX.getValue() - self.__mapTilesSize, TestMapScene.CAMERA_MOVEMENT_DELAY,
-                                            Easing.easingLinear)
-                    self.__inputsBlocked = True
-            '''
     def onTweenFinished(self, tag):
         super().onTweenFinished(tag)
         if tag == "cs":

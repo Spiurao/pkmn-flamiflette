@@ -1,3 +1,5 @@
+import math
+
 import pygame
 
 from data.constants import Constants
@@ -45,14 +47,28 @@ class TestNotSlowMapScene(Scene):
 
         self.__window = self.getEngine().getWindow()  # the game window
 
-        self.__playerTexture = Textures.getTextures()["ash"]  # player texture
+        self.__characterTexture = Textures.getTextures()["ash"]  # character texture
 
         self.__cameraTween = None  # the camera tween
+        self.__characterTween = None  # the player tween
+
+        self.__characterX = 12  # x position of the character in tiles
+        self.__characterY = 9  # y position of the character in tiles
 
         self.__drawRectX = 0  # draw rect x position in the map
         self.__drawRectY = 0  # draw rect y position in the map
         self.__cameraOffsetX = TweenSubject(0)  # camera x offset in px in the map
         self.__cameraOffsetY = TweenSubject(0)  # camera y offset in px in the map
+
+        self.__characterOffsetX = TweenSubject(0)  # offset x of the character in px
+        self.__characterOffsetY = TweenSubject(0)  # offset y of the character in px
+
+        # if the player is inside this rect (in tiles relative to the camera)
+        # and the camera can move, the camera tween will be used instead of the player tween
+        # X is for lateral movements, Y is for up / down movements
+        # tuple (position, position + width) and (position, position + height)
+        self.__cameraMovementRectX = (0, 0)
+        self.__cameraMovementRectY = (0, 0)
 
     def load(self):
         super().load()
@@ -83,6 +99,19 @@ class TestNotSlowMapScene(Scene):
         self.__windowHeight = int(self.getEngine().getResolution()[1] / self.__tileSize)
 
         print("     Window size in tiles : " + str(self.__windowWidth) + "*" + str(self.__windowHeight))
+
+        # Camera scroll rect
+        if self.__windowWidth % 2 == 0:
+            self.__cameraMovementRectX = (self.__windowWidth/2-1, self.__windowWidth/2-1 + 2)
+        else:
+            self.__cameraMovementRectX = (math.floor(self.__windowWidth / 2), math.floor(self.__windowWidth / 2) + 1)
+
+        if self.__windowHeight % 2 == 0:
+            self.__cameraMovementRectY = (self.__windowHeight / 2 - 1, self.__windowHeight / 2 - 1 + 2)
+        else:
+            self.__cameraMovementRectY = (math.floor(self.__windowHeight / 2), math.floor(self.__windowHeight / 2) + 1)
+
+        print("     Camera scroll boundaries : x : " + str(self.__cameraMovementRectX) + ", y :" + str(self.__cameraMovementRectY))
 
         # Load tileset texture
         self.__tilesetName = mapData["tilesets"][0]["source"][21:-4]
@@ -175,49 +204,74 @@ class TestNotSlowMapScene(Scene):
         self.drawMatrix(self.__tilesMatrix0)
 
         # Events
-        self.__window.blit(self.__playerTexture, (10 * self.__tileSize, 10 * self.__tileSize))
+        self.__window.blit(self.__characterTexture, (self.__characterX * self.__tileSize + self.__characterOffsetX.value, self.__characterY * self.__tileSize + self.__characterOffsetY.value))
 
         # Second layer
         self.drawMatrix(self.__tilesMatrix1)
 
+    def canCameraMoveLeft(self):
+        return self.__drawRectX > 0
+
+    def canCameraMoveRight(self):
+        return self.__drawRectX + self.__windowWidth < self.__mapWidth
+
+    def canCameraMoveUp(self):
+        return self.__drawRectY > 0
+
+    def canCameraMoveDown(self):
+        return self.__drawRectY + self.__windowHeight < self.__mapHeight
 
     def update(self, dt, events):
         super().update(dt, events)
 
         self.updateTween(self.__cameraTween, dt)
-
-        # TODO Make a working character : move the character OR the camera, but never both at the same time ?
+        self.updateTween(self.__characterTween, dt)
 
         if not self.__inputsBlocked:
             keys = pygame.key.get_pressed()
+
+            playerPosXOnScreen = self.__characterX - self.__cameraOffsetX.value
+            playerPosYOnScreen = self.__characterY - self.__cameraOffsetY.value
+
+            isPlayerInCameraScrollRectX = (playerPosXOnScreen >= self.__cameraMovementRectX[0]) and (playerPosXOnScreen <= self.__cameraMovementRectX[1])
+            isPlayerInCameraScrollRectY = (playerPosYOnScreen >= self.__cameraMovementRectY[0]) and (playerPosYOnScreen <= self.__cameraMovementRectY[1])
+
             if keys[pygame.K_LEFT]:
-                if self.__drawRectX > 0:
+                if isPlayerInCameraScrollRectX and self.canCameraMoveLeft():
                     self.__cameraTween = self.createTween("cq", self.__cameraOffsetX,
                                                                           self.__cameraOffsetX.value + self.__tileSize,
                                                                           TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION,
                                                                           Easing.easingLinear)
-                    self.__inputsBlocked = True
+                else:
+                    self.__characterTween = self.createTween("pq", self.__characterOffsetX, self.__characterOffsetX.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                self.__inputsBlocked = True
             elif keys[pygame.K_RIGHT]:
-                if self.__drawRectX + self.__windowWidth < self.__mapWidth:
+                if isPlayerInCameraScrollRectX and self.canCameraMoveRight():
                     self.__cameraTween = self.createTween("cd", self.__cameraOffsetX,
                                                                           self.__cameraOffsetX.value - self.__tileSize,
                                                                           TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION,
                                                                           Easing.easingLinear)
-                    self.__inputsBlocked = True
+                else:
+                    self.__characterTween = self.createTween("pd", self.__characterOffsetX, self.__characterOffsetX.value + self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                self.__inputsBlocked = True
             elif keys[pygame.K_UP]:
-                if self.__drawRectY > 0:
+                if isPlayerInCameraScrollRectY and self.canCameraMoveUp():
                     self.__cameraTween = self.createTween("cz", self.__cameraOffsetY,
                                                                           self.__cameraOffsetY.value + self.__tileSize,
                                                                           TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION,
                                                                           Easing.easingLinear)
-                    self.__inputsBlocked = True
+                else:
+                    self.__characterTween = self.createTween("pz", self.__characterOffsetY, self.__characterOffsetY.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                self.__inputsBlocked = True
             elif keys[pygame.K_DOWN]:
-                if self.__drawRectY + self.__windowHeight < self.__mapHeight:
+                if isPlayerInCameraScrollRectY and self.canCameraMoveDown():
                     self.__cameraTween = self.createTween("cs", self.__cameraOffsetY,
                                                                           self.__cameraOffsetY.value - self.__tileSize,
                                                                           TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION,
                                                                           Easing.easingLinear)
-                    self.__inputsBlocked = True
+                else:
+                    self.__characterTween = self.createTween("ps", self.__characterOffsetY, self.__characterOffsetY.value + self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                self.__inputsBlocked = True
 
     def drawMatrix(self, matrix):
         # Draw the map
@@ -250,6 +304,18 @@ class TestNotSlowMapScene(Scene):
         elif tag == "cd":
             self.__drawRectX += 1
             self.__cameraOffsetX.value = 0
+        elif tag == "pq":
+            self.__characterOffsetX.value = 0
+            self.__characterX -= 1
+        elif tag == "pd":
+            self.__characterOffsetX.value = 0
+            self.__characterX += 1
+        elif tag == "pz":
+            self.__characterOffsetY.value = 0
+            self.__characterY -= 1
+        elif tag == "ps":
+            self.__characterOffsetY.value = 0
+            self.__characterY += 1
 
         self.__inputsBlocked = False
 
