@@ -4,6 +4,7 @@ import pygame
 
 from data.constants import Constants
 from data.textures import Textures, Charset
+from engine.scene.map.tile import Tile
 from engine.scene.scene import Scene
 import os
 import json
@@ -12,15 +13,7 @@ from engine.tween.easing import Easing
 from engine.tween.tweensubject import TweenSubject
 
 
-class Tile:
-
-    TYPE_ABOVE_EVENTS = "aboveEvents"
-
-    def __init__(self):
-        self.surface = None  # the surface of this tile
-        self.collision = (False, False, False, False)  # Can the player enter from Top, Right, Bottom, Left
-
-class TestNotSlowMapScene(Scene):
+class MapScene(Scene):
 
     CAMERA_MOVEMENT_DURATION = 200
     STEP_DURATION = 100
@@ -314,9 +307,9 @@ class TestNotSlowMapScene(Scene):
                 if self.canCharacterMoveLeft():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectX and self.canCameraMoveLeft():
-                        self.__cameraTween = self.createTween("cq", self.__cameraOffsetX, self.__cameraOffsetX.value + self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                        self.__cameraTween = self.createTween("cq", self.__cameraOffsetX, self.__cameraOffsetX.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     else:
-                        self.__characterTween = self.createTween("pq", self.__characterOffsetX, self.__characterOffsetX.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                        self.__characterTween = self.createTween("pq", self.__characterOffsetX, self.__characterOffsetX.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
             elif keys[pygame.K_RIGHT]:
@@ -324,9 +317,9 @@ class TestNotSlowMapScene(Scene):
                 if self.canCharacterMoveRight():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectX and self.canCameraMoveRight():
-                        self.__cameraTween = self.createTween("cd", self.__cameraOffsetX, self.__cameraOffsetX.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                        self.__cameraTween = self.createTween("cd", self.__cameraOffsetX, self.__cameraOffsetX.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     else:
-                        self.__characterTween = self.createTween("pd", self.__characterOffsetX, self.__characterOffsetX.value + self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                        self.__characterTween = self.createTween("pd", self.__characterOffsetX, self.__characterOffsetX.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
             elif keys[pygame.K_UP]:
@@ -334,9 +327,9 @@ class TestNotSlowMapScene(Scene):
                 if self.canCharacterMoveUp():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveUp():
-                        self.__cameraTween = self.createTween("cz", self.__cameraOffsetY, self.__cameraOffsetY.value + self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                        self.__cameraTween = self.createTween("cz", self.__cameraOffsetY, self.__cameraOffsetY.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     else:
-                        self.__characterTween = self.createTween("pz", self.__characterOffsetY, self.__characterOffsetY.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                        self.__characterTween = self.createTween("pz", self.__characterOffsetY, self.__characterOffsetY.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
             elif keys[pygame.K_DOWN]:
@@ -344,9 +337,9 @@ class TestNotSlowMapScene(Scene):
                 if self.canCharacterMoveDown():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveDown():
-                        self.__cameraTween = self.createTween("cs", self.__cameraOffsetY, self.__cameraOffsetY.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                        self.__cameraTween = self.createTween("cs", self.__cameraOffsetY, self.__cameraOffsetY.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     else:
-                        self.__characterTween = self.createTween("ps", self.__characterOffsetY, self.__characterOffsetY.value + self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
+                        self.__characterTween = self.createTween("ps", self.__characterOffsetY, self.__characterOffsetY.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     self.__characterMoving =  True
                     self.__inputsBlocked = True
             elif self.__characterMoving:
