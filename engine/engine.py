@@ -1,6 +1,6 @@
 import pygame
 
-from engine.tween.Tween import Tween
+from engine.tween.tween import Tween
 
 
 class Engine:
@@ -66,6 +66,9 @@ class Engine:
                 for event in events:
                     if event.type == pygame.QUIT:
                         self.exit()
+
+                # fill
+                self.__window.fill((0, 0, 0, 0))
 
                 # scenes update and draw
                 self.update(dt, events)

@@ -6,8 +6,8 @@ import pygame
 from data.constants import Constants
 from data.textures import Textures
 from engine.scene.scene import Scene
-from engine.tween.Easing import Easing
-from engine.tween.TweenSubject import TweenSubject
+from engine.tween.easing import Easing
+from engine.tween.tweensubject import TweenSubject
 from lib.get_image_size import get_image_size
 
 

@@ -9,7 +9,8 @@ if __name__ == '__main__':
 
     engine = Engine(Constants.FRAMERATE, Constants.RESOLUTION, VARIANT)
 
-    scene1 = TestNotSlowMapScene(engine, "test")
+    scene1 = TestNotSlowMapScene(engine, "test", (10, 10))
+    #scene1 = TestNotSlowMapScene(engine, "test_tiny", (4, 4))
     #scene1 = TweenScene(engine)
     engine.pushScene(scene1, None)
 

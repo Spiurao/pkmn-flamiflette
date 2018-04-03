@@ -102,6 +102,108 @@
    <property name="collision" value="top;bottom;right;left"/>
   </properties>
  </tile>
+ <tile id="424">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="425">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="426">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="432">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="433">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="434">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="440">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="441">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="442">
+  <properties>
+   <property name="collision" value="top;bottom;right;left"/>
+  </properties>
+ </tile>
+ <tile id="448">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="449">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="450">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="456">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="457">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="458">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="464">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="465">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="466">
+  <properties>
+   <property name="collision" value=""/>
+  </properties>
+ </tile>
+ <tile id="469" type="aboveEvents"/>
+ <tile id="470" type="aboveEvents"/>
+ <tile id="477">
+  <properties>
+   <property name="collision" value="top;left;right;bottom"/>
+  </properties>
+ </tile>
+ <tile id="478">
+  <properties>
+   <property name="collision" value="top;left;right;bottom"/>
+  </properties>
+ </tile>
  <tile id="496">
   <properties>
    <property name="collision" value="top;bottom;right;left"/>

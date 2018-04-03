@@ -85,6 +85,86 @@
         {
          "collision":"top;bottom;right;left"
         },
+     "424":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "425":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "426":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "432":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "433":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "434":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "440":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "441":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "442":
+        {
+         "collision":"top;bottom;right;left"
+        },
+     "448":
+        {
+         "collision":""
+        },
+     "449":
+        {
+         "collision":""
+        },
+     "450":
+        {
+         "collision":""
+        },
+     "456":
+        {
+         "collision":""
+        },
+     "457":
+        {
+         "collision":""
+        },
+     "458":
+        {
+         "collision":""
+        },
+     "464":
+        {
+         "collision":""
+        },
+     "465":
+        {
+         "collision":""
+        },
+     "466":
+        {
+         "collision":""
+        },
+     "477":
+        {
+         "collision":"top;left;right;bottom"
+        },
+     "478":
+        {
+         "collision":"top;left;right;bottom"
+        },
      "496":
         {
          "collision":"top;bottom;right;left"
@@ -216,6 +296,86 @@
         {
          "collision":"string"
         },
+     "424":
+        {
+         "collision":"string"
+        },
+     "425":
+        {
+         "collision":"string"
+        },
+     "426":
+        {
+         "collision":"string"
+        },
+     "432":
+        {
+         "collision":"string"
+        },
+     "433":
+        {
+         "collision":"string"
+        },
+     "434":
+        {
+         "collision":"string"
+        },
+     "440":
+        {
+         "collision":"string"
+        },
+     "441":
+        {
+         "collision":"string"
+        },
+     "442":
+        {
+         "collision":"string"
+        },
+     "448":
+        {
+         "collision":"string"
+        },
+     "449":
+        {
+         "collision":"string"
+        },
+     "450":
+        {
+         "collision":"string"
+        },
+     "456":
+        {
+         "collision":"string"
+        },
+     "457":
+        {
+         "collision":"string"
+        },
+     "458":
+        {
+         "collision":"string"
+        },
+     "464":
+        {
+         "collision":"string"
+        },
+     "465":
+        {
+         "collision":"string"
+        },
+     "466":
+        {
+         "collision":"string"
+        },
+     "477":
+        {
+         "collision":"string"
+        },
+     "478":
+        {
+         "collision":"string"
+        },
      "496":
         {
          "collision":"string"
@@ -294,6 +454,14 @@
          "type":"aboveEvents"
         },
      "114":
+        {
+         "type":"aboveEvents"
+        },
+     "469":
+        {
+         "type":"aboveEvents"
+        },
+     "470":
         {
          "type":"aboveEvents"
         }

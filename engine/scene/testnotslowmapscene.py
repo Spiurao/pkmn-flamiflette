@@ -8,8 +8,8 @@ from engine.scene.scene import Scene
 import os
 import json
 
-from engine.tween.Easing import Easing
-from engine.tween.TweenSubject import TweenSubject
+from engine.tween.easing import Easing
+from engine.tween.tweensubject import TweenSubject
 
 
 class Tile:
@@ -25,7 +25,7 @@ class TestNotSlowMapScene(Scene):
     CAMERA_MOVEMENT_DURATION = 200
     STEP_DURATION = 100
 
-    def __init__(self, engine, map):
+    def __init__(self, engine, map, spawnPosition):
         super().__init__(engine)
 
         self.__mapName = map  # the map name
@@ -55,8 +55,8 @@ class TestNotSlowMapScene(Scene):
         self.__cameraTween = None  # the camera tween
         self.__characterTween = None  # the player tween
 
-        self.__characterX = 10  # x position of the character in tiles
-        self.__characterY = 10  # y position of the character in tiles
+        self.__characterX = spawnPosition[0] # x position of the character in tiles
+        self.__characterY = spawnPosition[1]  # y position of the character in tiles
 
         # TODO Initialize this properly / be able to spawn player at any given position and place camera accordingly
         self.__characterXOnScreen = self.__characterX # x position on screen of the character in tiles
@@ -78,6 +78,11 @@ class TestNotSlowMapScene(Scene):
         self.__cameraMovementRectY = (0, 0)
 
         self.__characterMoving = False  # is the character moving ?
+
+        # if the map is smaller than the window
+        # offset all render by these values (in px)
+        self.__mapOffsetX = 0
+        self.__mapOffsetY = 0
 
     def load(self):
         super().load()
@@ -108,6 +113,15 @@ class TestNotSlowMapScene(Scene):
         self.__windowHeight = int(self.getEngine().getResolution()[1] / self.__tileSize)
 
         print("     Window size in tiles : " + str(self.__windowWidth) + "*" + str(self.__windowHeight))
+
+        # Map offsets
+        if self.__mapWidth < self.__windowWidth:
+            self.__mapOffsetX = int((self.__windowWidth - self.__mapWidth) / 2) * self.__tileSize
+            print("     Map offset X : " + str(self.__mapOffsetX))
+
+        if self.__mapHeight < self.__windowHeight:
+            self.__mapOffsetY = int((self.__windowHeight - self.__mapHeight) / 2) * self.__tileSize
+            print("     Map offset Y : " + str(self.__mapOffsetX))
 
         # Camera scroll rect
         if self.__windowWidth % 2 == 0:
@@ -239,7 +253,7 @@ class TestNotSlowMapScene(Scene):
 
         # Events
         self.__window.blit(self.__characterCharset.getCurrentSurface(),
-                           (self.__characterXOnScreen * self.__tileSize + self.__characterOffsetX.value - self.__characterCharsetOffsetX, self.__characterYOnScreen * self.__tileSize + self.__characterOffsetY.value - self.__characterCharsetOffsetY))
+                           (self.__characterXOnScreen * self.__tileSize + self.__characterOffsetX.value - self.__characterCharsetOffsetX + self.__mapOffsetX, self.__characterYOnScreen * self.__tileSize + self.__characterOffsetY.value - self.__characterCharsetOffsetY + self.__mapOffsetY))
 
         # Second layer
         self.drawMatrix(self.__tilesMatrix1)
@@ -258,7 +272,7 @@ class TestNotSlowMapScene(Scene):
 
     def canCharacterMoveLeft(self):
         try:
-            return not self.__tilesMatrix0[self.__characterY][self.__characterX-1].collision[1]
+            return self.__characterX > 0 and not (self.__tilesMatrix0[self.__characterY][self.__characterX-1].collision[1])
         except IndexError:
             return False
 
@@ -268,13 +282,13 @@ class TestNotSlowMapScene(Scene):
         except IndexError:
             return False
 
-    def canCharacterMoveTop(self):
+    def canCharacterMoveUp(self):
         try:
-            return not self.__tilesMatrix0[self.__characterY - 1][self.__characterX].collision[2]
+            return self.__characterY > 0 and not (self.__tilesMatrix0[self.__characterY - 1][self.__characterX].collision[2])
         except IndexError:
             return False
 
-    def canCharacterMoveBottom(self):
+    def canCharacterMoveDown(self):
         try:
             return not self.__tilesMatrix0[self.__characterY + 1][self.__characterX].collision[0]
         except IndexError:
@@ -306,9 +320,9 @@ class TestNotSlowMapScene(Scene):
                     self.__characterMoving = True
                     self.__inputsBlocked = True
             elif keys[pygame.K_RIGHT]:
+                self.__characterCharset.setOrientation(Charset.ORIENTATION_RIGHT)
                 if self.canCharacterMoveRight():
                     self.__characterCharset.incrementStep()
-                    self.__characterCharset.setOrientation(Charset.ORIENTATION_RIGHT)
                     if isPlayerInCameraScrollRectX and self.canCameraMoveRight():
                         self.__cameraTween = self.createTween("cd", self.__cameraOffsetX, self.__cameraOffsetX.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     else:
@@ -316,9 +330,9 @@ class TestNotSlowMapScene(Scene):
                     self.__characterMoving = True
                     self.__inputsBlocked = True
             elif keys[pygame.K_UP]:
-                if self.canCharacterMoveTop():
+                self.__characterCharset.setOrientation(Charset.ORIENTATION_UP)
+                if self.canCharacterMoveUp():
                     self.__characterCharset.incrementStep()
-                    self.__characterCharset.setOrientation(Charset.ORIENTATION_UP)
                     if isPlayerInCameraScrollRectY and self.canCameraMoveUp():
                         self.__cameraTween = self.createTween("cz", self.__cameraOffsetY, self.__cameraOffsetY.value + self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
                     else:
@@ -327,7 +341,7 @@ class TestNotSlowMapScene(Scene):
                     self.__inputsBlocked = True
             elif keys[pygame.K_DOWN]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_DOWN)
-                if self.canCharacterMoveBottom():
+                if self.canCharacterMoveDown():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveDown():
                         self.__cameraTween = self.createTween("cs", self.__cameraOffsetY, self.__cameraOffsetY.value - self.__tileSize, TestNotSlowMapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear)
@@ -348,12 +362,15 @@ class TestNotSlowMapScene(Scene):
                 yInMatrix = trueY + self.__drawRectY
                 xInMatrix = trueX + self.__drawRectX
 
+                if xInMatrix < 0 or yInMatrix < 0:
+                    continue
+
                 try:
                     tileToDraw = matrix[yInMatrix][xInMatrix]
                 except IndexError:
                     continue
 
-                self.__window.blit(tileToDraw.surface, (trueX * self.__tileSize + self.__cameraOffsetX.value, trueY * self.__tileSize + self.__cameraOffsetY.value))
+                self.__window.blit(tileToDraw.surface, (trueX * self.__tileSize + self.__cameraOffsetX.value + self.__mapOffsetX, trueY * self.__tileSize + self.__cameraOffsetY.value + self.__mapOffsetY))
 
     def onTweenFinished(self, tag):
         super().onTweenFinished(tag)

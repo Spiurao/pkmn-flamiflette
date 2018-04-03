@@ -1,4 +1,4 @@
-from engine.tween.Tween import Tween
+from engine.tween.tween import Tween
 
 
 class Scene:
