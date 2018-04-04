@@ -249,23 +249,26 @@ class MapScene(Scene):
 
         # TODO Handle cases where there are no events in the map (no json file)
 
-        with open(os.path.join(Constants.EVENTS_PATH, self.__mapName + ".json"), "r") as f:
-            eventsData = json.loads(f.read())
+        try:
 
-        print("     Events count : " + str(len(eventsData)))
+            with open(os.path.join(Constants.EVENTS_PATH, self.__mapName + ".json"), "r") as f:
+                eventsData = json.loads(f.read())
 
-        eventModule = importlib.import_module("engine.scene.map.events.event")
-        for event in eventsData:
+            print("     Events count : " + str(len(eventsData)))
 
-            eventX = event["positionX"]
-            eventY = event["positionY"]
+            eventModule = importlib.import_module("engine.scene.map.events.event")
+            for event in eventsData:
 
-            eventClass = getattr(eventModule, event["type"])
-            eventInstance = eventClass(self, eventX, eventY, event["parameters"])
+                eventX = event["positionX"]
+                eventY = event["positionY"]
 
-            eventInstance.load()
-            eventInstance.spawn()
+                eventClass = getattr(eventModule, event["type"])
+                eventInstance = eventClass(self, eventX, eventY, event["parameters"])
 
+                eventInstance.load()
+                eventInstance.spawn()
+        except FileNotFoundError:
+            print("     No events found for this map")
 
         print("Done loading map")
 
@@ -404,7 +407,10 @@ class MapScene(Scene):
         if eventPosX < 0 or eventPosY < 0:
             return None
 
-        return self.__eventsMatrix[eventPosY][eventPosX]
+        try:
+            return self.__eventsMatrix[eventPosY][eventPosX]
+        except IndexError:
+            return None
 
     def update(self, dt, events):
         super().update(dt, events)
