@@ -67,7 +67,7 @@ class Event:
     presses an arrow key towards the event, even if it 
     is not pass-through / tile collision prevents the movement
     
-    Always fired before onCharacterEnteronCharacterTouchEventedTile()
+    Always fired before onCharacterEnteredTile()
     '''
     def onCharacterTouchEvent(self, orientation):
         pass
