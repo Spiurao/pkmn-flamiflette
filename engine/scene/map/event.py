@@ -7,7 +7,7 @@ class Event:
 
         self.__spawned = False  # if the event is not spawned, update(), draw() and events methods will not be called
 
-    def update(self):
+    def update(self, dt, events):
         pass
 
     def isSpawned(self):
@@ -29,7 +29,7 @@ class Event:
 
     def despawn(self):
         self.__spawned = False
-        # TODO Spawn this event by removing it from the event matrix
+        # TODO Despawn this event by removing it from the event matrix
         pass
 
     def passThrough(self):
