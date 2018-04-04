@@ -32,7 +32,12 @@ class Event:
         # TODO Despawn this event by removing it from the event matrix
         pass
 
-    def passThrough(self):
+    '''
+    Collision flag for this event
+    returns True if the character should collide with this event's tile
+    False otherwise
+    '''
+    def isPassThrough(self):
         return True
 
     def setPosition(self, x, y):
@@ -44,7 +49,7 @@ class Event:
     Fired when the character faces the event
     and presses the action button
     '''
-    def onActionPressed(self):
+    def onActionPressed(self, orientation):
         pass
 
     '''
@@ -54,7 +59,7 @@ class Event:
     
     Always fired after onCharacterTouchEvent()
     '''
-    def onCharacterEntersTile(self):
+    def onCharacterEntersTile(self, orientation):
         pass
 
     '''
@@ -64,5 +69,5 @@ class Event:
     
     Always fired before onCharacterEntersTile()
     '''
-    def onCharacterTouchEvent(self):
+    def onCharacterTouchEvent(self, orientation):
         pass
