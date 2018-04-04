@@ -1,3 +1,4 @@
+import importlib
 import math
 
 import pygame
@@ -76,6 +77,13 @@ class MapScene(Scene):
         # offset all render by these values (in px)
         self.__mapOffsetX = 0
         self.__mapOffsetY = 0
+
+        self.__eventsMatrix = []  # events matrix
+
+        self.__touchEventProcessed = False  # used to prevent touch events spamming
+
+        self.__dt = 0  # delta-time given by pygame clock
+        self.__events = None  # pygame events
 
     def load(self):
         super().load()
@@ -232,6 +240,33 @@ class MapScene(Scene):
 
                 tileCount += 1
 
+        # Load and spawn events
+        for y in range(self.__mapHeight):
+            self.__eventsMatrix.append([])
+            for x in range(self.__mapWidth):
+                self.__eventsMatrix[y].append([])
+                self.__eventsMatrix[y][x] = None
+
+        # TODO Handle cases where there are no events in the map (no json file)
+
+        with open(os.path.join(Constants.EVENTS_PATH, self.__mapName + ".json"), "r") as f:
+            eventsData = json.loads(f.read())
+
+        print("     Events count : " + str(len(eventsData)))
+
+        eventModule = importlib.import_module("engine.scene.map.events.event")
+        for event in eventsData:
+
+            eventX = event["positionX"]
+            eventY = event["positionY"]
+
+            eventClass = getattr(eventModule, event["type"])
+            eventInstance = eventClass(self, eventX, eventY, event["parameters"])
+
+            eventInstance.load()
+            eventInstance.spawn()
+
+
         print("Done loading map")
 
         # Load charsets
@@ -239,8 +274,28 @@ class MapScene(Scene):
         self.__characterCharsetOffsetX = int(self.__characterCharset.getSurfaceWidth()/4)
         self.__characterCharsetOffsetY = int(self.__characterCharset.getSurfaceHeight()/2)
 
+    def spawnEvent(self, event, posX, posY):
+        self.__eventsMatrix[posY][posX] = event
+
+    def despawnEvent(self, posX, posY):
+        self.__eventsMatrix[posY][posX] = None
+
+
     def unload(self):
         super().unload()
+
+        for y in range(self.__mapHeight):
+            for x in range(self.__mapWidth):
+                event = self.__eventsMatrix[y][x]
+                if event is not None:
+                    event.unload()
+
+    def updateEventPosition(self, oldX, oldY, newX, newY):
+        event = self.__eventsMatrix[oldY][oldX]
+
+        if event is not None:
+            self.__eventsMatrix[oldY][oldX] = None
+            self.__eventsMatrix[newY][newX] = None
 
     def draw(self):
         super().draw()
@@ -248,8 +303,19 @@ class MapScene(Scene):
         # First layer
         self.drawMatrix(self.__tilesMatrix0)
 
-        # Events
-        self.__window.blit(self.__characterCharset.getCurrentSurface(),
+        # Events and character
+
+        for y in range(self.__mapHeight):
+            for x in range(self.__mapWidth):
+                event = self.__eventsMatrix[y][x]
+
+                if event is not None:
+                    event.update(self.__dt, self.__events)
+                    event.draw()
+
+                # Character
+                if y == self.__characterY and x == self.__characterX:
+                    self.__window.blit(self.__characterCharset.getCurrentSurface(),
                            (self.__characterXOnScreen * self.__tileSize + self.__characterOffsetX.value - self.__characterCharsetOffsetX + self.__mapOffsetX, self.__characterYOnScreen * self.__tileSize + self.__characterOffsetY.value - self.__characterCharsetOffsetY + self.__mapOffsetY))
 
         # Second layer
@@ -268,28 +334,77 @@ class MapScene(Scene):
         return self.__drawRectY + self.__windowHeight < self.__mapHeight
 
     def canCharacterMoveLeft(self):
+        # Event collision
+        facingEvent = self.getEventWhichCharacterFaces()
+
+        if facingEvent is not None and not facingEvent.isPassThrough():
+            return False
+
+        # Tile collision
         try:
             return self.__characterX > 0 and not (self.__tilesMatrix0[self.__characterY][self.__characterX-1].collision[1])
         except IndexError:
             return False
 
     def canCharacterMoveRight(self):
+        # Event collision
+        facingEvent = self.getEventWhichCharacterFaces()
+
+        if facingEvent is not None and not facingEvent.isPassThrough():
+            return False
+
+        # Tile collision
         try:
             return not self.__tilesMatrix0[self.__characterY][self.__characterX+1].collision[3]
         except IndexError:
             return False
 
     def canCharacterMoveUp(self):
+        # Event collision
+        facingEvent = self.getEventWhichCharacterFaces()
+
+        if facingEvent is not None and not facingEvent.isPassThrough():
+            return False
+
+        # Tile collision
         try:
             return self.__characterY > 0 and not (self.__tilesMatrix0[self.__characterY - 1][self.__characterX].collision[2])
         except IndexError:
             return False
 
     def canCharacterMoveDown(self):
+        # Event collision
+        facingEvent = self.getEventWhichCharacterFaces()
+
+        if facingEvent is not None and not facingEvent.isPassThrough():
+            return False
+
+        # Tile collision
         try:
             return not self.__tilesMatrix0[self.__characterY + 1][self.__characterX].collision[0]
         except IndexError:
             return False
+
+
+    def getEventWhichCharacterFaces(self):
+        eventPosX = self.__characterX
+        eventPosY = self.__characterY
+
+        orientation = self.__characterCharset.getOrientation()
+
+        if orientation == Charset.ORIENTATION_DOWN:
+            eventPosY += 1
+        elif orientation == Charset.ORIENTATION_UP:
+            eventPosY -= 1
+        elif orientation == Charset.ORIENTATION_LEFT:
+            eventPosX -= 1
+        elif orientation == Charset.ORIENTATION_RIGHT:
+            eventPosX += 1
+
+        if eventPosX < 0 or eventPosY < 0:
+            return None
+
+        return self.__eventsMatrix[eventPosY][eventPosX]
 
     def update(self, dt, events):
         super().update(dt, events)
@@ -298,6 +413,21 @@ class MapScene(Scene):
         self.updateTween(self.__characterTween, dt)
 
         if not self.__inputsBlocked:
+
+            orientation = self.__characterCharset.getOrientation()
+
+            # Pygame events
+            for event in events:
+                # Return key (action)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+
+                        gameEvent = self.getEventWhichCharacterFaces()
+
+                        if gameEvent is not None:
+                            gameEvent.onActionPressed(orientation)
+
+            # Arrow keys
             keys = pygame.key.get_pressed()
 
             playerPosXOnScreen = self.__characterXOnScreen - self.__cameraOffsetX.value
@@ -308,6 +438,7 @@ class MapScene(Scene):
 
             if keys[pygame.K_LEFT]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_LEFT)
+                self.processEventsTouchEvent()
                 if self.canCharacterMoveLeft():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectX and self.canCameraMoveLeft():
@@ -318,6 +449,7 @@ class MapScene(Scene):
                     self.__inputsBlocked = True
             elif keys[pygame.K_RIGHT]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_RIGHT)
+                self.processEventsTouchEvent()
                 if self.canCharacterMoveRight():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectX and self.canCameraMoveRight():
@@ -328,6 +460,7 @@ class MapScene(Scene):
                     self.__inputsBlocked = True
             elif keys[pygame.K_UP]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_UP)
+                self.processEventsTouchEvent()
                 if self.canCharacterMoveUp():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveUp():
@@ -338,6 +471,7 @@ class MapScene(Scene):
                     self.__inputsBlocked = True
             elif keys[pygame.K_DOWN]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_DOWN)
+                self.processEventsTouchEvent()
                 if self.canCharacterMoveDown():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveDown():
@@ -349,6 +483,8 @@ class MapScene(Scene):
             elif self.__characterMoving:
                 self.__characterMoving = False
                 self.__characterCharset.resetStep()
+            else:
+                self.__touchEventProcessed = False
 
 
     def drawMatrix(self, matrix):
@@ -372,6 +508,22 @@ class MapScene(Scene):
                 if tileToDraw is not None:
                     self.__window.blit(tileToDraw.surface, (trueX * self.__tileSize + self.__cameraOffsetX.value + self.__mapOffsetX, trueY * self.__tileSize + self.__cameraOffsetY.value + self.__mapOffsetY))
 
+
+    def onCharacterEnteredTile(self):
+        event = self.__eventsMatrix[self.__characterY][self.__characterX]
+
+        if event is not None:
+            event.onCharacterEnteredTile(self.__characterCharset.getOrientation())
+
+    def processEventsTouchEvent(self):
+        if self.__touchEventProcessed:
+            return
+
+        event = self.getEventWhichCharacterFaces()
+        if event is not None:
+            event.onCharacterTouchEvent(self.__characterCharset.getOrientation())
+            self.__touchEventProcessed = True
+
     def onTweenFinished(self, tag):
         super().onTweenFinished(tag)
 
@@ -379,34 +531,50 @@ class MapScene(Scene):
             self.__drawRectY += 1
             self.__cameraOffsetY.value = 0
             self.__characterY += 1
+
+            self.onCharacterEnteredTile()
         elif tag == "cz":
             self.__drawRectY -= 1
             self.__cameraOffsetY.value = 0
             self.__characterY -= 1
+
+            self.onCharacterEnteredTile()
         elif tag == "cq":
             self.__drawRectX -= 1
             self.__cameraOffsetX.value = 0
             self.__characterX -= 1
+
+            self.onCharacterEnteredTile()
         elif tag == "cd":
             self.__drawRectX += 1
             self.__cameraOffsetX.value = 0
             self.__characterX += 1
+
+            self.onCharacterEnteredTile()
         elif tag == "pq":
             self.__characterOffsetX.value = 0
             self.__characterXOnScreen -= 1
             self.__characterX -= 1
+
+            self.onCharacterEnteredTile()
         elif tag == "pd":
             self.__characterOffsetX.value = 0
             self.__characterXOnScreen += 1
             self.__characterX += 1
+
+            self.onCharacterEnteredTile()
         elif tag == "pz":
             self.__characterOffsetY.value = 0
             self.__characterYOnScreen -= 1
             self.__characterY -= 1
+
+            self.onCharacterEnteredTile()
         elif tag == "ps":
             self.__characterOffsetY.value = 0
             self.__characterYOnScreen += 1
             self.__characterY += 1
+
+            self.onCharacterEnteredTile()
 
         self.__inputsBlocked = False
 

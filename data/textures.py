@@ -61,6 +61,9 @@ class Charset:
     def setOrientation(self, orientation):
         self.__orientation = orientation
 
+    def getOrientation(self):
+        return self.__orientation
+
 class Textures:
 
     COLOR_KEYS = {

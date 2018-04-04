@@ -1,6 +1,6 @@
 class Event:
 
-    def __init__(self, scene, x, y):
+    def __init__(self, scene, x, y, parameters):
         self.__scene = scene  # the MapScene containing this event
         self.__posX = x  # x position of this event
         self.__posY = y  # y position of this event
@@ -24,12 +24,12 @@ class Event:
 
     def spawn(self):
         self.__spawned = True
-        # TODO Spawn this event by adding it to the event matrix
+        self.__scene.spawnEvent(self, self.__posX, self.__posY)
         pass
 
     def despawn(self):
         self.__spawned = False
-        # TODO Despawn this event by removing it from the event matrix
+        self.__scene.despawnEvent(self.__posX, self.__posY)
         pass
 
     '''
@@ -41,9 +41,9 @@ class Event:
         return True
 
     def setPosition(self, x, y):
+        self.__scene.updateEventPosition(self.__posX, self.__poxY, x, y)
         self.__posX = x
         self.__posY = x
-        # TODO Replicate this change in the scene's events matrix (important !)
 
     '''
     Fired when the character faces the event
@@ -59,7 +59,7 @@ class Event:
     
     Always fired after onCharacterTouchEvent()
     '''
-    def onCharacterEntersTile(self, orientation):
+    def onCharacterEnteredTile(self, orientation):
         pass
 
     '''
@@ -67,7 +67,7 @@ class Event:
     presses an arrow key towards the event, even if it 
     is not pass-through / tile collision prevents the movement
     
-    Always fired before onCharacterEntersTile()
+    Always fired before onCharacterEnteronCharacterTouchEventedTile()
     '''
     def onCharacterTouchEvent(self, orientation):
         pass
