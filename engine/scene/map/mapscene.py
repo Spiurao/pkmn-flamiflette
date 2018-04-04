@@ -226,6 +226,10 @@ class MapScene(Scene):
                                     else:
                                         raise Exception("Unknown collision parameter : " + flag)
 
+                # if there was no tile drawn on the above layer, discard the tile
+                if not above:
+                    self.__tilesMatrix1[y][x] = None
+
                 tileCount += 1
 
         print("Done loading map")
@@ -345,6 +349,8 @@ class MapScene(Scene):
             elif self.__characterMoving:
                 self.__characterMoving = False
                 self.__characterCharset.resetStep()
+
+
     def drawMatrix(self, matrix):
         # Draw the map
         for y in range(self.__windowHeight + 2):
@@ -363,7 +369,8 @@ class MapScene(Scene):
                 except IndexError:
                     continue
 
-                self.__window.blit(tileToDraw.surface, (trueX * self.__tileSize + self.__cameraOffsetX.value + self.__mapOffsetX, trueY * self.__tileSize + self.__cameraOffsetY.value + self.__mapOffsetY))
+                if tileToDraw is not None:
+                    self.__window.blit(tileToDraw.surface, (trueX * self.__tileSize + self.__cameraOffsetX.value + self.__mapOffsetX, trueY * self.__tileSize + self.__cameraOffsetY.value + self.__mapOffsetY))
 
     def onTweenFinished(self, tag):
         super().onTweenFinished(tag)
