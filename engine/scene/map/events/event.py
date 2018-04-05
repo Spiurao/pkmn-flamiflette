@@ -19,7 +19,7 @@ class Event:
     def unload(self):
         pass
 
-    def draw(self):
+    def draw(self, offsetX, offsetY):
         pass
 
     def getPosX(self):

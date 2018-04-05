@@ -44,7 +44,7 @@ class MapScene(Scene):
         self.__window = self.getEngine().getWindow()  # the game window
 
         self.__characterCharset = Charset.ofTexture("charsets.character", Charset.ORIENTATION_DOWN)   # character charset
-        self.__characterCharsetOffsetX = 0  # half the width of the step texture
+        self.__characterCharsetOffsetX = 0  # quarter the width of the step texture
         self.__characterCharsetOffsetY = 0  # half the height of the step texture
 
         self.__cameraTween = None  # the camera tween
@@ -325,7 +325,7 @@ class MapScene(Scene):
 
                 if event is not None:
                     event.update(self.__dt, self.__events)
-                    event.draw()
+                    event.draw(self.__cameraOffsetX.value - self.__drawRectX * self.__tileSize + self.__mapOffsetX, self.__cameraOffsetY.value - self.__drawRectY * self.__tileSize + self.__mapOffsetY)
 
                 # Character
                 if y == self.__characterY and x == self.__characterX:

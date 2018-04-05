@@ -17,10 +17,11 @@ class NPCEvent(Event):
 
         self.__charsetSurfaceOffset = (self.__charset.getSurfaceWidth()/4, self.__charset.getSurfaceHeight()/2)
 
-    def draw(self):
-        super().draw()
+    def draw(self, offsetX, offsetY):
+        super().draw(offsetX, offsetY)
 
-        self.getWindow().blit(self.__charset.getCurrentSurface(), (self.getPosX() * self.__tileSize - self.__charsetSurfaceOffset[0], self.getPosY() * self.__tileSize - self.__charsetSurfaceOffset[1]))
+        # No need to check if the charset will be offscreen since pygame does it for us
+        self.getWindow().blit(self.__charset.getCurrentSurface(), (self.getPosX() * self.__tileSize - self.__charsetSurfaceOffset[0] + offsetX, self.getPosY() * self.__tileSize - self.__charsetSurfaceOffset[1] + offsetY))
 
     def isPassThrough(self):
         return False
