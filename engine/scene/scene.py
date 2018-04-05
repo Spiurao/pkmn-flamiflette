@@ -6,6 +6,10 @@ class Scene:
     def __init__(self, engine):
         self.__engine = engine
         self.__tweenList = []
+        self.__timersList = []
+
+    def pushTimer(self, timer):
+        self.__timersList.append(timer)
 
     def load(self):
         pass
@@ -18,6 +22,7 @@ class Scene:
 
     def update(self, dt, events):
         self.updateTweens(dt)
+        self.updateTimers(dt)
 
     def getEngine(self):
         return self.__engine
@@ -49,6 +54,13 @@ class Scene:
     def onTweenFinished(self, tag):
         pass
 
+    def updateTimers(self, dt):
+        for timer in self.__timersList:
+            timer.update(dt)
+
+        self.__timersList = [t for t in self.__timersList if t.alive]
+
+
     def updateTween(self, tween, dt):
         if not tween or not tween.alive:
             return
@@ -77,11 +89,8 @@ class Scene:
         return Tween(True, duration, 0, None if subject is None else subject.value, targetValue, subject, tag, easing)
 
     def updateTweens(self, dt):
-        toRemove = []
         for tween in self.__tweenList:
             self.updateTween(tween, dt)
-            if not tween.alive:
-                toRemove.append(tween)
 
-        for tween in toRemove:
-            self.__tweenList.remove(tween)
+
+        self.__tweenList = [t for t in self.__tweenList if t.alive]
