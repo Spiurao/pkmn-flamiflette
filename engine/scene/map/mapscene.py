@@ -296,6 +296,9 @@ class MapScene(Scene):
     def updateEventPosition(self, oldX, oldY, newX, newY):
         event = self.__eventsMatrix[oldY][oldX]
 
+        if self.__eventsMatrix[newY][newX] is not None:
+            raise Exception("Cannot move an event on top of another")
+
         if event is not None:
             self.__eventsMatrix[oldY][oldX] = None
             self.__eventsMatrix[newY][newX] = None
@@ -307,7 +310,6 @@ class MapScene(Scene):
         self.drawMatrix(self.__tilesMatrix0)
 
         # Events and character
-
         for y in range(self.__mapHeight):
             for x in range(self.__mapWidth):
                 event = self.__eventsMatrix[y][x]
