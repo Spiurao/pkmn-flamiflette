@@ -10,6 +10,7 @@ class Constants:
     MAPS_PATH = os.path.join("data", "maps")
     TILESETS_PATH = os.path.join("data", "tilesets")
     EVENTS_PATH = os.path.join("data", "events")
+    COLOR_KEYS_PATH = os.path.join("data", "colorkeys.json")
 
     WINDOW_TITLE = {
         GAME_VARIANT_FLAMIFLETTE : "Pokémon Version Flamiflette",

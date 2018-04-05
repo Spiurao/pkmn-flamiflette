@@ -1,7 +1,5 @@
 import pygame
 
-from engine.tween.tween import Tween
-
 
 class Engine:
 
@@ -29,6 +27,10 @@ class Engine:
         from data.constants import Constants
         pygame.display.set_caption(Constants.WINDOW_TITLE[self.__variant])
         self.__window = pygame.display.set_mode(self.__resolution)
+
+        # textures loading
+        from engine.graphics.textures import Textures
+        Textures.load()
 
     def invalidateDrawOrder(self):
         if len(self.__sceneStack) > 0:
@@ -81,6 +83,9 @@ class Engine:
         # exit
         print("Quitting game...")
         pygame.display.quit()
+
+        from engine.graphics.textures import Textures
+        Textures.unload()
 
     def exit(self):
         self.__running = False

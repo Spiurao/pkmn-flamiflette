@@ -22,6 +22,12 @@ class Event:
     def draw(self):
         pass
 
+    def getPosX(self):
+        return self.__posX
+
+    def getPosY(self):
+        return self.__posY
+
     def spawn(self):
         self.__spawned = True
         self.__scene.spawnEvent(self, self.__posX, self.__posY)
@@ -31,6 +37,12 @@ class Event:
         self.__spawned = False
         self.__scene.despawnEvent(self.__posX, self.__posY)
         pass
+
+    def getScene(self):
+        return self.__scene
+
+    def getWindow(self):
+        return self.__scene.getEngine().getWindow()
 
     '''
     Collision flag for this event

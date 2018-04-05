@@ -4,7 +4,8 @@ import math
 import pygame
 
 from data.constants import Constants
-from data.textures import Textures, Charset
+from engine.graphics.textures import Textures
+from engine.graphics.charset import Charset
 from engine.scene.map.tile import Tile
 from engine.scene.scene import Scene
 import os
@@ -42,7 +43,7 @@ class MapScene(Scene):
 
         self.__window = self.getEngine().getWindow()  # the game window
 
-        self.__characterCharset = Charset(Textures.getTextures()["character"], Charset.ORIENTATION_DOWN)   # character charset
+        self.__characterCharset = Charset.ofTexture("charsets.character", Charset.ORIENTATION_DOWN)   # character charset
         self.__characterCharsetOffsetX = 0  # half the width of the step texture
         self.__characterCharsetOffsetY = 0  # half the height of the step texture
 
@@ -84,6 +85,10 @@ class MapScene(Scene):
 
         self.__dt = 0  # delta-time given by pygame clock
         self.__events = None  # pygame events
+
+
+    def getTileSize(self):
+        return self.__tileSize
 
     def load(self):
         super().load()
@@ -256,13 +261,17 @@ class MapScene(Scene):
 
             print("     Events count : " + str(len(eventsData)))
 
-            eventModule = importlib.import_module("engine.scene.map.events.event")
+            eventModules = {}
+
             for event in eventsData:
 
                 eventX = event["positionX"]
                 eventY = event["positionY"]
 
-                eventClass = getattr(eventModule, event["type"])
+                if not event["type"] in eventModules:
+                    eventModules[event["type"]] = importlib.import_module("engine.scene.map.events." + event["type"].lower())
+
+                eventClass = getattr(eventModules[event["type"]], event["type"])
                 eventInstance = eventClass(self, eventX, eventY, event["parameters"])
 
                 eventInstance.load()

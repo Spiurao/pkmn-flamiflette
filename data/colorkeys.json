@@ -1,0 +1,5 @@
+{
+  "tilesets.overworld" : [255, 255, 255],
+  "charsets.wobbuffet": [25, 117, 85],
+  "charsets.character" : [25, 117, 85]
+}
