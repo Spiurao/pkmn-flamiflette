@@ -301,7 +301,7 @@ class MapScene(Scene):
 
         if event is not None:
             self.__eventsMatrix[oldY][oldX] = None
-            self.__eventsMatrix[newY][newX] = None
+            self.__eventsMatrix[newY][newX] = event
 
     def draw(self):
         super().draw()
