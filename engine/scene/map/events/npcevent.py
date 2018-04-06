@@ -1,3 +1,6 @@
+import math
+import sys
+
 from engine.graphics.charset import Charset
 from engine.scene.map.events.event import Event
 from engine.scene.map.mapscene import MapScene
@@ -44,10 +47,38 @@ class NPCEvent(Event):
     def moveTweenCallback(self, tag):
         self.__moving = False
 
+    # BLOCKNG CALLS
+    # TO USE IN THREADED METHODS
+
     def setOrientation(self, orientation):
+        self.blockingCallsSafeGuard()
+
         self.__charset.setOrientation(orientation)
 
+    def turnToFaceCharacter(self):
+        self.blockingCallsSafeGuard()
+
+        characterPosition = self.getScene().getCharacterPosition()
+
+        degree = math.degrees(math.atan2(characterPosition[1] - self.getPosY(), characterPosition[0] - self.getPosX()))
+
+        # right : -45 to 45
+        # down : 45 to 135
+        # left : 135 to -135
+        # top : -135 to -45
+
+        if degree >= -45 and degree < 45:
+            self.setOrientation(Charset.ORIENTATION_RIGHT)
+        elif degree >= 45 and degree < 135:
+            self.setOrientation(Charset.ORIENTATION_DOWN)
+        elif degree >= -135 and degree < -45:
+            self.setOrientation(Charset.ORIENTATION_UP)
+        elif degree >= -135 or degree < 135:
+            self.setOrientation(Charset.ORIENTATION_LEFT)
+
     def walk(self, orientation):
+        self.blockingCallsSafeGuard()
+
         if self.__moving:
             return
 
@@ -55,6 +86,7 @@ class NPCEvent(Event):
 
         # TODO Walk animation
         # TODO Collision checks
+
         if orientation == Charset.ORIENTATION_LEFT:
             self.setPosition(self.getPosX()-1, self.getPosY())
             self.__movingOffsetX.value = 1
@@ -74,11 +106,10 @@ class NPCEvent(Event):
             self.__movingOffsetY.value = -1
             self.__moveTween = Tween.create(None, self.__movingOffsetY, 0, MapScene.CAMERA_MOVEMENT_DURATION,
                                             Easing.easingLinear, self.moveTweenCallback)
-        # TODO Do other orientations
 
         self.__moving = True
 
-        while self.__moving:
+        while self.isSpawned() and self.__moving:
             pass
 
 

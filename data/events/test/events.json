@@ -17,7 +17,8 @@
     "type": "Wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",
-      "orientation":0
+      "orientation":0,
+      "look":true
     }
   },
   {
@@ -26,7 +27,8 @@
     "type": "Wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",
-      "orientation":0
+      "orientation":0,
+      "walk":true
     }
   }
 ]

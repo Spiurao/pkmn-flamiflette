@@ -90,9 +90,15 @@ class MapScene(Scene):
         self.__dt = 0  # delta-time given by pygame clock
         self.__events = None  # pygame events
 
+        self.__threadList = []
+
+        self.toRunOnMainThread = None  # function to run on main thread on next update() tick
 
     def getTileSize(self):
         return self.__tileSize
+
+    def getCharacterPosition(self):
+        return (self.__characterX, self.__characterY)
 
     def load(self):
         super().load()
@@ -152,6 +158,11 @@ class MapScene(Scene):
         print("     Tileset name : " + self.__tilesetName)
 
         self.__tilesetTexture = Textures.getTextures()["tilesets." + self.__tilesetName]
+
+        # Load player charset
+        self.__characterCharset.load()
+        self.__characterCharsetOffsetX = int(self.__characterCharset.getSurfaceWidth() / 4)
+        self.__characterCharsetOffsetY = int(self.__characterCharset.getSurfaceHeight() / 2)
 
         # Load tileset data
         tilesetData = None
@@ -256,8 +267,6 @@ class MapScene(Scene):
                 self.__eventsMatrix[y].append([])
                 self.__eventsMatrix[y][x] = None
 
-        # TODO Handle cases where there are no events in the map (no json file)
-
         try:
 
             with open(os.path.join(Constants.EVENTS_PATH, self.__mapName, "events.json"), "r") as f:
@@ -283,15 +292,16 @@ class MapScene(Scene):
 
                 eventInstance.load()
                 eventInstance.spawn()
+
+                thread = Thread(target=eventInstance.onSpawn, args=())
+                eventInstance.threadList["onSpawn"] = thread
+                thread.daemon = True
+                thread.start()
+
         except FileNotFoundError:
             print("     No events found for this map")
 
         print("Done loading map")
-
-        # Load charsets
-        self.__characterCharset.load()
-        self.__characterCharsetOffsetX = int(self.__characterCharset.getSurfaceWidth()/4)
-        self.__characterCharsetOffsetY = int(self.__characterCharset.getSurfaceHeight()/2)
 
     def spawnEvent(self, event, posX, posY):
         self.__eventsMatrix[posY][posX] = event
@@ -307,6 +317,7 @@ class MapScene(Scene):
             for x in range(self.__mapWidth):
                 event = self.__eventsMatrix[y][x]
                 if event is not None:
+                    event.despawn()
                     event.unload()
 
     def updateEventPosition(self, oldX, oldY, newX, newY):
@@ -318,6 +329,9 @@ class MapScene(Scene):
         if event is not None:
             self.__eventsMatrix[oldY][oldX] = None
             self.__eventsMatrix[newY][newX] = event
+
+    def getCharacterOrientation(self):
+        return self.__characterCharset.getOrientation()
 
     def draw(self):
         super().draw()
@@ -439,6 +453,10 @@ class MapScene(Scene):
         self.__dt = dt
         self.__events = events
 
+        if self.toRunOnMainThread is not None:
+            self.toRunOnMainThread()
+            self.toRunOnMainThread = None
+
         if self.__cameraTween is not None:
             self.__cameraTween.update(dt)
 
@@ -458,7 +476,10 @@ class MapScene(Scene):
                         gameEvent = self.getEventWhichCharacterFaces()
 
                         if gameEvent is not None:
-                            Thread(target=gameEvent.onActionPressed, args=(orientation,)).start()
+                            thread = Thread(target=gameEvent.onActionPressed, args=(orientation,))
+                            gameEvent.threadList["onActionPressed"] = thread
+                            thread.daemon = True
+                            thread.start()
 
             # Arrow keys
             keys = pygame.key.get_pressed()
@@ -546,7 +567,10 @@ class MapScene(Scene):
         event = self.__eventsMatrix[self.__characterY][self.__characterX]
 
         if event is not None:
-            Thread(target=event.onCharacterEnteredTile, args=(self.__characterCharset.getOrientation(),)).start()
+            thread = Thread(target=event.onCharacterEnteredTile, args=(self.__characterCharset.getOrientation(),))
+            event.threadList["onCharacterEnteredTile"] = thread
+            thread.daemon = True
+            thread.start()
 
     def processEventsTouchEvent(self):
         if self.__touchEventProcessed:
@@ -554,7 +578,10 @@ class MapScene(Scene):
 
         event = self.getEventWhichCharacterFaces()
         if event is not None:
-            Thread(target=event.onCharacterTouchEvent, args=(self.__characterCharset.getOrientation(),)).start()
+            thread = Thread(target=event.onCharacterTouchEvent, args=(self.__characterCharset.getOrientation(),))
+            event.threadList["onCharacterTouchEvent"] = thread
+            thread.daemon = True
+            thread.start()
             self.__touchEventProcessed = True
 
     def tweensCallback(self, tag):

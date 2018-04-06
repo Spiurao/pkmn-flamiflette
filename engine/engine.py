@@ -89,6 +89,10 @@ class Engine:
 
         # exit
         print("Quitting game...")
+
+        for scene in self.__sceneStack[::-1]:
+            scene.unload()
+
         pygame.display.quit()
 
         from engine.graphics.textures import Textures
