@@ -43,6 +43,9 @@ class Charset:
 
                 self.__surfaceMatrix[y][x] = surface
 
+    def unload(self):
+        self.__surfaceMatrix = None
+
     def getSurfaceWidth(self):
         return self.__stepWidth
 

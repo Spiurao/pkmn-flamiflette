@@ -44,6 +44,10 @@ class NPCEvent(Event):
     def isPassThrough(self):
         return False
 
+    def unload(self):
+        super().unload()
+        self.__charset.unload()
+
     def moveTweenCallback(self, tag):
         self.__moving = False
 
