@@ -7,6 +7,8 @@ class Event:
 
         self.__spawned = False  # if the event is not spawned, update(), draw() and events methods will not be called
 
+        self.lastUpdateTime = 0  # the last time this event was updated and drawn
+
     def update(self, dt, events):
         pass
 
@@ -53,9 +55,9 @@ class Event:
         return True
 
     def setPosition(self, x, y):
-        self.__scene.updateEventPosition(self.__posX, self.__poxY, x, y)
+        self.__scene.updateEventPosition(self.__posX, self.__posY, x, y)
         self.__posX = x
-        self.__posY = x
+        self.__posY = y
 
     '''
     Fired when the character faces the event

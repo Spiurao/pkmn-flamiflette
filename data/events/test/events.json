@@ -14,7 +14,16 @@
   {
     "positionX":6,
     "positionY":4,
-    "type": "NPCEvent",
+    "type": "Wobbuffet",
+    "parameters":{
+      "charset":"charsets.wobbuffet",
+      "orientation":0
+    }
+  },
+  {
+    "positionX":10,
+    "positionY":8,
+    "type": "Wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",
       "orientation":0

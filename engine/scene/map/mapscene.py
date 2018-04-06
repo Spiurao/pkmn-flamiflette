@@ -1,5 +1,6 @@
 import importlib
 import math
+from threading import Thread
 
 import pygame
 
@@ -20,6 +21,8 @@ class MapScene(Scene):
 
     CAMERA_MOVEMENT_DURATION = 200
     STEP_DURATION = 100
+
+    # TODO Keep track of the threads instead of just throwing anonymous threads, to prevent leaks
 
     def __init__(self, engine, map, spawnPosition):
         super().__init__(engine)
@@ -257,7 +260,7 @@ class MapScene(Scene):
 
         try:
 
-            with open(os.path.join(Constants.EVENTS_PATH, self.__mapName + ".json"), "r") as f:
+            with open(os.path.join(Constants.EVENTS_PATH, self.__mapName, "events.json"), "r") as f:
                 eventsData = json.loads(f.read())
 
             print("     Events count : " + str(len(eventsData)))
@@ -270,7 +273,10 @@ class MapScene(Scene):
                 eventY = event["positionY"]
 
                 if not event["type"] in eventModules:
-                    eventModules[event["type"]] = importlib.import_module("engine.scene.map.events." + event["type"].lower())
+                    try:
+                        eventModules[event["type"]] = importlib.import_module("data.events." + self.__mapName + "." + event["type"].lower())
+                    except ModuleNotFoundError:
+                        eventModules[event["type"]] = importlib.import_module("engine.scene.map.events." + event["type"].lower())
 
                 eventClass = getattr(eventModules[event["type"]], event["type"])
                 eventInstance = eventClass(self, eventX, eventY, event["parameters"])
@@ -319,14 +325,17 @@ class MapScene(Scene):
         # First layer
         self.drawMatrix(self.__tilesMatrix0)
 
+        clockTime = self.getEngine().getClockTime()
+
         # Events and character
         for y in range(self.__mapHeight):
             for x in range(self.__mapWidth):
                 event = self.__eventsMatrix[y][x]
 
-                if event is not None:
+                if event is not None and event.lastUpdateTime != clockTime:
                     event.update(self.__dt, self.__events)
                     event.draw(self.__cameraOffsetX.value - self.__drawRectX * self.__tileSize + self.__mapOffsetX, self.__cameraOffsetY.value - self.__drawRectY * self.__tileSize + self.__mapOffsetY)
+                    event.lastUpdateTime = clockTime
 
                 # Character
                 if y == self.__characterY and x == self.__characterX:
@@ -427,6 +436,9 @@ class MapScene(Scene):
     def update(self, dt, events):
         super().update(dt, events)
 
+        self.__dt = dt
+        self.__events = events
+
         if self.__cameraTween is not None:
             self.__cameraTween.update(dt)
 
@@ -446,7 +458,7 @@ class MapScene(Scene):
                         gameEvent = self.getEventWhichCharacterFaces()
 
                         if gameEvent is not None:
-                            gameEvent.onActionPressed(orientation)
+                            Thread(target=gameEvent.onActionPressed, args=(orientation,)).start()
 
             # Arrow keys
             keys = pygame.key.get_pressed()
@@ -534,7 +546,7 @@ class MapScene(Scene):
         event = self.__eventsMatrix[self.__characterY][self.__characterX]
 
         if event is not None:
-            event.onCharacterEnteredTile(self.__characterCharset.getOrientation())
+            Thread(target=event.onCharacterEnteredTile, args=(self.__characterCharset.getOrientation(),)).start()
 
     def processEventsTouchEvent(self):
         if self.__touchEventProcessed:
@@ -542,7 +554,7 @@ class MapScene(Scene):
 
         event = self.getEventWhichCharacterFaces()
         if event is not None:
-            event.onCharacterTouchEvent(self.__characterCharset.getOrientation())
+            Thread(target=event.onCharacterTouchEvent, args=(self.__characterCharset.getOrientation(),)).start()
             self.__touchEventProcessed = True
 
     def tweensCallback(self, tag):
