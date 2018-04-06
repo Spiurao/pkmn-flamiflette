@@ -1,12 +1,14 @@
 import importlib
 import math
 from threading import Thread
+from typing import Tuple, List
 
 import pygame
 
 from data.constants import Constants
-from engine.graphics.textures import Textures
+from engine.graphics.textures import Textures, Engine
 from engine.graphics.charset import Charset
+from engine.scene.map.events.event import Event
 from engine.scene.map.tile import Tile
 from engine.scene.scene import Scene
 import os
@@ -24,7 +26,7 @@ class MapScene(Scene):
 
     # TODO Keep track of the threads instead of just throwing anonymous threads, to prevent leaks
 
-    def __init__(self, engine, map, spawnPosition):
+    def __init__(self, engine : Engine, map : str, spawnPosition : Tuple):
         super().__init__(engine)
 
         self.__mapName = map  # the map name
@@ -57,7 +59,7 @@ class MapScene(Scene):
         self.__characterX = spawnPosition[0] # x position of the character in tiles
         self.__characterY = spawnPosition[1]  # y position of the character in tiles
 
-        # TODO Initialize this properly / be able to spawn player at any given position and place camera accordingly
+        # TODO Initialize this properly / be able to (1) spawn player at any given position AND (2) place camera accordingly
         self.__characterXOnScreen = self.__characterX # x position on screen of the character in tiles
         self.__characterYOnScreen = self.__characterY  # y position on screen of the character in tiles
 
@@ -94,10 +96,10 @@ class MapScene(Scene):
 
         self.toRunOnMainThread = None  # function to run on main thread on next update() tick
 
-    def getTileSize(self):
+    def getTileSize(self) -> int:
         return self.__tileSize
 
-    def getCharacterPosition(self):
+    def getCharacterPosition(self) -> Tuple:
         return (self.__characterX, self.__characterY)
 
     def load(self):
@@ -303,10 +305,10 @@ class MapScene(Scene):
 
         print("Done loading map")
 
-    def spawnEvent(self, event, posX, posY):
+    def spawnEvent(self, event : Event, posX : int, posY : int):
         self.__eventsMatrix[posY][posX] = event
 
-    def despawnEvent(self, posX, posY):
+    def despawnEvent(self, posX : int, posY : int):
         self.__eventsMatrix[posY][posX] = None
 
 
@@ -320,7 +322,7 @@ class MapScene(Scene):
                     event.despawn()
                     event.unload()
 
-    def updateEventPosition(self, oldX, oldY, newX, newY):
+    def updateEventPosition(self, oldX : int, oldY : int, newX : int, newY : int):
         event = self.__eventsMatrix[oldY][oldX]
 
         if self.__eventsMatrix[newY][newX] is not None:
@@ -330,7 +332,7 @@ class MapScene(Scene):
             self.__eventsMatrix[oldY][oldX] = None
             self.__eventsMatrix[newY][newX] = event
 
-    def getCharacterOrientation(self):
+    def getCharacterOrientation(self) -> int:
         return self.__characterCharset.getOrientation()
 
     def draw(self):
@@ -359,19 +361,19 @@ class MapScene(Scene):
         # Second layer
         self.drawMatrix(self.__tilesMatrix1)
 
-    def canCameraMoveLeft(self):
+    def canCameraMoveLeft(self) -> bool:
         return self.__drawRectX > 0
 
-    def canCameraMoveRight(self):
+    def canCameraMoveRight(self) -> bool:
         return self.__drawRectX + self.__windowWidth < self.__mapWidth
 
-    def canCameraMoveUp(self):
+    def canCameraMoveUp(self) -> bool:
         return self.__drawRectY > 0
 
-    def canCameraMoveDown(self):
+    def canCameraMoveDown(self) -> bool:
         return self.__drawRectY + self.__windowHeight < self.__mapHeight
 
-    def canCharacterMoveLeft(self):
+    def canCharacterMoveLeft(self) -> bool:
         # Event collision
         facingEvent = self.getEventWhichCharacterFaces()
 
@@ -384,7 +386,7 @@ class MapScene(Scene):
         except IndexError:
             return False
 
-    def canCharacterMoveRight(self):
+    def canCharacterMoveRight(self) -> bool:
         # Event collision
         facingEvent = self.getEventWhichCharacterFaces()
 
@@ -397,7 +399,7 @@ class MapScene(Scene):
         except IndexError:
             return False
 
-    def canCharacterMoveUp(self):
+    def canCharacterMoveUp(self) -> bool:
         # Event collision
         facingEvent = self.getEventWhichCharacterFaces()
 
@@ -410,7 +412,7 @@ class MapScene(Scene):
         except IndexError:
             return False
 
-    def canCharacterMoveDown(self):
+    def canCharacterMoveDown(self) -> bool:
         # Event collision
         facingEvent = self.getEventWhichCharacterFaces()
 
@@ -424,7 +426,7 @@ class MapScene(Scene):
             return False
 
 
-    def getEventWhichCharacterFaces(self):
+    def getEventWhichCharacterFaces(self) -> Event:
         eventPosX = self.__characterX
         eventPosY = self.__characterY
 
@@ -447,7 +449,7 @@ class MapScene(Scene):
         except IndexError:
             return None
 
-    def update(self, dt, events):
+    def update(self, dt : int, events : List[pygame.event.Event]):
         super().update(dt, events)
 
         self.__dt = dt
@@ -496,9 +498,9 @@ class MapScene(Scene):
                 if self.canCharacterMoveLeft():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectX and self.canCameraMoveLeft():
-                        self.__cameraTween = Tween.create("cq", self.__cameraOffsetX, self.__cameraOffsetX.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
+                        self.__cameraTween = Tween("cq", self.__cameraOffsetX, self.__cameraOffsetX.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     else:
-                        self.__characterTween = Tween.create("pq", self.__characterOffsetX, self.__characterOffsetX.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
+                        self.__characterTween = Tween("pq", self.__characterOffsetX, self.__characterOffsetX.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
             elif keys[pygame.K_RIGHT]:
@@ -507,9 +509,9 @@ class MapScene(Scene):
                 if self.canCharacterMoveRight():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectX and self.canCameraMoveRight():
-                        self.__cameraTween = Tween.create("cd", self.__cameraOffsetX, self.__cameraOffsetX.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
+                        self.__cameraTween = Tween("cd", self.__cameraOffsetX, self.__cameraOffsetX.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     else:
-                        self.__characterTween = Tween.create("pd", self.__characterOffsetX, self.__characterOffsetX.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
+                        self.__characterTween = Tween("pd", self.__characterOffsetX, self.__characterOffsetX.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
             elif keys[pygame.K_UP]:
@@ -518,9 +520,9 @@ class MapScene(Scene):
                 if self.canCharacterMoveUp():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveUp():
-                        self.__cameraTween = Tween.create("cz", self.__cameraOffsetY, self.__cameraOffsetY.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
+                        self.__cameraTween = Tween("cz", self.__cameraOffsetY, self.__cameraOffsetY.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     else:
-                        self.__characterTween = Tween.create("pz", self.__characterOffsetY, self.__characterOffsetY.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
+                        self.__characterTween = Tween("pz", self.__characterOffsetY, self.__characterOffsetY.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
             elif keys[pygame.K_DOWN]:
@@ -529,9 +531,9 @@ class MapScene(Scene):
                 if self.canCharacterMoveDown():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveDown():
-                        self.__cameraTween = Tween.create("cs", self.__cameraOffsetY, self.__cameraOffsetY.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
+                        self.__cameraTween = Tween("cs", self.__cameraOffsetY, self.__cameraOffsetY.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     else:
-                        self.__characterTween = Tween.create("ps", self.__characterOffsetY, self.__characterOffsetY.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
+                        self.__characterTween = Tween("ps", self.__characterOffsetY, self.__characterOffsetY.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving =  True
                     self.__inputsBlocked = True
             elif self.__characterMoving:
@@ -541,7 +543,7 @@ class MapScene(Scene):
                 self.__touchEventProcessed = False
 
 
-    def drawMatrix(self, matrix):
+    def drawMatrix(self, matrix : List[List]):
         # Draw the map
         for y in range(self.__windowHeight + 2):
             for x in range(self.__windowWidth + 2):

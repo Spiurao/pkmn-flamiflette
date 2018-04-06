@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from data.constants import *
 import glob
@@ -33,5 +34,5 @@ class Textures:
         Textures.__textures = {}
 
     @staticmethod
-    def getTextures():
+    def getTextures() -> List[pygame.Surface]:
         return Textures.__textures

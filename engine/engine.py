@@ -1,4 +1,8 @@
+from typing import Tuple, List
+
 import pygame
+
+from engine.scene.scene import Scene
 
 
 class Engine:
@@ -9,7 +13,7 @@ class Engine:
     GAME_VARIANT_1 = 0
     GAME_VARIANT_2 = 1
 
-    def __init__(self, framerate, resolution, variant):
+    def __init__(self, framerate : int, resolution : Tuple, variant : int):
         # data init
         self.__sceneStack = []  # scene stack
         self.__sceneDrawOrder = []  # pre-computed list of scenes to draw in the right order
@@ -46,16 +50,16 @@ class Engine:
         else:
             self.__sceneDrawOrder = []
 
-    def getVariant(self):
+    def getVariant(self) -> int:
         return self.__variant
 
-    def getResolution(self):
+    def getResolution(self) -> Tuple:
         return self.__resolution
 
-    def getWindow(self):
+    def getWindow(self) -> pygame.Surface:
         return self.__window
 
-    def getClockTime(self):
+    def getClockTime(self) -> int:
         return self.__clockTime
 
     def run(self):
@@ -101,7 +105,7 @@ class Engine:
     def exit(self):
         self.__running = False
 
-    def update(self, dt, events):
+    def update(self, dt : int, events : List[pygame.event.Event]):
         if self.__transitionScene is None and len(self.__sceneStack) > 0:
             self.__sceneStack[-1].update(dt, events)
         elif self.__transitionScene is not None:
@@ -125,7 +129,7 @@ class Engine:
             self.__transitionScene = None
             self.popScene(None)
 
-    def pushScene(self, scene, transition):
+    def pushScene(self, scene : Scene, transition : Scene):
         # transition
         if transition is not None:
             self.__transitionAction = Engine.TRANSITION_ACTION_PUSH
@@ -144,7 +148,7 @@ class Engine:
             # invalidate draw order
             self.invalidateDrawOrder()
 
-    def popScene(self, transition):
+    def popScene(self, transition : Scene):
         if transition is not None:
             self.__transitionAction = Engine.TRANSITION_ACTION_POP
             self.__transitionScene = transition

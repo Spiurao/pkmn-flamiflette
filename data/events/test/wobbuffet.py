@@ -1,8 +1,12 @@
+from typing import Dict
+
 from engine.graphics.charset import Charset
 from engine.scene.map.events.npcevent import NPCEvent
+from engine.scene.map.mapscene import MapScene
+
 
 class Wobbuffet(NPCEvent):
-    def __init__(self, scene, x, y, parameters):
+    def __init__(self, scene: MapScene, x: int, y: int, parameters: Dict):
         super().__init__(scene, x, y, parameters)
 
     def onSpawn(self):

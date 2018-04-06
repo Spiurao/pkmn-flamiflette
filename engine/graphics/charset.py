@@ -13,10 +13,10 @@ class Charset:
     LINES = 4  # the number of lines / orientations in a charset
 
     @staticmethod
-    def ofTexture(texture, orientation):
+    def ofTexture(texture: pygame.Surface, orientation: int):
         return Charset(Textures.getTextures()[texture], orientation)
 
-    def __init__(self, texture, orientation):
+    def __init__(self, texture: pygame.Surface, orientation: int):
         self.__texture = texture  # the texture surface
         self.__orientation = orientation  # the current character orientation
         self.__step = 0  # the current step
@@ -46,13 +46,13 @@ class Charset:
     def unload(self):
         self.__surfaceMatrix = None
 
-    def getSurfaceWidth(self):
+    def getSurfaceWidth(self) -> int:
         return self.__stepWidth
 
-    def getSurfaceHeight(self):
+    def getSurfaceHeight(self) -> int:
         return self.__stepHeight
 
-    def getCurrentSurface(self):
+    def getCurrentSurface(self) -> pygame.Surface:
         return self.__surfaceMatrix[self.__orientation][self.__step]
 
     def resetStep(self):
@@ -67,5 +67,5 @@ class Charset:
     def setOrientation(self, orientation):
         self.__orientation = orientation
 
-    def getOrientation(self):
+    def getOrientation(self) -> int:
         return self.__orientation

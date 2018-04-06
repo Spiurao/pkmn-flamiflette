@@ -1,3 +1,5 @@
+from typing import Any
+
 import msgpack
 import os
 
@@ -11,7 +13,7 @@ class SaveManager:
     Returns the current save's value for the given key or None if no save is loaded / the key is empty
     """
     @staticmethod
-    def getCurrentSaveValue(key):
+    def getCurrentSaveValue(key : str) -> Any:
         if SaveManager.__saveData is None or key not in SaveManager.__saveData:
             return None
 
@@ -21,7 +23,7 @@ class SaveManager:
     Sets the current save's value for the given key
     """
     @staticmethod
-    def setCurrentSaveValue(key, value):
+    def setCurrentSaveValue(key : str, value : Any):
         if SaveManager.__saveData is None:
             return False
 
@@ -36,11 +38,11 @@ class SaveManager:
     Returns the current save slot number or None if no save is loaded
     """
     @staticmethod
-    def getCurrentSaveSlot():
+    def getCurrentSaveSlot() -> int:
         return SaveManager.__currentSlot
 
     @staticmethod
-    def getCurrentVariant():
+    def getCurrentVariant() -> int:
         return SaveManager.__currentVariant
 
     """
@@ -67,7 +69,7 @@ class SaveManager:
     slotX-Y.bin where X is the variant, Y the slot
     """
     @staticmethod
-    def getSavePathForSlot(slot, variant):
+    def getSavePathForSlot(slot : int, variant : int) -> str:
         try:
             slot = str(slot)
             variant = str(variant)
@@ -80,7 +82,7 @@ class SaveManager:
     Returns the directory to use to store save files
     """
     @staticmethod
-    def getSaveDirectory():
+    def getSaveDirectory() -> str:
         return "save"
 
     """
@@ -88,7 +90,7 @@ class SaveManager:
     Returns True if creating the save succeeded, False otherwise
     """
     @staticmethod
-    def createNewSave(slot, variant):
+    def createNewSave(slot : int, variant : int):
         SaveManager.unloadCurrentSave()
 
         try:
@@ -119,7 +121,7 @@ class SaveManager:
     Returns True if the deletion succeeded, False otherwise
     """
     @staticmethod
-    def deleteSave(slot, variant):
+    def deleteSave(slot : int, variant : int):
         SaveManager.unloadCurrentSave()
 
         try:
@@ -140,7 +142,7 @@ class SaveManager:
     Returns True if a save is present in the given slot, False otherwise
     """
     @staticmethod
-    def saveExists(slot, variant):
+    def saveExists(slot : int, variant : int) -> bool:
         try:
             slot = str(slot)
             variant = str(variant)
@@ -154,7 +156,7 @@ class SaveManager:
     Returns True if the save was loaded, False otherwise
     """
     @staticmethod
-    def load(slot, variant):
+    def load(slot : int, variant : int):
         SaveManager.unloadCurrentSave()
 
         try:

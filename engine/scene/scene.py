@@ -1,4 +1,10 @@
+from typing import List, Callable
+
+import pygame
+
+from engine.timer import Timer
 from engine.tween.tween import Tween
+from engine.tween.tweensubject import TweenSubject
 
 
 class Scene:
@@ -8,7 +14,7 @@ class Scene:
         self.__tweenList = []
         self.__timersList = []
 
-    def pushTimer(self, timer):
+    def pushTimer(self, timer : Timer):
         self.__timersList.append(timer)
 
     def load(self):
@@ -20,7 +26,7 @@ class Scene:
     def draw(self):
         pass
 
-    def update(self, dt, events):
+    def update(self, dt : int, events : List[pygame.event.Event]):
         self.updateTweens(dt)
         self.updateTimers(dt)
 
@@ -36,12 +42,11 @@ class Scene:
     def onResume(self):
         pass
 
-    def shouldDrawUnderlyingScenes(self):
+    def shouldDrawUnderlyingScenes(self) -> bool:
         return True
 
-
-    def pushTween(self, tag, subject, targetValue, duration, easing):
-        tween = Tween.create(tag, subject, targetValue, duration, easing)
+    def pushTween(self, tag : str, subject : TweenSubject, targetValue : float, duration : int, easing : Callable):
+        tween = Tween(tag, subject, targetValue, duration, easing)
 
         # ignore born-dead tweens
         if tween.duration == 0 or tween.initialValue == tween.targetValue:
@@ -51,13 +56,13 @@ class Scene:
 
         return True
 
-    def updateTimers(self, dt):
+    def updateTimers(self, dt : int):
         for timer in self.__timersList:
             timer.update(dt)
 
         self.__timersList = [t for t in self.__timersList if t.alive]
 
-    def updateTweens(self, dt):
+    def updateTweens(self, dt : int):
         for tween in self.__tweenList:
             tween.update(tween, dt)
 

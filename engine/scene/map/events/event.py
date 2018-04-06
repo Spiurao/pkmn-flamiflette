@@ -1,9 +1,9 @@
+import pygame
 import sys
-import time
+from typing import Dict, List, Callable
 
 class Event:
-
-    def __init__(self, scene, x, y, parameters):
+    def __init__(self, scene, x: int, y: int, parameters: Dict):
         self.__scene = scene  # the MapScene containing this event
         self.__posX = x  # x position of this event
         self.__posY = y  # y position of this event
@@ -25,17 +25,17 @@ class Event:
             "onCharacterTouchEvent": None
         }
 
-    def getParameters(self):
+    def getParameters(self) -> Dict:
         return self.__parameters
 
-    def update(self, dt, events):
+    def update(self, dt : int, events : List[pygame.event.Event]):
         if self.__waiting:
             self.__waitFor -= dt
 
             if self.__waitFor <= 0:
                 self.__waiting = False
 
-    def isSpawned(self):
+    def isSpawned(self) -> bool:
         return self.__spawned
 
     def load(self):
@@ -47,10 +47,10 @@ class Event:
     def draw(self, offsetX, offsetY):
         pass
 
-    def getPosX(self):
+    def getPosX(self) -> int:
         return self.__posX
 
-    def getPosY(self):
+    def getPosY(self) -> int:
         return self.__posY
 
     def spawn(self):
@@ -68,10 +68,10 @@ class Event:
     def getScene(self):
         return self.__scene
 
-    def getWindow(self):
+    def getWindow(self) -> pygame.Surface:
         return self.__scene.getEngine().getWindow()
 
-    def runOnMainThread(self, func):
+    def runOnMainThread(self, func : Callable):
         self.getScene().toRunOnMainThread = func
 
     '''
@@ -79,10 +79,10 @@ class Event:
     returns True if the character should collide with this event's tile
     False otherwise
     '''
-    def isPassThrough(self):
+    def isPassThrough(self) -> bool:
         return True
 
-    def setPosition(self, x, y):
+    def setPosition(self, x : int, y : int):
         self.__scene.updateEventPosition(self.__posX, self.__posY, x, y)
         self.__posX = x
         self.__posY = y
@@ -100,7 +100,7 @@ class Event:
     Fired when the character faces the event
     and presses the action button
     '''
-    def onActionPressed(self, orientation):
+    def onActionPressed(self, orientation : int):
         pass
 
     '''
@@ -110,7 +110,7 @@ class Event:
     
     Always fired after onCharacterTouchEvent()
     '''
-    def onCharacterEnteredTile(self, orientation):
+    def onCharacterEnteredTile(self, orientation : int):
         pass
 
     '''
@@ -120,7 +120,7 @@ class Event:
     
     Always fired before onCharacterEnteredTile()
     '''
-    def onCharacterTouchEvent(self, orientation):
+    def onCharacterTouchEvent(self, orientation : int):
         pass
 
     def blockingCallsSafeGuard(self):

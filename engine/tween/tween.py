@@ -1,20 +1,21 @@
+from typing import Any, Callable
+
+from engine.tween.tweensubject import TweenSubject
+
+
 class Tween:
-    def __init__(self, alive, duration, runningSince, initialValue, targetValue, subject, tag, easing, cb):
-        self.alive = alive
+    def __init__(self, tag : Any, subject : TweenSubject, targetValue : float, duration : int, easing : Callable, cb : Callable):
+        self.alive = True
         self.duration = duration
-        self.runningSince = runningSince
-        self.initialValue = initialValue
+        self.runningSince = 0
+        self.initialValue = None if subject is None else subject.value
         self.targetValue = targetValue
         self.subject = subject
         self.tag = tag
         self.easing = easing
         self.cb = cb
 
-    @staticmethod
-    def create(tag, subject, targetValue, duration, easing, cb):
-        return Tween(True, duration, 0, None if subject is None else subject.value, targetValue, subject, tag, easing, cb)
-
-    def update(self, dt):
+    def update(self, dt : int):
         if not self.alive:
             return
 
