@@ -19,3 +19,5 @@ class Constants:
 
     FRAMERATE = 60
     RESOLUTION = (800, 608)
+
+    # TODO Add root scene class here (no parameters required) - first scene to be ran by the game when launching

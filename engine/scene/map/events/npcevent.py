@@ -53,6 +53,7 @@ class NPCEvent(Event):
 
         self.__charset.setOrientation(orientation)
 
+        # TODO Walk animation
         # TODO Collision checks
         if orientation == Charset.ORIENTATION_LEFT:
             self.setPosition(self.getPosX()-1, self.getPosY())
