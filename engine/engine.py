@@ -26,8 +26,6 @@ class Engine:
         self.__resolution = resolution  # the game window resolution
         self.__variant = variant  # the game variant : GAME_VARIANT_1 or GAME_VARIANT_2
 
-        self.__clockTime = 0  # clock time since the beginning of the game
-
         # pygame display
         pygame.display.init()
         from data.constants import Constants
@@ -60,7 +58,7 @@ class Engine:
         return self.__window
 
     def getClockTime(self) -> int:
-        return self.__clockTime
+        return pygame.time.get_ticks()
 
     def run(self):
         print("Running game...")
@@ -71,8 +69,6 @@ class Engine:
             try:
                 # tick tock
                 dt = self.__clock.tick(self.__framerate)
-
-                self.__clockTime += dt
 
                 # pygame events
                 events = pygame.event.get()
