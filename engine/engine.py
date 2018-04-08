@@ -75,7 +75,7 @@ class Engine:
 
             try:
                 # tick tock
-                dt = self.__clock.tick(self.__framerate)
+                dt = self.__clock.tick_busy_loop(self.__framerate)
 
                 # pygame events
                 events = pygame.event.get()
