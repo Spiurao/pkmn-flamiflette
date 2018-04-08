@@ -13,6 +13,8 @@ class Engine:
     GAME_VARIANT_1 = 0
     GAME_VARIANT_2 = 1
 
+    SHOW_FPS_COUNTER = True
+
     def __init__(self, framerate : int, resolution : Tuple, variant : int):
         # data init
         self.__sceneStack = []  # scene stack
@@ -120,8 +122,7 @@ class Engine:
             self.__transitionScene.draw()
 
         # FPS Counter
-        from data.constants import Constants
-        if Constants.SHOW_FPS_COUNTER:
+        if Engine.SHOW_FPS_COUNTER:
             fpsCount = str(self.__clock.get_fps())[:4]
             fpsCounter = self.__font32.render(fpsCount, 0, (255, 255, 255))
             self.__window.blit(fpsCounter, (10, 10))
