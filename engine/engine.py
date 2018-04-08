@@ -27,6 +27,7 @@ class Engine:
         self.__variant = variant  # the game variant : GAME_VARIANT_1 or GAME_VARIANT_2
 
         # pygame display
+        pygame.init()
         pygame.display.init()
         from data.constants import Constants
         pygame.display.set_caption(Constants.WINDOW_TITLE[self.__variant])
@@ -35,6 +36,10 @@ class Engine:
         # textures loading
         from engine.graphics.textures import Textures
         Textures.load()
+
+        # fonts
+        from data.constants import Constants
+        self.__font32 = pygame.font.SysFont(Constants.FONT_NAME, 32)
 
     def invalidateDrawOrder(self):
         if len(self.__sceneStack) > 0:
@@ -113,6 +118,13 @@ class Engine:
 
         if self.__transitionScene is not None:
             self.__transitionScene.draw()
+
+        # FPS Counter
+        from data.constants import Constants
+        if Constants.SHOW_FPS_COUNTER:
+            fpsCount = str(self.__clock.get_fps())[:4]
+            fpsCounter = self.__font32.render(fpsCount, 0, (255, 255, 255))
+            self.__window.blit(fpsCounter, (10, 10))
 
     def onTransitionFinish(self):
         if self.__transitionAction == Engine.TRANSITION_ACTION_PUSH:

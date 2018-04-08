@@ -20,4 +20,8 @@ class Constants:
     FRAMERATE = 60
     RESOLUTION = (800, 608)
 
+    FONT_NAME = "System"
+
+    SHOW_FPS_COUNTER = True
+
     # TODO Add root scene class here (no parameters required) - first scene to be ran by the game when launching
