@@ -13,6 +13,8 @@ from engine.scene.scene import Scene
 import os
 import json
 
+from engine.sound.sfx import SFX
+from engine.timer import Timer
 from engine.tween.easing import Easing
 from engine.tween.tween import Tween
 from engine.tween.tweensubject import TweenSubject
@@ -86,6 +88,9 @@ class MapScene(Scene):
 
         self.__touchEventProcessed = False  # used to prevent touch events spamming
 
+        self.__bumpPlayed = False  # used to delay bump sounds
+        self.__bumpTimer = None
+
         self.__dt = 0  # delta-time given by pygame clock
         self.__events = None  # pygame events
 
@@ -102,6 +107,15 @@ class MapScene(Scene):
         super().load()
 
         print("Loading map " + self.__mapName + "...")
+
+        # Load map metadata
+        mapMetaData = None
+        with open(os.path.join(Constants.MAPS_METADATA_PATH, self.__mapName + ".json")) as f:
+            mapMetaData = json.loads(f.read())
+
+        # Play BGM
+        if "bgm" in mapMetaData:
+            self.getEngine().playBGM(mapMetaData["bgm"])
 
         # Load the map data
         mapData = None
@@ -460,6 +474,9 @@ class MapScene(Scene):
         if self.__characterTween is not None:
             self.__characterTween.update(dt)
 
+        if self.__bumpTimer is not None:
+            self.__bumpTimer.update(dt)
+
         if not self.__inputsBlocked:
 
             orientation = self.__characterCharset.getOrientation()
@@ -495,6 +512,8 @@ class MapScene(Scene):
                         self.__characterTween = Tween("pq", self.__characterOffsetX, self.__characterOffsetX.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
+                else:
+                    self.playBump()
             elif keys[pygame.K_RIGHT]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_RIGHT)
                 self.processTouchEvent()
@@ -506,6 +525,8 @@ class MapScene(Scene):
                         self.__characterTween = Tween("pd", self.__characterOffsetX, self.__characterOffsetX.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
+                else:
+                    self.playBump()
             elif keys[pygame.K_UP]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_UP)
                 self.processTouchEvent()
@@ -517,6 +538,8 @@ class MapScene(Scene):
                         self.__characterTween = Tween("pz", self.__characterOffsetY, self.__characterOffsetY.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
                     self.__inputsBlocked = True
+                else:
+                    self.playBump()
             elif keys[pygame.K_DOWN]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_DOWN)
                 self.processTouchEvent()
@@ -528,11 +551,29 @@ class MapScene(Scene):
                         self.__characterTween = Tween("ps", self.__characterOffsetY, self.__characterOffsetY.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving =  True
                     self.__inputsBlocked = True
+                else:
+                    self.playBump()
             elif self.__characterMoving:
                 self.__characterMoving = False
                 self.__characterCharset.resetStep()
             else:
                 self.__touchEventProcessed = False
+
+    def canBump(self, tag):
+        self.__bumpPlayed = False
+
+    def playBump(self):
+        if self.__bumpPlayed:
+            return
+
+        # check if we bumped on an actor
+        if self.getActorWhichCharacterFaces() is not None:
+            return
+
+        self.__bumpTimer = Timer("bump", MapScene.CAMERA_MOVEMENT_DURATION*2, self.canBump)
+
+        self.__bumpPlayed = True
+        SFX.play("bump")
 
 
     def drawMatrix(self, matrix : List[List]):

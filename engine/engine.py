@@ -1,8 +1,10 @@
+import os
 from typing import Tuple, List
 
 import pygame
 
 from engine.scene.scene import Scene
+from engine.sound.sfx import SFX
 
 
 class Engine:
@@ -39,6 +41,9 @@ class Engine:
         from engine.graphics.textures import Textures
         Textures.load()
 
+        # sfx loading
+        SFX.load()
+
         # fonts
         from data.constants import Constants
         self.__font32 = pygame.font.SysFont(Constants.FONT_NAME, 32)
@@ -66,6 +71,14 @@ class Engine:
 
     def getClockDate(self) -> int:
         return pygame.time.get_ticks()
+
+    def playBGM(self, musicName):
+        # TODO If already playing the same BGM, do nothing, else make a fade out and play
+        from data.constants import Constants
+        bgmPath = os.path.join(Constants.BGM_PATH, musicName + ".mp3")
+        pygame.mixer.music.load(bgmPath)
+        pygame.mixer.music.set_volume(Constants.BGM_VOLUME * Constants.MASTER_VOLUME)
+        pygame.mixer.music.play()
 
     def run(self):
         print("Running game...")
@@ -104,6 +117,8 @@ class Engine:
 
         from engine.graphics.textures import Textures
         Textures.unload()
+
+        SFX.unload()
 
     def exit(self):
         self.__running = False

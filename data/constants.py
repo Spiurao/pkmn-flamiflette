@@ -8,9 +8,13 @@ class Constants:
 
     IMG_PATH = os.path.join("data", "img")
     MAPS_PATH = os.path.join("data", "maps")
+    METADATA_PATH = os.path.join("data", "metadata")
+    MAPS_METADATA_PATH = os.path.join(METADATA_PATH, "maps")
     TILESETS_PATH = os.path.join("data", "tilesets")
     ACTORS_PATH = os.path.join("data", "actors")
     COLOR_KEYS_PATH = os.path.join("data", "colorkeys.json")
+    BGM_PATH = os.path.join("data", "bgm")
+    SFX_PATH = os.path.join("data", "sfx")
 
     WINDOW_TITLE = {
         GAME_VARIANT_FLAMIFLETTE : "Pokémon Version Flamiflette",
@@ -21,5 +25,9 @@ class Constants:
     RESOLUTION = (800, 608)
 
     FONT_NAME = "System"
+
+    MASTER_VOLUME = 1.0
+    BGM_VOLUME = 0.1
+    SFX_VOLUME = 0.2
 
     # TODO Add root scene class here (no parameters required) - first scene to be ran by the game when launching
