@@ -2,11 +2,12 @@ import os
 
 import pygame
 import sys
-from typing import Dict, List, Callable
+from typing import Dict, List, Callable, Tuple
 
 from data.constants import Constants
 from engine.scene.map.cantalscript import CantalParser, CantalInterpreter, BooleanLiteral, FunctionCallStatement, \
     StringLiteral
+from engine.timer import Timer
 
 
 class Actor:
@@ -26,7 +27,7 @@ class Actor:
         self.lastUpdateDate = 0  # the last time this actor was updated and drawn
 
         # used to keep references to interpreters
-        self.__eventScripts = {
+        self.eventInterpreters = {
             "spawn": None,
             "actionPressed": None,
             "characterEnteredTile": None,
@@ -34,12 +35,27 @@ class Actor:
             "loop" : None
         }
 
+        # used to keep references to interpreters timers
+        self.interpreterTimers = {}
+
         # List of the condition functions
         # name associated to boolean function
-        self.conditionFunctions = {
-            "inParameters": self.isInParameters
-        }
+        self.__cantalConditionFunctions = {}
 
+        # List of regular conditions
+        # name associated to the function
+        self.__cantalFunctions = {}
+
+        # Default Cantal functions
+        self.registerCantalConditionFunction("inParameters", self.isInParameters)
+
+        self.registerCantalFunction("wait", self.wait)
+
+    def registerCantalConditionFunction(self, name, cb):
+        self.__cantalConditionFunctions[name] = cb
+
+    def registerCantalFunction(self, name, cb):
+        self.__cantalFunctions[name] = cb
 
     def getParameters(self) -> Dict:
         return self.__parameters
@@ -47,10 +63,16 @@ class Actor:
     def update(self, dt : int, events : List[pygame.event.Event]):
         # Notify interpreters that a new frame has been displayed
         # so that they can continue running the scripts
-        for i in self.__eventScripts:
-            interpreter = self.__eventScripts[i]
+        for i in self.eventInterpreters:
+            interpreter = self.eventInterpreters[i]
             if interpreter is not None:
                 interpreter.newFrame()
+
+        # Interpreters timers
+        for t in self.interpreterTimers:
+            timer = self.interpreterTimers[t]
+            if timer is not None:
+                timer.update(dt)  # will self-delete in callback
 
     def isSpawned(self) -> bool:
         return self.__spawned
@@ -70,33 +92,29 @@ class Actor:
                 for event in scriptData.events:
                     eventName = event.name
 
-                    if eventName not in self.__eventScripts:
+                    if eventName not in self.eventInterpreters:
                         raise Exception("Unknown event " + eventName)
 
-                    if self.__eventScripts[eventName] is not None:
+                    if self.eventInterpreters[eventName] is not None:
                         raise Exception("Duplicate event " + eventName)
 
-                    self.__eventScripts[eventName] = CantalInterpreter(event.block, self.cantalStatementCallback, self.cantalConditionCallback, eventName == "loop")
+                    self.eventInterpreters[eventName] = CantalInterpreter(eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "loop")
 
             except FileNotFoundError:
                 raise Exception("Could not find a script named " + self.__script)
 
-    def cantalConditionCallback(self, expression):
-        # Boolean litterals
-        if type(expression) == BooleanLiteral:
-            return str(expression) == "true"
+    def cantalConditionCallback(self, interpreter, expression):
         # Function calls
-        elif type(expression) == FunctionCallStatement:
-            if expression.name not in self.conditionFunctions:
-                raise Exception("Unknown function " + expression.name)
+        if expression.name not in self.__cantalConditionFunctions:
+            raise Exception("Unknown Cantal condition function " + expression.name)
 
-            return self.conditionFunctions[expression.name](expression.params.params)
+        return self.__cantalConditionFunctions[expression.name](interpreter, expression.params.params)
 
-        #Default
-        raise Exception("Unknown boolean expression in condition (type : " + str(type(expression))) + ")"
+    def cantalFunctionCallback(self, interpreter, function : FunctionCallStatement):
+        if function.name not in self.__cantalFunctions:
+            raise Exception("Unknown Cantal function " + function.name)
 
-    def cantalStatementCallback(self, statement):
-        print("Received statement " + str(statement))
+        self.__cantalFunctions[function.name](interpreter, function.params.params)
 
     def unload(self):
         self.despawn()  # just to be sure
@@ -115,8 +133,8 @@ class Actor:
             self.__spawned = True
             self.__scene.spawnActor(self, self.__posX, self.__posY)
 
-            if self.__eventScripts["loop"] is not None:
-                self.__eventScripts["loop"].run()
+            if self.eventInterpreters["loop"] is not None:
+                self.eventInterpreters["loop"].run()
 
     def despawn(self):
         if self.__spawned:
@@ -172,14 +190,14 @@ class Actor:
     def onCharacterTouchEvent(self, orientation : int):
         pass
 
-    def blockingCallsSafeGuard(self):
-        if not self.isSpawned():
-            sys.exit()
+    def interpreterTimerCallback(self, tag):
+        self.interpreterTimers[tag] = None
+        self.eventInterpreters[tag].nextStatement()
 
     '''
     CantalScript conditional functions
     '''
-    def isInParameters(self, functionParams):
+    def isInParameters(self, interpreter, functionParams):
         param = functionParams[0].literal
         if type(param) != StringLiteral:
             raise Exception("Illegal parameter - expected StringLiteral, got " + str(type(param)))
@@ -190,4 +208,10 @@ class Actor:
     CantalScript methods
     '''
 
-    # TODO Move things here
+    def wait(self, interpreter, functionParams):
+        param = functionParams[0].literal
+
+        if type(param) != int:
+            raise Exception("Illegal parameter - expected int, got " + str(type(param)))
+
+        self.interpreterTimers[interpreter] = Timer(interpreter, param, self.interpreterTimerCallback)

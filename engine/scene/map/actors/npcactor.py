@@ -25,6 +25,9 @@ class NPCActor(Actor):
         self.__movingOffsetX = TweenSubject(0)
         self.__movingOffsetY = TweenSubject(0)
 
+        # Cantal functions
+        self.registerCantalFunction("turnToFaceCharacter", self.turnToFaceCharacter)
+
     def update(self, dt : int, events : List[pygame.event.Event]):
         super().update(dt, events)
         if self.__moveTween is not None:
@@ -53,13 +56,12 @@ class NPCActor(Actor):
         self.__moving = False
 
     def setOrientation(self, orientation : int):
-        self.blockingCallsSafeGuard()
-
         self.__charset.setOrientation(orientation)
 
-    def turnToFaceCharacter(self):
-        self.blockingCallsSafeGuard()
-
+    '''
+    CantalScript methods
+    '''
+    def turnToFaceCharacter(self, interpreter, functionParameters):
         characterPosition = self.getScene().getCharacterPosition()
 
         degree = math.degrees(math.atan2(characterPosition[1] - self.getPosY(), characterPosition[0] - self.getPosX()))
@@ -78,10 +80,10 @@ class NPCActor(Actor):
         elif degree >= -135 or degree < 135:
             self.setOrientation(Charset.ORIENTATION_LEFT)
 
-    # TODO Unblock this :peep:
-    def walk(self, orientation : int):
-        self.blockingCallsSafeGuard()
+        self.eventInterpreters[interpreter].nextStatement()
 
+    # TODO Unblock and adapt this :peep:
+    def walk(self, orientation : int):
         if self.__moving:
             return
 

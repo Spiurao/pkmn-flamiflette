@@ -68,7 +68,8 @@ class BlockEntry:
 class CantalInterpreter:
     STATEMENTS_LIMIT_PER_FRAME = 100  # the interpreter cannot execute more statements per frame than this - fixes game freeze and maximum recursion depth errors
 
-    def __init__(self, code : Block, statementCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool):
+    def __init__(self, name : str, code : Block, statementCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool):
+        self.__name = name
         self.__code = code.statements
         self.__cb = statementCallback
         self.__conditionCb = conditionCallback
@@ -107,19 +108,26 @@ class CantalInterpreter:
         if type(currentStatement) == IfStatement:
             # Evaluate condition
             try:
-                if self.__conditionCb(currentStatement.expression.expression):
+                value = False
+
+                if type(currentStatement.expression.expression) == BooleanLiteral:
+                    value = str(currentStatement.expression.expression) == "true"
+                elif type(currentStatement.expression.expression) == FunctionCallStatement:
+                    value = self.__conditionCb(self.__name, currentStatement.expression.expression)
+
+                if value:
                     self.__blockStack.append(BlockEntry(currentStatement.block.statements))
                     self.processCurrentStatement()
                 else:
                     self.nextStatement()
             except TypeError:
-                raise Exception("Interpreter conditions callback must only have one argument (expression)")
+                raise Exception("Interpreter conditions callback must only have two parameters (interpreter, expression)")
         # Actor statements
         else:
             try:
-                self.__cb(currentStatement)
+                self.__cb(self.__name, currentStatement)
             except TypeError:
-                raise Exception("Interpreter statements callback must only have one argument (statement)")
+                raise Exception("Interpreter statements callback must only have two parameters (interpreter, statement)")
 
     def nextStatement(self):
         self.__statementsForCurrentFrame += 1
