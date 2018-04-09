@@ -26,8 +26,8 @@ class NPCActor(Actor):
         self.__movingOffsetY = TweenSubject(0)
 
         # Cantal functions
-        self.registerCantalFunction("turnToFaceCharacter", self.turnToFaceCharacter)
-        self.registerCantalFunction("walk", self.walk)
+        self.registerCantalFunction("turnToFaceCharacter", self.cantalTurnToFaceCharacter)
+        self.registerCantalFunction("walk", self.cantalWalk)
 
     def update(self, dt : int, events : List[pygame.event.Event]):
         super().update(dt, events)
@@ -63,7 +63,7 @@ class NPCActor(Actor):
     '''
     CantalScript methods
     '''
-    def turnToFaceCharacter(self, interpreter, functionParameters):
+    def cantalTurnToFaceCharacter(self, interpreter, functionParameters):
         characterPosition = self.getScene().getCharacterPosition()
 
         degree = math.degrees(math.atan2(characterPosition[1] - self.getPosY(), characterPosition[0] - self.getPosX()))
@@ -84,7 +84,7 @@ class NPCActor(Actor):
 
         self.eventInterpreters[interpreter].nextStatement()
 
-    def walk(self, interpreter, functionParams):
+    def cantalWalk(self, interpreter, functionParams):
 
         orientation = functionParams[0].literal.getValue()
         stepsCount = functionParams[1].literal.getValue()

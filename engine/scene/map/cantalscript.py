@@ -105,8 +105,14 @@ class CantalInterpreter:
         self.__blockStack = []  # stack of BlockEntry instances
         self.__running = False
 
+        self.__shouldLoop = False
+
     def newFrame(self):
         self.__statementsForCurrentFrame = 0
+
+        if self.__shouldLoop:
+            self.__shouldLoop = False
+            self.run()
 
         if self.__waitingForNewFrame:
             self.__waitingForNewFrame = False
@@ -167,10 +173,8 @@ class CantalInterpreter:
 
             if len(self.__blockStack) == 0:
                 if self.__loop:
-                    self.reset()
-                    self.run()
-                else:
-                    self.reset()
+                    self.__shouldLoop = True
+                self.reset()
             else:
                 self.nextStatement();
         else:
