@@ -95,6 +95,9 @@ class MapScene(Scene):
     def getCharacterPosition(self) -> Tuple:
         return (self.__characterX, self.__characterY)
 
+    def getMapName(self) -> str:
+        return self.__mapName
+
     def load(self):
         super().load()
 
@@ -283,17 +286,20 @@ class MapScene(Scene):
                 if "parameters" not in actor:
                     actor["parameters"] = {}
 
+                if "script" not in actor:
+                    actor["script"] = None
+
                 if not actor["type"] in actorModules:
                     actorModules[actor["type"]] = importlib.import_module("engine.scene.map.actors." + actor["type"].lower())
 
                 actorClass = getattr(actorModules[actor["type"]], actor["type"])
 
-                actorInstance = actorClass(self, actorX, actorY, actor["parameters"])
+                actorInstance = actorClass(self, actorX, actorY, actor["parameters"], actor["script"])
 
                 actorInstance.load()
                 actorInstance.spawn()
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             print("     No actors found for this map")
 
         print("Done loading map")

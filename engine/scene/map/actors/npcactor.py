@@ -11,8 +11,8 @@ from engine.tween.tweensubject import TweenSubject
 
 
 class NPCActor(Actor):
-    def __init__(self, scene: MapScene, x: int, y: int, parameters: Dict):
-        super().__init__(scene, x, y, parameters)
+    def __init__(self, scene: MapScene, x: int, y: int, parameters: Dict, script : str):
+        super().__init__(scene, x, y, parameters, script)
 
         self.__charset = Charset.ofTexture(parameters["charset"], parameters["orientation"])
 

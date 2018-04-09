@@ -1,6 +1,8 @@
 import typing
 
 from pypeg2 import *
+from pypeg2.xmlast import thing2xml
+
 
 class BooleanLiteral(Keyword):
     grammar = Enum(K('true'), K('false'))
@@ -10,52 +12,142 @@ class OrientationLiteral(Keyword):
 
 class StringLiteral(str):
     quoted_string = re.compile(r'"[^"]*"')
-    grammar = [word, quoted_string]
+    grammar = attr("value", [word, quoted_string])
+
+    def getValue(self):
+        return self.value[1:-1]
 
 class Literal(List):
-    grammar = [OrientationLiteral, int, StringLiteral, BooleanLiteral]
+    grammar = attr("literal", [OrientationLiteral, int, StringLiteral, BooleanLiteral])
 
 class FunctionParameters(List):
-    grammar = optional(csl(Literal))
+    grammar = attr("params", optional(csl(Literal)))
 
 class FunctionCallStatement:
     grammar = name(), "(", attr("params", FunctionParameters), ")"
 
 class BooleanExpression(str):
-    grammar = [FunctionCallStatement, BooleanLiteral]
+    grammar = attr("expression", [FunctionCallStatement, BooleanLiteral])
 
 class Block(List):
     pass
 
 class IfStatement(str):
-    grammar = "if", "(", attr("expression", BooleanExpression), ")", Block
+    grammar = "if", "(", attr("expression", BooleanExpression), ")", attr("block", Block)
 
 class Statement(List):
-    grammar = [(FunctionCallStatement, ";"), IfStatement]
+    grammar = attr("statement", [(FunctionCallStatement, ";"), IfStatement])
 
 class Event(List):
-    grammar = "event", name(), "()", Block
+    grammar = "event", name(), "()", attr("block", Block)
 
 class CantalScript(str):
-    grammar = maybe_some(Event)
+    grammar = attr("events", maybe_some(Event))
 
 # Stupid Python
-Block.grammar = "{", maybe_some(Statement), "}"
+Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
 
 class CantalParser:
 
     COMMENTS_GRAMMAR = [re.compile(r"//.*"),
                                 re.compile("/\*.*?\*/", re.S)]
 
-    def __init__(self):
-        pass
-
     @staticmethod
     def parse(scriptPath : str) -> typing.List:
+        result = None
         with open(scriptPath, "r") as f:
             result = parse(f.read(), CantalScript, None, whitespace, CantalParser.COMMENTS_GRAMMAR)
-            print(str(result))
+        return result
+
+class BlockEntry:
+    def __init__(self, code : typing.List[Statement]):
+        self.code = code  # list of statements
+        self.statementNumber = 0  # current statement
+
 
 class CantalInterpreter:
-    def __init__(self, eventCode : Event):
-        self.__eventCode = eventCode
+    STATEMENTS_LIMIT_PER_FRAME = 100  # the interpreter cannot execute more statements per frame than this - fixes game freeze and maximum recursion depth errors
+
+    def __init__(self, code : Block, statementCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool):
+        self.__code = code.statements
+        self.__cb = statementCallback
+        self.__conditionCb = conditionCallback
+        self.__loop = loop
+
+        self.__statementsForCurrentFrame = 0
+        self.__waitingForNewFrame = False  # is the interpreter waiting for a new frame to continue ?
+
+        self.__blockStack = []  # stack of BlockEntry instances
+        self.__running = False
+
+    def newFrame(self):
+        self.__statementsForCurrentFrame = 0
+
+        if self.__waitingForNewFrame:
+            self.nextStatement()
+
+        self.__waitingForNewFrame = False
+
+    def run(self):
+        if self.__running:
+            return
+
+        self.__blockStack.append(BlockEntry(self.__code))
+        self.__running = True
+        self.processCurrentStatement()
+
+    def processCurrentStatement(self):
+        if not self.__running:
+            return
+
+        currentBlock = self.__blockStack[-1]
+        currentStatement = currentBlock.code[currentBlock.statementNumber].statement
+
+        # If statement
+        if type(currentStatement) == IfStatement:
+            # Evaluate condition
+            try:
+                if self.__conditionCb(currentStatement.expression.expression):
+                    self.__blockStack.append(BlockEntry(currentStatement.block.statements))
+                    self.processCurrentStatement()
+                else:
+                    self.nextStatement()
+            except TypeError:
+                raise Exception("Interpreter conditions callback must only have one argument (expression)")
+        # Actor statements
+        else:
+            try:
+                self.__cb(currentStatement)
+            except TypeError:
+                raise Exception("Interpreter statements callback must only have one argument (statement)")
+
+    def nextStatement(self):
+        self.__statementsForCurrentFrame += 1
+
+        if self.__statementsForCurrentFrame >= CantalInterpreter.STATEMENTS_LIMIT_PER_FRAME:
+            self.__waitingForNewFrame = True
+            return
+
+        currentBlock = self.__blockStack[-1]
+        currentBlock.statementNumber += 1
+
+        if currentBlock.statementNumber >= len(currentBlock.code):
+            self.__blockStack.pop()
+
+            if len(self.__blockStack) == 0:
+                if self.__loop:
+                    self.reset()
+                    self.run()
+                else:
+                    self.reset()
+            else:
+                self.nextStatement();
+        else:
+            self.processCurrentStatement()
+
+    def reset(self):
+        self.__blockStack = []
+        self.__running = False
+
+    def isRunning(self):
+        return self.__running
