@@ -1,17 +1,16 @@
 import math
 import pygame
-import sys
 from typing import Dict, List, Any
 
 from engine.graphics.charset import Charset
-from engine.scene.map.events.event import Event
+from engine.scene.map.actors.actor import Actor
 from engine.scene.map.mapscene import MapScene
 from engine.tween.easing import Easing
 from engine.tween.tween import Tween
 from engine.tween.tweensubject import TweenSubject
 
 
-class NPCEvent(Event):
+class NPCActor(Actor):
     def __init__(self, scene: MapScene, x: int, y: int, parameters: Dict):
         super().__init__(scene, x, y, parameters)
 

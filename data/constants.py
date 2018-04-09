@@ -9,7 +9,7 @@ class Constants:
     IMG_PATH = os.path.join("data", "img")
     MAPS_PATH = os.path.join("data", "maps")
     TILESETS_PATH = os.path.join("data", "tilesets")
-    EVENTS_PATH = os.path.join("data", "events")
+    ACTORS_PATH = os.path.join("data", "actors")
     COLOR_KEYS_PATH = os.path.join("data", "colorkeys.json")
 
     WINDOW_TITLE = {

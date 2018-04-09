@@ -56,5 +56,6 @@ class CantalParser:
             result = parse(f.read(), CantalScript, None, whitespace, CantalParser.COMMENTS_GRAMMAR)
             print(str(result))
 
-if __name__ == "__main__":
-    CantalParser.parse("test.cantalscript")
+class CantalInterpreter:
+    def __init__(self, eventCode : Event):
+        self.__eventCode = eventCode

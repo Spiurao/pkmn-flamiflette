@@ -7,7 +7,7 @@ import pygame
 from data.constants import Constants
 from engine.graphics.textures import Textures, Engine
 from engine.graphics.charset import Charset
-from engine.scene.map.events.event import Event
+from engine.scene.map.actors.actor import Actor
 from engine.scene.map.tile import Tile
 from engine.scene.scene import Scene
 import os
@@ -39,8 +39,8 @@ class MapScene(Scene):
         self.__windowWidth = 0  # width of the window in tiles (depends on tileSize)
         self.__windowHeight = 0  # height of the window in tiles (depends on tileSize)
 
-        self.__tilesMatrix0 = []  # matrix of Tile objects to draw below the events
-        self.__tilesMatrix1 = []  # matrix of Tile objects surfaces to draw above the events
+        self.__tilesMatrix0 = []  # matrix of Tile objects to draw below the actors
+        self.__tilesMatrix1 = []  # matrix of Tile objects surfaces to draw above the actors
 
         self.__inputsBlocked = False  # self-explanatory
 
@@ -82,7 +82,7 @@ class MapScene(Scene):
         self.__mapOffsetX = 0
         self.__mapOffsetY = 0
 
-        self.__eventsMatrix = []  # events matrix
+        self.actorsMatrix = []  # actors matrix
 
         self.__touchEventProcessed = False  # used to prevent touch events spamming
 
@@ -217,9 +217,9 @@ class MapScene(Scene):
 
                     strTileId = str(tileId)
 
-                    # if there is at least one tile which is above the events
+                    # if there is at least one tile which is above the actors
                     # all the subsequent tiles will be above, regardless of the layer
-                    if strTileId in tilesetData["tiles"] and tilesetData["tiles"][strTileId]["type"] == Tile.TYPE_ABOVE_EVENTS:
+                    if strTileId in tilesetData["tiles"] and tilesetData["tiles"][strTileId]["type"] == Tile.TYPE_ABOVE_ACTORS:
                         above = True
 
                     # Blit on the correct tile
@@ -255,46 +255,54 @@ class MapScene(Scene):
 
                 tileCount += 1
 
-        # Load and spawn events
+        # Load and spawn actors
         for y in range(self.__mapHeight):
-            self.__eventsMatrix.append([])
+            self.actorsMatrix.append([])
             for x in range(self.__mapWidth):
-                self.__eventsMatrix[y].append([])
-                self.__eventsMatrix[y][x] = None
+                self.actorsMatrix[y].append([])
+                self.actorsMatrix[y][x] = None
 
         try:
 
-            with open(os.path.join(Constants.EVENTS_PATH, self.__mapName, "events.json"), "r") as f:
-                eventsData = json.loads(f.read())
+            with open(os.path.join(Constants.ACTORS_PATH, self.__mapName, "actors.json"), "r") as f:
+                actorsData = json.loads(f.read())
 
-            print("     Events count : " + str(len(eventsData)))
+            print("     Actors count : " + str(len(actorsData)))
 
-            eventModules = {}
+            actorModules = {}
 
-            for event in eventsData:
+            for actor in actorsData:
 
-                eventX = event["positionX"]
-                eventY = event["positionY"]
+                actorX = actor["positionX"]
+                actorY = actor["positionY"]
 
-                if not event["type"] in eventModules:
-                        eventModules[event["type"]] = importlib.import_module("engine.scene.map.events." + event["type"].lower())
+                # Default values
+                if "type" not in actor:
+                    actor["type"] = "Actor"
 
-                eventClass = getattr(eventModules[event["type"]], event["type"])
-                eventInstance = eventClass(self, eventX, eventY, event["parameters"])
+                if "parameters" not in actor:
+                    actor["parameters"] = {}
 
-                eventInstance.load()
-                eventInstance.spawn()
+                if not actor["type"] in actorModules:
+                    actorModules[actor["type"]] = importlib.import_module("engine.scene.map.actors." + actor["type"].lower())
+
+                actorClass = getattr(actorModules[actor["type"]], actor["type"])
+
+                actorInstance = actorClass(self, actorX, actorY, actor["parameters"])
+
+                actorInstance.load()
+                actorInstance.spawn()
 
         except FileNotFoundError:
-            print("     No events found for this map")
+            print("     No actors found for this map")
 
         print("Done loading map")
 
-    def spawnEvent(self, event : Event, posX : int, posY : int):
-        self.__eventsMatrix[posY][posX] = event
+    def spawnActor(self, actor : Actor, posX : int, posY : int):
+        self.actorsMatrix[posY][posX] = actor
 
-    def despawnEvent(self, posX : int, posY : int):
-        self.__eventsMatrix[posY][posX] = None
+    def despawnActor(self, posX : int, posY : int):
+        self.actorsMatrix[posY][posX] = None
 
 
     def unload(self):
@@ -302,20 +310,20 @@ class MapScene(Scene):
 
         for y in range(self.__mapHeight):
             for x in range(self.__mapWidth):
-                event = self.__eventsMatrix[y][x]
-                if event is not None:
-                    event.despawn()
-                    event.unload()
+                actor = self.actorsMatrix[y][x]
+                if actor is not None:
+                    actor.despawn()
+                    actor.unload()
 
-    def updateEventPosition(self, oldX : int, oldY : int, newX : int, newY : int):
-        event = self.__eventsMatrix[oldY][oldX]
+    def updateActorPosition(self, oldX : int, oldY : int, newX : int, newY : int):
+        actor = self.actorsMatrix[oldY][oldX]
 
-        if self.__eventsMatrix[newY][newX] is not None:
-            raise Exception("Cannot move an event on top of another")
+        if self.actorsMatrix[newY][newX] is not None:
+            raise Exception("Cannot move an actor on top of another")
 
-        if event is not None:
-            self.__eventsMatrix[oldY][oldX] = None
-            self.__eventsMatrix[newY][newX] = event
+        if actor is not None:
+            self.actorsMatrix[oldY][oldX] = None
+            self.actorsMatrix[newY][newX] = actor
 
     def getCharacterOrientation(self) -> int:
         return self.__characterCharset.getOrientation()
@@ -328,15 +336,15 @@ class MapScene(Scene):
 
         clockTime = self.getEngine().getClockTime()
 
-        # Events and character
+        # Actors and character
         for y in range(self.__mapHeight):
             for x in range(self.__mapWidth):
-                event = self.__eventsMatrix[y][x]
+                actor = self.actorsMatrix[y][x]
 
-                if event is not None and event.lastUpdateTime != clockTime:
-                    event.update(self.__dt, self.__events)
-                    event.draw(self.__cameraOffsetX.value - self.__drawRectX * self.__tileSize + self.__mapOffsetX, self.__cameraOffsetY.value - self.__drawRectY * self.__tileSize + self.__mapOffsetY)
-                    event.lastUpdateTime = clockTime
+                if actor is not None and actor.lastUpdateDate != clockTime:
+                    actor.update(self.__dt, self.__events)
+                    actor.draw(self.__cameraOffsetX.value - self.__drawRectX * self.__tileSize + self.__mapOffsetX, self.__cameraOffsetY.value - self.__drawRectY * self.__tileSize + self.__mapOffsetY)
+                    actor.lastUpdateTime = clockTime
 
                 # Character
                 if y == self.__characterY and x == self.__characterX:
@@ -359,10 +367,10 @@ class MapScene(Scene):
         return self.__drawRectY + self.__windowHeight < self.__mapHeight
 
     def canCharacterMoveLeft(self) -> bool:
-        # Event collision
-        facingEvent = self.getEventWhichCharacterFaces()
+        # Actor collision
+        facingActor = self.getActorWhichCharacterFaces()
 
-        if facingEvent is not None and not facingEvent.isPassThrough():
+        if facingActor is not None and not facingActor.isPassThrough():
             return False
 
         # Tile collision
@@ -372,10 +380,10 @@ class MapScene(Scene):
             return False
 
     def canCharacterMoveRight(self) -> bool:
-        # Event collision
-        facingEvent = self.getEventWhichCharacterFaces()
+        # Actor collision
+        facingActor = self.getActorWhichCharacterFaces()
 
-        if facingEvent is not None and not facingEvent.isPassThrough():
+        if facingActor is not None and not facingActor.isPassThrough():
             return False
 
         # Tile collision
@@ -385,10 +393,10 @@ class MapScene(Scene):
             return False
 
     def canCharacterMoveUp(self) -> bool:
-        # Event collision
-        facingEvent = self.getEventWhichCharacterFaces()
+        # Actor collision
+        facingActor = self.getActorWhichCharacterFaces()
 
-        if facingEvent is not None and not facingEvent.isPassThrough():
+        if facingActor is not None and not facingActor.isPassThrough():
             return False
 
         # Tile collision
@@ -398,10 +406,10 @@ class MapScene(Scene):
             return False
 
     def canCharacterMoveDown(self) -> bool:
-        # Event collision
-        facingEvent = self.getEventWhichCharacterFaces()
+        # Actor collision
+        facingActor = self.getActorWhichCharacterFaces()
 
-        if facingEvent is not None and not facingEvent.isPassThrough():
+        if facingActor is not None and not facingActor.isPassThrough():
             return False
 
         # Tile collision
@@ -411,26 +419,26 @@ class MapScene(Scene):
             return False
 
 
-    def getEventWhichCharacterFaces(self) -> Event:
-        eventPosX = self.__characterX
-        eventPosY = self.__characterY
+    def getActorWhichCharacterFaces(self) -> Actor:
+        actorPosX = self.__characterX
+        actorPosY = self.__characterY
 
         orientation = self.__characterCharset.getOrientation()
 
         if orientation == Charset.ORIENTATION_DOWN:
-            eventPosY += 1
+            actorPosY += 1
         elif orientation == Charset.ORIENTATION_UP:
-            eventPosY -= 1
+            actorPosY -= 1
         elif orientation == Charset.ORIENTATION_LEFT:
-            eventPosX -= 1
+            actorPosX -= 1
         elif orientation == Charset.ORIENTATION_RIGHT:
-            eventPosX += 1
+            actorPosX += 1
 
-        if eventPosX < 0 or eventPosY < 0:
+        if actorPosX < 0 or actorPosY < 0:
             return None
 
         try:
-            return self.__eventsMatrix[eventPosY][eventPosX]
+            return self.actorsMatrix[actorPosY][actorPosX]
         except IndexError:
             return None
 
@@ -456,10 +464,10 @@ class MapScene(Scene):
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
 
-                        gameEvent = self.getEventWhichCharacterFaces()
+                        gameActor = self.getActorWhichCharacterFaces()
 
-                        if gameEvent is not None:
-                            gameEvent.onActionPressed(orientation)
+                        if gameActor is not None:
+                            gameActor.onActionPressed(orientation)
 
             # Arrow keys
             keys = pygame.key.get_pressed()
@@ -472,7 +480,7 @@ class MapScene(Scene):
 
             if keys[pygame.K_LEFT]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_LEFT)
-                self.processEventsTouchEvent()
+                self.processTouchEvent()
                 if self.canCharacterMoveLeft():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectX and self.canCameraMoveLeft():
@@ -483,7 +491,7 @@ class MapScene(Scene):
                     self.__inputsBlocked = True
             elif keys[pygame.K_RIGHT]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_RIGHT)
-                self.processEventsTouchEvent()
+                self.processTouchEvent()
                 if self.canCharacterMoveRight():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectX and self.canCameraMoveRight():
@@ -494,7 +502,7 @@ class MapScene(Scene):
                     self.__inputsBlocked = True
             elif keys[pygame.K_UP]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_UP)
-                self.processEventsTouchEvent()
+                self.processTouchEvent()
                 if self.canCharacterMoveUp():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveUp():
@@ -505,7 +513,7 @@ class MapScene(Scene):
                     self.__inputsBlocked = True
             elif keys[pygame.K_DOWN]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_DOWN)
-                self.processEventsTouchEvent()
+                self.processTouchEvent()
                 if self.canCharacterMoveDown():
                     self.__characterCharset.incrementStep()
                     if isPlayerInCameraScrollRectY and self.canCameraMoveDown():
@@ -544,18 +552,18 @@ class MapScene(Scene):
 
 
     def onCharacterEnteredTile(self):
-        event = self.__eventsMatrix[self.__characterY][self.__characterX]
+        actor = self.actorsMatrix[self.__characterY][self.__characterX]
 
-        if event is not None:
-            event.onCharacterEnteredTile(self.__characterCharset.getOrientation())
+        if actor is not None:
+            actor.onCharacterEnteredTile(self.__characterCharset.getOrientation())
 
-    def processEventsTouchEvent(self):
+    def processTouchEvent(self):
         if self.__touchEventProcessed:
             return
 
-        event = self.getEventWhichCharacterFaces()
-        if event is not None:
-            event.onCharacterTouchEvent(self.__characterCharset.getOrientation())
+        actor = self.getActorWhichCharacterFaces()
+        if actor is not None:
+            actor.onCharacterTouchEvent(self.__characterCharset.getOrientation())
             self.__touchEventProcessed = True
 
     def tweensCallback(self, tag):

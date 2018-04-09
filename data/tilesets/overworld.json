@@ -447,23 +447,23 @@
         },
      "112":
         {
-         "type":"aboveEvents"
+         "type":"aboveActors"
         },
      "113":
         {
-         "type":"aboveEvents"
+         "type":"aboveActors"
         },
      "114":
         {
-         "type":"aboveEvents"
+         "type":"aboveActors"
         },
      "469":
         {
-         "type":"aboveEvents"
+         "type":"aboveActors"
         },
      "470":
         {
-         "type":"aboveEvents"
+         "type":"aboveActors"
         }
     },
  "tilewidth":32,

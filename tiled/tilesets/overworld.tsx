@@ -4,9 +4,9 @@
  <tile id="11">
   <objectgroup draworder="index"/>
  </tile>
- <tile id="112" type="aboveEvents"/>
- <tile id="113" type="aboveEvents"/>
- <tile id="114" type="aboveEvents"/>
+ <tile id="112" type="aboveActors"/>
+ <tile id="113" type="aboveActors"/>
+ <tile id="114" type="aboveActors"/>
  <tile id="120">
   <properties>
    <property name="collision" value="top;bottom;right;left"/>
@@ -192,8 +192,8 @@
    <property name="collision" value=""/>
   </properties>
  </tile>
- <tile id="469" type="aboveEvents"/>
- <tile id="470" type="aboveEvents"/>
+ <tile id="469" type="aboveActors"/>
+ <tile id="470" type="aboveActors"/>
  <tile id="477">
   <properties>
    <property name="collision" value="top;left;right;bottom"/>

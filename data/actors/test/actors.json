@@ -1,20 +1,16 @@
 [
   {
     "positionX": 16,
-    "positionY" : 28,
-    "type":"Event",
-    "parameters": {}
+    "positionY" : 28
   },
   {
     "positionX" : 14,
-    "positionY" : 36,
-    "type" : "Event",
-    "parameters": {}
+    "positionY" : 36
   },
   {
     "positionX":6,
     "positionY":4,
-    "type": "NPCEvent",
+    "type": "NPCActor",
     "script":"wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",
@@ -25,7 +21,7 @@
   {
     "positionX":10,
     "positionY":8,
-    "type": "NPCEvent",
+    "type": "NPCActor",
     "script":"wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",
