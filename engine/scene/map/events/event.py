@@ -1,5 +1,3 @@
-from threading import Thread
-
 import pygame
 import sys
 from typing import Dict, List, Callable
@@ -19,12 +17,12 @@ class Event:
         self.__waitFor = 0
         self.__waiting = False
 
-        # used to keep references to threads
-        self.threadList = {
-            "onSpawn": None,
-            "onActionPressed": None,
-            "onCharacterEnteredTile": None,
-            "onCharacterTouchEvent": None
+        # used to keep references to parsed scripts
+        self.eventScripts = {
+            "spawn": None,
+            "actionPressed": None,
+            "characterEnteredTile": None,
+            "characterTouchEvent": None
         }
 
     def getParameters(self) -> Dict:
@@ -60,10 +58,7 @@ class Event:
             self.__spawned = True
             self.__scene.spawnEvent(self, self.__posX, self.__posY)
 
-            thread = Thread(target=self.onSpawn, args=())
-            self.threadList["onSpawn"] = thread
-            thread.start()
-
+            self.onSpawn()
 
     def despawn(self):
         if self.__spawned:
@@ -76,9 +71,6 @@ class Event:
 
     def getWindow(self) -> pygame.Surface:
         return self.__scene.getEngine().getWindow()
-
-    def runOnMainThread(self, func : Callable):
-        self.getScene().toRunOnMainThread = func
 
     '''
     Collision flag for this event
@@ -93,8 +85,7 @@ class Event:
         self.__posX = x
         self.__posY = y
 
-    # THREADED METHODS
-    # CAN USE BLOCKING CALLS
+    # TODO Events should run the interpreter
 
     '''
     Fired when the event spawns
@@ -132,17 +123,3 @@ class Event:
     def blockingCallsSafeGuard(self):
         if not self.isSpawned():
             sys.exit()
-
-    # BLOCKNG CALLS
-    # TO USE IN THREADED METHODS
-
-    def wait(self, duration):
-        self.blockingCallsSafeGuard()
-
-        if (not self.__waiting) or (self.__waiting and self.__waitFor < duration):
-            self.__waitFor = duration
-
-        self.__waiting = True
-
-        while self.isSpawned() and self.__waiting:
-            pass

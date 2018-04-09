@@ -53,9 +53,6 @@ class NPCEvent(Event):
     def moveTweenCallback(self, tag : Any):
         self.__moving = False
 
-    # BLOCKNG CALLS
-    # TO USE IN THREADED METHODS
-
     def setOrientation(self, orientation : int):
         self.blockingCallsSafeGuard()
 
@@ -82,6 +79,7 @@ class NPCEvent(Event):
         elif degree >= -135 or degree < 135:
             self.setOrientation(Charset.ORIENTATION_LEFT)
 
+    # TODO Unblock this :peep:
     def walk(self, orientation : int):
         self.blockingCallsSafeGuard()
 

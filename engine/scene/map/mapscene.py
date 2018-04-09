@@ -1,6 +1,5 @@
 import importlib
 import math
-from threading import Thread
 from typing import Tuple, List
 
 import pygame
@@ -23,8 +22,6 @@ class MapScene(Scene):
 
     CAMERA_MOVEMENT_DURATION = 200
     STEP_DURATION = 100
-
-    # TODO Keep track of the threads instead of just throwing anonymous threads, to prevent leaks
 
     def __init__(self, engine : Engine, map : str, spawnPosition : Tuple):
         super().__init__(engine)
@@ -91,10 +88,6 @@ class MapScene(Scene):
 
         self.__dt = 0  # delta-time given by pygame clock
         self.__events = None  # pygame events
-
-        self.__threadList = []
-
-        self.toRunOnMainThread = None  # function to run on main thread on next update() tick
 
     def getTileSize(self) -> int:
         return self.__tileSize
@@ -284,9 +277,6 @@ class MapScene(Scene):
                 eventY = event["positionY"]
 
                 if not event["type"] in eventModules:
-                    try:
-                        eventModules[event["type"]] = importlib.import_module("data.events." + self.__mapName + "." + event["type"].lower())
-                    except ImportError:
                         eventModules[event["type"]] = importlib.import_module("engine.scene.map.events." + event["type"].lower())
 
                 eventClass = getattr(eventModules[event["type"]], event["type"])
@@ -450,10 +440,6 @@ class MapScene(Scene):
         self.__dt = dt
         self.__events = events
 
-        if self.toRunOnMainThread is not None:
-            self.toRunOnMainThread()
-            self.toRunOnMainThread = None
-
         if self.__cameraTween is not None:
             self.__cameraTween.update(dt)
 
@@ -473,9 +459,7 @@ class MapScene(Scene):
                         gameEvent = self.getEventWhichCharacterFaces()
 
                         if gameEvent is not None:
-                            thread = Thread(target=gameEvent.onActionPressed, args=(orientation,))
-                            gameEvent.threadList["onActionPressed"] = thread
-                            thread.start()
+                            gameEvent.onActionPressed(orientation)
 
             # Arrow keys
             keys = pygame.key.get_pressed()
@@ -563,9 +547,7 @@ class MapScene(Scene):
         event = self.__eventsMatrix[self.__characterY][self.__characterX]
 
         if event is not None:
-            thread = Thread(target=event.onCharacterEnteredTile, args=(self.__characterCharset.getOrientation(),))
-            event.threadList["onCharacterEnteredTile"] = thread
-            thread.start()
+            event.onCharacterEnteredTile(self.__characterCharset.getOrientation())
 
     def processEventsTouchEvent(self):
         if self.__touchEventProcessed:
@@ -573,9 +555,7 @@ class MapScene(Scene):
 
         event = self.getEventWhichCharacterFaces()
         if event is not None:
-            thread = Thread(target=event.onCharacterTouchEvent, args=(self.__characterCharset.getOrientation(),))
-            event.threadList["onCharacterTouchEvent"] = thread
-            thread.start()
+            event.onCharacterTouchEvent(self.__characterCharset.getOrientation())
             self.__touchEventProcessed = True
 
     def tweensCallback(self, tag):
