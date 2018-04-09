@@ -1,3 +1,4 @@
+import time
 from typing import Dict
 
 from engine.graphics.charset import Charset

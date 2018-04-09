@@ -1,3 +1,5 @@
+from threading import Thread
+
 import pygame
 import sys
 from typing import Dict, List, Callable
@@ -57,6 +59,10 @@ class Event:
         if not self.__spawned:
             self.__spawned = True
             self.__scene.spawnEvent(self, self.__posX, self.__posY)
+
+            thread = Thread(target=self.onSpawn, args=())
+            self.threadList["onSpawn"] = thread
+            thread.start()
 
 
     def despawn(self):

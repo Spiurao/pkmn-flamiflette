@@ -286,7 +286,7 @@ class MapScene(Scene):
                 if not event["type"] in eventModules:
                     try:
                         eventModules[event["type"]] = importlib.import_module("data.events." + self.__mapName + "." + event["type"].lower())
-                    except ModuleNotFoundError:
+                    except ImportError:
                         eventModules[event["type"]] = importlib.import_module("engine.scene.map.events." + event["type"].lower())
 
                 eventClass = getattr(eventModules[event["type"]], event["type"])
@@ -294,11 +294,6 @@ class MapScene(Scene):
 
                 eventInstance.load()
                 eventInstance.spawn()
-
-                thread = Thread(target=eventInstance.onSpawn, args=())
-                eventInstance.threadList["onSpawn"] = thread
-                thread.daemon = True
-                thread.start()
 
         except FileNotFoundError:
             print("     No events found for this map")
@@ -480,7 +475,6 @@ class MapScene(Scene):
                         if gameEvent is not None:
                             thread = Thread(target=gameEvent.onActionPressed, args=(orientation,))
                             gameEvent.threadList["onActionPressed"] = thread
-                            thread.daemon = True
                             thread.start()
 
             # Arrow keys
@@ -571,7 +565,6 @@ class MapScene(Scene):
         if event is not None:
             thread = Thread(target=event.onCharacterEnteredTile, args=(self.__characterCharset.getOrientation(),))
             event.threadList["onCharacterEnteredTile"] = thread
-            thread.daemon = True
             thread.start()
 
     def processEventsTouchEvent(self):
@@ -582,7 +575,6 @@ class MapScene(Scene):
         if event is not None:
             thread = Thread(target=event.onCharacterTouchEvent, args=(self.__characterCharset.getOrientation(),))
             event.threadList["onCharacterTouchEvent"] = thread
-            thread.daemon = True
             thread.start()
             self.__touchEventProcessed = True
 
