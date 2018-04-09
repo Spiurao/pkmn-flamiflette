@@ -64,7 +64,7 @@ class Engine:
     def getWindow(self) -> pygame.Surface:
         return self.__window
 
-    def getClockTime(self) -> int:
+    def getClockDate(self) -> int:
         return pygame.time.get_ticks()
 
     def run(self):

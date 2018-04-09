@@ -3,12 +3,36 @@ import typing
 from pypeg2 import *
 from pypeg2.xmlast import thing2xml
 
+from engine.graphics.charset import Charset
+
 
 class BooleanLiteral(Keyword):
     grammar = Enum(K('true'), K('false'))
 
+    def getValue(self):
+        strSelf = str(self)
+        if strSelf == "true":
+            return True
+        else:
+            return False
+
 class OrientationLiteral(Keyword):
     grammar = Enum(K('UP'), K('RIGHT'), K('DOWN'), K('LEFT'))
+
+    def getValue(self):
+        strSelf = str(self)
+        if strSelf == "UP":
+            return Charset.ORIENTATION_UP
+        elif strSelf == "RIGHT":
+            return Charset.ORIENTATION_RIGHT
+        elif strSelf == "DOWN":
+            return Charset.ORIENTATION_DOWN
+        elif strSelf == "LEFT":
+            return Charset.ORIENTATION_LEFT
+
+class IntegerLiteral(int):
+    def getValue(self):
+        return self
 
 class StringLiteral(str):
     quoted_string = re.compile(r'"[^"]*"')
@@ -18,7 +42,7 @@ class StringLiteral(str):
         return self.value[1:-1]
 
 class Literal(List):
-    grammar = attr("literal", [OrientationLiteral, int, StringLiteral, BooleanLiteral])
+    grammar = attr("literal", [OrientationLiteral, IntegerLiteral, BooleanLiteral, StringLiteral])
 
 class FunctionParameters(List):
     grammar = attr("params", optional(csl(Literal)))
@@ -85,9 +109,8 @@ class CantalInterpreter:
         self.__statementsForCurrentFrame = 0
 
         if self.__waitingForNewFrame:
+            self.__waitingForNewFrame = False
             self.nextStatement()
-
-        self.__waitingForNewFrame = False
 
     def run(self):
         if self.__running:
@@ -111,7 +134,7 @@ class CantalInterpreter:
                 value = False
 
                 if type(currentStatement.expression.expression) == BooleanLiteral:
-                    value = str(currentStatement.expression.expression) == "true"
+                    value = currentStatement.expression.expression.getValue()
                 elif type(currentStatement.expression.expression) == FunctionCallStatement:
                     value = self.__conditionCb(self.__name, currentStatement.expression.expression)
 
@@ -130,11 +153,11 @@ class CantalInterpreter:
                 raise Exception("Interpreter statements callback must only have two parameters (interpreter, statement)")
 
     def nextStatement(self):
-        self.__statementsForCurrentFrame += 1
-
         if self.__statementsForCurrentFrame >= CantalInterpreter.STATEMENTS_LIMIT_PER_FRAME:
             self.__waitingForNewFrame = True
             return
+
+        self.__statementsForCurrentFrame += 1
 
         currentBlock = self.__blockStack[-1]
         currentBlock.statementNumber += 1

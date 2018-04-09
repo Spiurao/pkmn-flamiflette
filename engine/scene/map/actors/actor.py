@@ -6,7 +6,7 @@ from typing import Dict, List, Callable, Tuple
 
 from data.constants import Constants
 from engine.scene.map.cantalscript import CantalParser, CantalInterpreter, BooleanLiteral, FunctionCallStatement, \
-    StringLiteral
+    StringLiteral, IntegerLiteral
 from engine.timer import Timer
 
 
@@ -47,9 +47,12 @@ class Actor:
         self.__cantalFunctions = {}
 
         # Default Cantal functions
-        self.registerCantalConditionFunction("inParameters", self.isInParameters)
+        self.registerCantalConditionFunction("inParameters", self.cantalIsInParameters)
+        self.registerCantalConditionFunction("isParameterTrue", self.cantalIsParameterTrue)
 
-        self.registerCantalFunction("wait", self.wait)
+        self.registerCantalFunction("wait", self.cantalWait)
+        self.registerCantalFunction("setParameter", self.cantalSetParameter)
+        self.registerCantalFunction("print", self.cantalPrint)
 
     def registerCantalConditionFunction(self, name, cb):
         self.__cantalConditionFunctions[name] = cb
@@ -161,14 +164,12 @@ class Actor:
         self.__posX = x
         self.__posY = y
 
-    # TODO Events should run the interpreter
-
     '''
     Fired when the character faces the actor
     and presses the action button
     '''
-    def onActionPressed(self, orientation : int):
-        pass
+    def onActionPressed(self):
+        self.eventInterpreters["actionPressed"].run()
 
     '''
     Fired when the character walks on the tile
@@ -177,8 +178,9 @@ class Actor:
     
     Always fired after onCharacterTouchEvent()
     '''
-    def onCharacterEnteredTile(self, orientation : int):
-        pass
+    def onCharacterEnteredTile(self):
+        if self.eventInterpreters["characterEnteredTile"] is not None:
+            self.eventInterpreters["characterEnteredTile"].run()
 
     '''
     Fired when the character is on a tile near the actor and
@@ -187,8 +189,9 @@ class Actor:
     
     Always fired before onCharacterEnteredTile()
     '''
-    def onCharacterTouchEvent(self, orientation : int):
-        pass
+    def onCharacterTouchEvent(self):
+        if self.eventInterpreters["characterTouchEvent"] is not None:
+            self.eventInterpreters["characterTouchEvent"].run()
 
     def interpreterTimerCallback(self, tag):
         self.interpreterTimers[tag] = None
@@ -197,21 +200,40 @@ class Actor:
     '''
     CantalScript conditional functions
     '''
-    def isInParameters(self, interpreter, functionParams):
-        param = functionParams[0].literal
-        if type(param) != StringLiteral:
-            raise Exception("Illegal parameter - expected StringLiteral, got " + str(type(param)))
+    def cantalIsInParameters(self, interpreter, functionParams):
+        name = functionParams[0].literal
 
-        return param.getValue() in self.__parameters
+        return name.getValue() in self.__parameters
+
+    def cantalIsParameterTrue(self, interpreter, functionParams):
+        name = functionParams[0].literal
+
+        value = name.getValue()
+
+        returnValue = value in self.__parameters and self.__parameters[value] == True
+
+        return returnValue
 
     '''
     CantalScript methods
     '''
 
-    def wait(self, interpreter, functionParams):
-        param = functionParams[0].literal
+    def cantalWait(self, interpreter, functionParams):
+        duration = functionParams[0].literal
 
-        if type(param) != int:
-            raise Exception("Illegal parameter - expected int, got " + str(type(param)))
+        self.interpreterTimers[interpreter] = Timer(interpreter, duration.getValue(), self.interpreterTimerCallback)
 
-        self.interpreterTimers[interpreter] = Timer(interpreter, param, self.interpreterTimerCallback)
+
+    def cantalSetParameter(self, interpreter, functionParams):
+        name = functionParams[0].literal
+        value = functionParams[1].literal
+
+        self.__parameters[name.getValue()] = value.getValue()
+        self.eventInterpreters[interpreter].nextStatement()
+
+    def cantalPrint(self, interpreter, functionParams):
+        text = functionParams[0].literal
+
+        print(text.getValue())
+
+        self.eventInterpreters[interpreter].nextStatement()

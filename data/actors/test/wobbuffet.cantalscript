@@ -2,7 +2,7 @@ event loop()
 {
     //Look at the character if enabled
     //in the event parameters
-    if (inParameters("look"))
+    if (isParameterTrue("look"))
     {
         turnToFaceCharacter();
         wait(500);
@@ -14,11 +14,11 @@ event actionPressed()
     //Walk 4 tiles up and 3 tiles
     //left if enabled in the event
     //parameters
-    if (inParameters("walk"))
+    if (isParameterTrue("walk"))
     {
         walk(UP, 4);
         walk(LEFT, 3);
-        setParameters("look", true);
-        setParameters("walk", false);
+        setParameter("look", true);
+        setParameter("walk", false);
     }
 }

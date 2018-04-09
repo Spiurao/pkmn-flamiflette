@@ -10,7 +10,7 @@
   {
     "positionX":6,
     "positionY":4,
-    "type": "NPCActor",
+    "type": "NPC",
     "script":"wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",
@@ -21,7 +21,7 @@
   {
     "positionX":10,
     "positionY":8,
-    "type": "NPCActor",
+    "type": "NPC",
     "script":"wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",

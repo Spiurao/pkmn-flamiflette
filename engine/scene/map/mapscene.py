@@ -281,7 +281,7 @@ class MapScene(Scene):
 
                 # Default values
                 if "type" not in actor:
-                    actor["type"] = "Actor"
+                    actor["type"] = ""
 
                 if "parameters" not in actor:
                     actor["parameters"] = {}
@@ -290,9 +290,9 @@ class MapScene(Scene):
                     actor["script"] = None
 
                 if not actor["type"] in actorModules:
-                    actorModules[actor["type"]] = importlib.import_module("engine.scene.map.actors." + actor["type"].lower())
+                    actorModules[actor["type"]] = importlib.import_module("engine.scene.map.actors." + actor["type"].lower() + "actor")
 
-                actorClass = getattr(actorModules[actor["type"]], actor["type"])
+                actorClass = getattr(actorModules[actor["type"]], actor["type"] + "Actor")
 
                 actorInstance = actorClass(self, actorX, actorY, actor["parameters"], actor["script"])
 
@@ -340,7 +340,7 @@ class MapScene(Scene):
         # First layer
         self.drawMatrix(self.__tilesMatrix0)
 
-        clockTime = self.getEngine().getClockTime()
+        clockTime = self.getEngine().getClockDate()
 
         # Actors and character
         for y in range(self.__mapHeight):
@@ -473,7 +473,7 @@ class MapScene(Scene):
                         gameActor = self.getActorWhichCharacterFaces()
 
                         if gameActor is not None:
-                            gameActor.onActionPressed(orientation)
+                            gameActor.onActionPressed()
 
             # Arrow keys
             keys = pygame.key.get_pressed()
@@ -561,7 +561,7 @@ class MapScene(Scene):
         actor = self.actorsMatrix[self.__characterY][self.__characterX]
 
         if actor is not None:
-            actor.onCharacterEnteredTile(self.__characterCharset.getOrientation())
+            actor.onCharacterEnteredTile()
 
     def processTouchEvent(self):
         if self.__touchEventProcessed:
@@ -569,7 +569,7 @@ class MapScene(Scene):
 
         actor = self.getActorWhichCharacterFaces()
         if actor is not None:
-            actor.onCharacterTouchEvent(self.__characterCharset.getOrientation())
+            actor.onCharacterTouchEvent()
             self.__touchEventProcessed = True
 
     def tweensCallback(self, tag):

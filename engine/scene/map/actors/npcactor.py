@@ -27,6 +27,7 @@ class NPCActor(Actor):
 
         # Cantal functions
         self.registerCantalFunction("turnToFaceCharacter", self.turnToFaceCharacter)
+        self.registerCantalFunction("walk", self.walk)
 
     def update(self, dt : int, events : List[pygame.event.Event]):
         super().update(dt, events)
@@ -54,6 +55,7 @@ class NPCActor(Actor):
 
     def moveTweenCallback(self, tag : Any):
         self.__moving = False
+        self.eventInterpreters[tag].nextStatement()
 
     def setOrientation(self, orientation : int):
         self.__charset.setOrientation(orientation)
@@ -82,40 +84,38 @@ class NPCActor(Actor):
 
         self.eventInterpreters[interpreter].nextStatement()
 
-    # TODO Unblock and adapt this :peep:
-    def walk(self, orientation : int):
-        if self.__moving:
-            return
+    def walk(self, interpreter, functionParams):
+
+        orientation = functionParams[0].literal.getValue()
+        stepsCount = functionParams[1].literal.getValue()
 
         self.__charset.setOrientation(orientation)
 
         # TODO Walk animation
         # TODO Collision checks
+        # TODO Optionnal speed parameter
 
         if orientation == Charset.ORIENTATION_LEFT:
-            self.setPosition(self.getPosX()-1, self.getPosY())
-            self.__movingOffsetX.value = 1
-            self.__moveTween = Tween(None, self.__movingOffsetX, 0, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.moveTweenCallback)
+            self.setPosition(self.getPosX()-stepsCount, self.getPosY())
+            self.__movingOffsetX.value = stepsCount
+            self.__moveTween = Tween(interpreter, self.__movingOffsetX, 0, MapScene.CAMERA_MOVEMENT_DURATION*stepsCount, Easing.easingLinear, self.moveTweenCallback)
         elif orientation == Charset.ORIENTATION_RIGHT:
-            self.setPosition(self.getPosX() + 1, self.getPosY())
-            self.__movingOffsetX.value = -1
-            self.__moveTween = Tween(None, self.__movingOffsetX, 0, MapScene.CAMERA_MOVEMENT_DURATION,
+            self.setPosition(self.getPosX() + stepsCount, self.getPosY())
+            self.__movingOffsetX.value = -stepsCount
+            self.__moveTween = Tween(interpreter, self.__movingOffsetX, 0, MapScene.CAMERA_MOVEMENT_DURATION*stepsCount,
                                             Easing.easingLinear, self.moveTweenCallback)
         elif orientation == Charset.ORIENTATION_UP:
-            self.setPosition(self.getPosX(), self.getPosY()-1)
-            self.__movingOffsetY.value = 1
-            self.__moveTween = Tween(None, self.__movingOffsetY, 0, MapScene.CAMERA_MOVEMENT_DURATION,
+            self.setPosition(self.getPosX(), self.getPosY()-stepsCount)
+            self.__movingOffsetY.value = stepsCount
+            self.__moveTween = Tween(interpreter, self.__movingOffsetY, 0, MapScene.CAMERA_MOVEMENT_DURATION*stepsCount,
                                             Easing.easingLinear, self.moveTweenCallback)
         elif orientation == Charset.ORIENTATION_DOWN:
-            self.setPosition(self.getPosX(), self.getPosY() + 1)
-            self.__movingOffsetY.value = -1
-            self.__moveTween = Tween(None, self.__movingOffsetY, 0, MapScene.CAMERA_MOVEMENT_DURATION,
+            self.setPosition(self.getPosX(), self.getPosY() + stepsCount)
+            self.__movingOffsetY.value = -stepsCount
+            self.__moveTween = Tween(interpreter, self.__movingOffsetY, 0, MapScene.CAMERA_MOVEMENT_DURATION*stepsCount,
                                             Easing.easingLinear, self.moveTweenCallback)
 
         self.__moving = True
-
-        while self.isSpawned() and self.__moving:
-            pass
 
 
 
