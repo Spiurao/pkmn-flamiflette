@@ -14,6 +14,14 @@ class Actor:
 
     CANTAL_CACHE = {}  # this is the cache for already parsed scripts (key : map name dot script name)
 
+    CANTAL_EVENTS_LIST = [
+        "spawn",
+        "actionPressed",
+        "characterEnteredTile",
+        "characterTouchEvent",
+        "loop"
+    ]
+
     def __init__(self, scene, x: int, y: int, parameters: Dict, script : str, name : str):
         self.__scene = scene  # the MapScene containing this actor
         self.__posX = x  # x position of this actor
@@ -28,13 +36,7 @@ class Actor:
         self.lastUpdateDate = 0  # the last time this actor was updated and drawn
 
         # used to keep references to interpreters
-        self.eventInterpreters = {
-            "spawn": None,
-            "actionPressed": None,
-            "characterEnteredTile": None,
-            "characterTouchEvent": None,
-            "loop" : None
-        }
+        self.interpreters = {}
 
         # used to keep references to interpreters timers
         self.interpreterTimers = {}
@@ -70,8 +72,8 @@ class Actor:
     def update(self, dt : int, events : List[pygame.event.Event]):
         # Notify interpreters that a new frame has been displayed
         # so that they can continue running the scripts
-        for i in self.eventInterpreters:
-            interpreter = self.eventInterpreters[i]
+        for i in self.interpreters:
+            interpreter = self.interpreters[i]
             if interpreter is not None:
                 interpreter.newFrame()
 
@@ -99,13 +101,15 @@ class Actor:
                 for event in scriptData.events:
                     eventName = event.name
 
-                    if eventName not in self.eventInterpreters:
+                    if eventName not in Actor.CANTAL_EVENTS_LIST:
                         raise Exception("Unknown event " + eventName)
 
-                    if self.eventInterpreters[eventName] is not None:
+                    eventName = "event." + eventName
+
+                    if eventName in self.interpreters:
                         raise Exception("Duplicate event " + eventName)
 
-                    self.eventInterpreters[eventName] = CantalInterpreter(eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "loop")
+                    self.interpreters[eventName] = CantalInterpreter(eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop")
 
             except FileNotFoundError:
                 raise Exception("Could not find a script named " + self.__script)
@@ -126,10 +130,10 @@ class Actor:
     def unload(self):
         self.despawn()  # just to be sure
 
-        for interpreter in self.eventInterpreters:
-            if self.eventInterpreters[interpreter] is not None:
-                self.eventInterpreters[interpreter].reset()
-                self.eventInterpreters[interpreter] = None
+        for interpreter in self.interpreters:
+            if self.interpreters[interpreter] is not None:
+                self.interpreters[interpreter].reset()
+                self.interpreters[interpreter] = None
 
     def draw(self, offsetX, offsetY):
         pass
@@ -145,8 +149,8 @@ class Actor:
             self.__spawned = True
             self.__scene.spawnActor(self, self.__posX, self.__posY)
 
-            if self.eventInterpreters["loop"] is not None:
-                self.eventInterpreters["loop"].run()
+            if "event.loop" in self.interpreters and self.interpreters["event.loop"] is not None:
+                self.interpreters["event.loop"].run()
 
     def despawn(self):
         if self.__spawned:
@@ -178,8 +182,8 @@ class Actor:
     and presses the action button
     '''
     def onActionPressed(self):
-        if self.eventInterpreters["actionPressed"] is not None:
-            self.eventInterpreters["actionPressed"].run()
+        if "event.actionPressed" in self.interpreters and self.interpreters["event.actionPressed"] is not None:
+            self.interpreters["event.actionPressed"].run()
 
     '''
     Fired when the character walks on the tile
@@ -189,8 +193,8 @@ class Actor:
     Always fired after onCharacterTouchEvent()
     '''
     def onCharacterEnteredTile(self):
-        if self.eventInterpreters["characterEnteredTile"] is not None:
-            self.eventInterpreters["characterEnteredTile"].run()
+        if "event.characterEnteredTile" in self.interpreters and self.interpreters["event.characterEnteredTile"] is not None:
+            self.interpreters["event.characterEnteredTile"].run()
 
     '''
     Fired when the character is on a tile near the actor and
@@ -200,12 +204,12 @@ class Actor:
     Always fired before onCharacterEnteredTile()
     '''
     def onCharacterTouchEvent(self):
-        if self.eventInterpreters["characterTouchEvent"] is not None:
-            self.eventInterpreters["characterTouchEvent"].run()
+        if "event.characterTouchEvent" in self.interpreters and self.interpreters["event.characterTouchEvent"] is not None:
+            self.interpreters["event.characterTouchEvent"].run()
 
     def interpreterTimerCallback(self, tag):
         self.interpreterTimers[tag] = None
-        self.eventInterpreters[tag].nextStatement()
+        self.interpreters[tag].nextStatement()
 
     '''
     CantalScript conditional functions
@@ -239,11 +243,11 @@ class Actor:
         value = functionParams[1].literal
 
         self.__parameters[name.getValue()] = value.getValue()
-        self.eventInterpreters[interpreter].nextStatement()
+        self.interpreters[interpreter].nextStatement()
 
     def cantalPrint(self, interpreter, functionParams):
         text = functionParams[0].literal
 
         print(text.getValue())
 
-        self.eventInterpreters[interpreter].nextStatement()
+        self.interpreters[interpreter].nextStatement()
