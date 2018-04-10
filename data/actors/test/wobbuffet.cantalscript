@@ -3,6 +3,11 @@
 constant PARAMETER_LOOK = "look";
 constant PARAMETER_WALK = "walk";
 
+message testMessage()
+{
+    print("Received test message");
+}
+
 event loop()
 {
     //Look at the character if enabled

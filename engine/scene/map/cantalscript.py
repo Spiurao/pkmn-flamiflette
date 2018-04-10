@@ -65,11 +65,14 @@ class Statement(List):
 class Event(List):
     grammar = "event", name(), "()", attr("block", Block)
 
-class Constant:
+class Message(List):
+    grammar = "message", name(), "()", attr("block", Block)
+
+class Constant(List):
     grammar = "constant", name(), "=", attr("value", Literal), ";"
 
 class CantalScript(str):
-    grammar = attr("constants", maybe_some(Constant)), attr("events", maybe_some(Event))
+    grammar = attr("constants", maybe_some(Constant)), attr("messages", maybe_some(Message)), attr("events", maybe_some(Event))
 
     constantsTable = {}  # constants table
 
