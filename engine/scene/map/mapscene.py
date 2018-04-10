@@ -85,6 +85,7 @@ class MapScene(Scene):
         self.__mapOffsetY = 0
 
         self.actorsMatrix = []  # actors matrix
+        self.actorsByName = {}  # actors by name
 
         self.__touchEventProcessed = False  # used to prevent touch events spamming
 
@@ -294,6 +295,9 @@ class MapScene(Scene):
                 actorY = actor["positionY"]
 
                 # Default values
+                if "name" not in actor:
+                    actor["name"] = None
+
                 if "type" not in actor:
                     actor["type"] = ""
 
@@ -308,7 +312,7 @@ class MapScene(Scene):
 
                 actorClass = getattr(actorModules[actor["type"]], actor["type"] + "Actor")
 
-                actorInstance = actorClass(self, actorX, actorY, actor["parameters"], actor["script"])
+                actorInstance = actorClass(self, actorX, actorY, actor["parameters"], actor["script"], actor["name"])
 
                 actorInstance.load()
                 actorInstance.spawn()
@@ -321,9 +325,20 @@ class MapScene(Scene):
     def spawnActor(self, actor : Actor, posX : int, posY : int):
         self.actorsMatrix[posY][posX] = actor
 
+        name = actor.getName()
+        if name is not None:
+            if name in self.actorsByName:
+                raise Exception("Duplicate actor name " + name)
+            self.actorsByName[name] = actor
+
     def despawnActor(self, posX : int, posY : int):
+        actor = self.actorsMatrix[posY][posX]
         self.actorsMatrix[posY][posX] = None
 
+        name = actor.getName()
+
+        if name is not None and name in self.actorsByName:
+            del self.actorsByName[name]
 
     def unload(self):
         super().unload()

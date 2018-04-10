@@ -11,6 +11,7 @@
     "positionX":6,
     "positionY":4,
     "type": "NPC",
+    "name" : "wobbuffet1",
     "script":"wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",
@@ -22,6 +23,7 @@
     "positionX":10,
     "positionY":8,
     "type": "NPC",
+    "name" : "wobbuffet2",
     "script":"wobbuffet",
     "parameters":{
       "charset":"charsets.wobbuffet",

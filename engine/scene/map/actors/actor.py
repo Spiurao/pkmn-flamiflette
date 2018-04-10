@@ -14,11 +14,12 @@ class Actor:
 
     CANTAL_CACHE = {}  # this is the cache for already parsed scripts (key : map name dot script name)
 
-    def __init__(self, scene, x: int, y: int, parameters: Dict, script : str):
+    def __init__(self, scene, x: int, y: int, parameters: Dict, script : str, name : str):
         self.__scene = scene  # the MapScene containing this actor
         self.__posX = x  # x position of this actor
         self.__posY = y  # y position of this actor
         self.__script = script
+        self.__name = name
 
         self.__spawned = False  # if the actor is not spawned, update(), draw() and events methods will not be called
 
@@ -62,6 +63,9 @@ class Actor:
 
     def getParameters(self) -> Dict:
         return self.__parameters
+
+    def getName(self) -> str:
+        return self.__name
 
     def update(self, dt : int, events : List[pygame.event.Event]):
         # Notify interpreters that a new frame has been displayed
