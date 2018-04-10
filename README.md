@@ -6,3 +6,4 @@ Pokémon Flamiflette &amp; Tartikueche
 * Modules Python
     * `msgpack`
     * `pygame`
+    * `pypeg2`

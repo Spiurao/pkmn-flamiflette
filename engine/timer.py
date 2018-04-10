@@ -16,8 +16,5 @@ class Timer:
         self.__runningSince += dt
 
         if self.__runningSince >= self.__duration:
-            try:
-                self.__callback(self.__tag)
-            except TypeError:
-                raise Exception("Timer callback must have only one argument (tag)")
             self.alive = False
+            self.__callback(self.__tag)

@@ -122,6 +122,11 @@ class Actor:
     def unload(self):
         self.despawn()  # just to be sure
 
+        for interpreter in self.eventInterpreters:
+            if self.eventInterpreters[interpreter] is not None:
+                self.eventInterpreters[interpreter].reset()
+                self.eventInterpreters[interpreter] = None
+
     def draw(self, offsetX, offsetY):
         pass
 
@@ -169,7 +174,8 @@ class Actor:
     and presses the action button
     '''
     def onActionPressed(self):
-        self.eventInterpreters["actionPressed"].run()
+        if self.eventInterpreters["actionPressed"] is not None:
+            self.eventInterpreters["actionPressed"].run()
 
     '''
     Fired when the character walks on the tile

@@ -1,3 +1,8 @@
+//TODO Replace the isParameterTrue conditions by states once they're implemented
+
+constant PARAMETER_LOOK = "look";
+constant PARAMETER_WALK = "walk";
+
 event loop()
 {
     //Look at the character if enabled

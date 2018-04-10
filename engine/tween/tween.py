@@ -37,7 +37,4 @@ class Tween:
                     self.targetValue
                 )
             self.alive = False
-            try:
-                self.cb(self.tag)
-            except TypeError:
-                raise Exception("Tween callback must only have one argument (tag)")
+            self.cb(self.tag)

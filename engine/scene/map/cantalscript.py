@@ -65,8 +65,17 @@ class Statement(List):
 class Event(List):
     grammar = "event", name(), "()", attr("block", Block)
 
+class Constant:
+    grammar = "constant", name(), "=", attr("value", Literal), ";"
+
 class CantalScript(str):
-    grammar = attr("events", maybe_some(Event))
+    grammar = attr("constants", maybe_some(Constant)), attr("events", maybe_some(Event))
+
+    constantsTable = {}  # constants table
+
+    def init(self):
+        for constant in self.constants:
+            self.constantsTable[constant.name] = constant.value.literal.getValue()
 
 # Stupid Python
 Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
@@ -77,10 +86,13 @@ class CantalParser:
                                 re.compile("/\*.*?\*/", re.S)]
 
     @staticmethod
-    def parse(scriptPath : str) -> typing.List:
+    def parse(scriptPath : str) -> CantalScript:
         result = None
         with open(scriptPath, "r") as f:
             result = parse(f.read(), CantalScript, None, whitespace, CantalParser.COMMENTS_GRAMMAR)
+
+        result.init()
+
         return result
 
 class BlockEntry:
@@ -136,27 +148,22 @@ class CantalInterpreter:
         # If statement
         if type(currentStatement) == IfStatement:
             # Evaluate condition
-            try:
-                value = False
+            value = False
 
-                if type(currentStatement.expression.expression) == BooleanLiteral:
-                    value = currentStatement.expression.expression.getValue()
-                elif type(currentStatement.expression.expression) == FunctionCallStatement:
-                    value = self.__conditionCb(self.__name, currentStatement.expression.expression)
+            if type(currentStatement.expression.expression) == BooleanLiteral:
+                value = currentStatement.expression.expression.getValue()
+            elif type(currentStatement.expression.expression) == FunctionCallStatement:
+                value = self.__conditionCb(self.__name, currentStatement.expression.expression)
 
-                if value:
-                    self.__blockStack.append(BlockEntry(currentStatement.block.statements))
-                    self.processCurrentStatement()
-                else:
-                    self.nextStatement()
-            except TypeError:
-                raise Exception("Interpreter conditions callback must only have two parameters (interpreter, expression)")
+            if value:
+                self.__blockStack.append(BlockEntry(currentStatement.block.statements))
+                self.processCurrentStatement()
+            else:
+                self.nextStatement()
         # Actor statements
         else:
-            try:
-                self.__cb(self.__name, currentStatement)
-            except TypeError:
-                raise Exception("Interpreter statements callback must only have two parameters (interpreter, statement)")
+            self.__cb(self.__name, currentStatement)
+
 
     def nextStatement(self):
         if self.__statementsForCurrentFrame >= CantalInterpreter.STATEMENTS_LIMIT_PER_FRAME:
