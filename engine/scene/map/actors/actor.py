@@ -54,8 +54,8 @@ class Actor:
         self.__cantalVariables = {}
 
         # Default Cantal functions
-        self.registerCantalConditionFunction("inParameters", self.cantalIsInParameters)
-        self.registerCantalConditionFunction("isParameterTrue", self.cantalIsParameterTrue)
+
+        # No conditional
 
         self.registerCantalFunction("wait", self.cantalWait)
         self.registerCantalFunction("setParameter", self.cantalSetParameter)
@@ -269,19 +269,8 @@ class Actor:
     '''
     CantalScript conditional functions
     '''
-    def cantalIsInParameters(self, interpreter, functionParams):
-        name = functionParams[0].literal
 
-        return name.getValue() in self.__parameters
-
-    def cantalIsParameterTrue(self, interpreter, functionParams):
-        name = functionParams[0].literal
-
-        value = name.getValue()
-
-        returnValue = value in self.__parameters and self.__parameters[value] == True
-
-        return returnValue
+    # None
 
     '''
     CantalScript methods
