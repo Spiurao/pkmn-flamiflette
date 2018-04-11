@@ -113,7 +113,7 @@ class Actor:
                     if eventName in self.interpreters:
                         raise Exception("Duplicate event " + eventName)
 
-                    self.interpreters[eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop", self.cantalRegisterAffectationCallback)
+                    self.interpreters[eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop", self.cantalRegisterAffectationCallback, self.cantalRegisterCallback)
 
             except FileNotFoundError:
                 raise Exception("Could not find a script named " + self.__script)
@@ -138,16 +138,35 @@ class Actor:
 
         return constantsTable[constant]
 
+    def cantalRegisterCallback(self, interpreter : str, register : Register):
+        regType = register.type
+        regName = self.getRegName(interpreter, register.name)
+
+        try:
+            if regType == "parameters":
+                return self.__parameters[regName]
+            elif regType == "variables":
+                return self.__cantalVariables[regName]
+            elif regType == "savedVariables":
+                return SaveManager.getCurrentSaveValue(regName)
+            elif regType == "messageParameters":
+                pass # TODO Implement this - get message parameters for message name
+        except KeyError:
+            return None
+
+
+    def getRegName(self, interpreter : str, regName : str):
+        if type(regName) == Symbol:
+            # Assume it's a constant
+            regName = str(regName)
+            return self.getConstantForInterpreter(interpreter, regName)
+        else:
+            # String literal
+            return regName.getValue()
+
     def cantalRegisterAffectationCallback(self, interpreter:str, register : Register, value : Literal):
             regType = register.type
-            regName = register.name
-
-            if type(regName) == Symbol:
-                # Assume it's a constant
-                regName = str(regName)
-                regName = self.getConstantForInterpreter(interpreter, regName)
-            else:
-                regName = regName.getValue()
+            regName = self.getRegName(interpreter, register.name)
 
             if regType == "parameters":
                 self.__parameters[regName] = value.literal.getValue()

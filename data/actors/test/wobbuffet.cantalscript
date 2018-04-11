@@ -1,4 +1,4 @@
-//TODO Replace the isParameterTrue conditions by states once they're implemented
+//TODO Replace the parameters[...] conditions by states once they're implemented
 
 constant PARAMETER_LOOK = "look";
 constant PARAMETER_WALK = "walk";
@@ -12,7 +12,7 @@ event loop()
 {
     //Look at the character if enabled
     //in the event parameters
-    if (isParameterTrue("look"))
+    if (parameters[PARAMETER_LOOK])
     {
         turnToFaceCharacter();
         wait(500);
@@ -24,7 +24,7 @@ event actionPressed()
     //Walk 4 tiles up and 3 tiles
     //left if enabled in the event
     //parameters
-    if (isParameterTrue("walk"))
+    if (parameters[PARAMETER_WALK])
     {
         walk(UP, 4);
         walk(LEFT, 3);

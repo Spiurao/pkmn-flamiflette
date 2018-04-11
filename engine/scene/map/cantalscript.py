@@ -1,4 +1,5 @@
 import typing
+from pprint import pprint
 
 from pypeg2 import *
 
@@ -52,14 +53,17 @@ class FunctionParameters(List):
 class FunctionCallStatement:
     grammar = name(), "(", attr("params", FunctionParameters), ")"
 
-class BooleanExpression(str):
-    grammar = attr("expression", [FunctionCallStatement, BooleanLiteral])
-
 class Block(List):
     pass
 
 class Register(str):
     grammar = attr("type", Symbol), "[", attr("name", [Symbol, StringLiteral]) ,"]"
+
+class RegisterBooleanExpression:
+    grammar = attr("register", Register), "==", attr("literal", Literal)
+
+class BooleanExpression(str):
+    grammar = maybe_some(attr("bang", "!")), attr("expression", [RegisterBooleanExpression, Register, FunctionCallStatement, BooleanLiteral])
 
 class RegisterAffectationStatement(str):
     grammar = attr("register", Register), "=", attr("value", Literal)
@@ -115,12 +119,13 @@ class BlockEntry:
 class CantalInterpreter:
     STATEMENTS_LIMIT_PER_FRAME = 100  # the interpreter cannot execute more statements per frame than this - fixes game freeze and maximum recursion depth errors
 
-    def __init__(self, script : CantalScript, name : str, code : Block, functionsCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool, registerAffectationCallback : typing.Callable):
+    def __init__(self, script : CantalScript, name : str, code : Block, functionsCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool, registerAffectationCallback : typing.Callable, registerValueCallback : typing.Callable):
         self.__name = name
         self.__code = code.statements
         self.__functionsCb = functionsCallback
         self.__conditionCb = conditionCallback
         self.__registerAffectationCb = registerAffectationCallback
+        self.__registerValueCb = registerValueCallback
         self.__loop = loop
 
         self.script = script
@@ -153,12 +158,27 @@ class CantalInterpreter:
         self.processCurrentStatement()
 
     def evaluateBooleanExpression(self, expression) -> bool:
-        expressionType = type(expression)
+        expressionType = type(expression.expression)
+
+        value = False
 
         if expressionType == BooleanLiteral:
-            return expression.getValue()
+            value = expression.expression.getValue()
         elif expressionType == FunctionCallStatement:
-            return self.__conditionCb(self.__name, expression)
+            value = self.__conditionCb(self.__name, expression.expression)
+        elif expressionType == Register:
+            registerValue = self.__registerValueCb(self.__name, expression.expression)
+            value = registerValue is not None and type(registerValue) == bool and registerValue == True
+        elif expressionType == RegisterBooleanExpression:
+            registerValue = self.__registerValueCb(self.__name, expression.expression.register)
+            value = registerValue is not None and registerValue == expression.expression.literal.literal.getValue()
+        else:
+            raise Exception("Unknown boolean expression type " + str(expressionType))
+
+        if hasattr(expression, "bang"):
+            value = not value
+
+        return value
 
 
 
@@ -173,7 +193,7 @@ class CantalInterpreter:
         statementType = type(currentStatement)
         if statementType == IfStatement:
             # Evaluate condition
-            if self.evaluateBooleanExpression(currentStatement.expression.expression):
+            if self.evaluateBooleanExpression(currentStatement.expression):
                 self.__blockStack.append(BlockEntry(currentStatement.block.statements))
                 self.processCurrentStatement()
             else:
