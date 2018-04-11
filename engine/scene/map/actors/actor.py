@@ -200,6 +200,8 @@ class Actor:
                 return SaveManager.getCurrentSaveValue(regName)
             elif regType == "messageParameters":
                 pass # TODO Implement this - get message parameters for message name
+            else:
+                raise Exception("Unknown register " + str(regType))
         except KeyError:
             return None
 
