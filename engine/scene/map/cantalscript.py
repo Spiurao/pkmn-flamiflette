@@ -63,7 +63,19 @@ class RegisterBooleanExpression:
     grammar = attr("register", Register), "==", attr("literal", Literal)
 
 class BooleanExpression(str):
-    grammar = maybe_some(attr("bang", "!")), attr("expression", [RegisterBooleanExpression, Register, FunctionCallStatement, BooleanLiteral])
+    pass
+
+class AndOperator(str):
+    grammar = grammar = attr("op1", BooleanExpression), "&&", attr("op2", BooleanExpression)
+
+class NotOperator(str):
+    grammar = "!", attr("op", BooleanExpression)
+
+class OrOperator(str):
+    grammar = attr("op1", BooleanExpression), "||", attr("op2", BooleanExpression)
+
+class BooleanOperator:
+    grammar = "(", attr("operator", [NotOperator, AndOperator, OrOperator]), ")"
 
 class RegisterAffectationStatement(str):
     grammar = attr("register", Register), "=", attr("value", Literal)
@@ -97,6 +109,7 @@ class CantalScript(str):
 
 # Stupid Python
 Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
+BooleanExpression.grammar = attr("expression", [BooleanOperator, RegisterBooleanExpression, Register, FunctionCallStatement, BooleanLiteral])
 
 class CantalParser:
 
@@ -163,25 +176,27 @@ class CantalInterpreter:
     def evaluateBooleanExpression(self, expression) -> bool:
         expressionType = type(expression.expression)
 
-        value = False
-
         if expressionType == BooleanLiteral:
-            value = expression.expression.getValue()
+            return expression.expression.getValue()
         elif expressionType == FunctionCallStatement:
-            value = self.__conditionCb(self.__name, expression.expression)
+            return self.__conditionCb(self.__name, expression.expression)
         elif expressionType == Register:
             registerValue = self.__registerValueCb(expression.expression)
-            value = registerValue is not None and type(registerValue) == bool and registerValue == True
+            return registerValue is not None and type(registerValue) == bool and registerValue == True
         elif expressionType == RegisterBooleanExpression:
             registerValue = self.__registerValueCb(expression.expression.register)
-            value = registerValue is not None and registerValue == expression.expression.literal.literal.getValue()
+            return registerValue is not None and registerValue == expression.expression.literal.literal.getValue()
+        elif expressionType == BooleanOperator:
+            operator = expression.expression.operator
+            booleanType = type(operator)
+            if booleanType == AndOperator:
+                return self.evaluateBooleanExpression(operator.op1) and self.evaluateBooleanExpression(operator.op2)
+            elif booleanType == OrOperator:
+                return self.evaluateBooleanExpression(operator.op1) or self.evaluateBooleanExpression(operator.op2)
+            elif booleanType == NotOperator:
+                return not self.evaluateBooleanExpression(operator.op)
         else:
             raise Exception("Unknown boolean expression type " + str(expressionType))
-
-        if hasattr(expression, "bang"):
-            value = not value
-
-        return value
 
 
     def processCurrentStatement(self):
