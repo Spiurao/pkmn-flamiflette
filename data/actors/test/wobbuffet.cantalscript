@@ -28,7 +28,7 @@ event actionPressed()
     {
         walk(UP, 4);
         walk(LEFT, 3);
-        setParameter("look", true);
-        setParameter("walk", false);
+        parameters[PARAMETER_LOOK] = true;
+        parameters[PARAMETER_WALK] = false;
     }
 }

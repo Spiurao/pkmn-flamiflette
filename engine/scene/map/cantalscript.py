@@ -40,6 +40,9 @@ class StringLiteral(str):
     def getValue(self):
         return self.value[1:-1]
 
+    def __repr__(self):
+        return self.getValue()
+
 class Literal(List):
     grammar = attr("literal", [OrientationLiteral, IntegerLiteral, BooleanLiteral, StringLiteral])
 
@@ -55,11 +58,17 @@ class BooleanExpression(str):
 class Block(List):
     pass
 
+class Register(str):
+    grammar = attr("type", Symbol), "[", attr("name", [Symbol, StringLiteral]) ,"]"
+
+class RegisterAffectationStatement(str):
+    grammar = attr("register", Register), "=", attr("value", Literal)
+
 class IfStatement(str):
     grammar = "if", "(", attr("expression", BooleanExpression), ")", attr("block", Block)
 
 class Statement(List):
-    grammar = attr("statement", [(FunctionCallStatement, ";"), IfStatement])
+    grammar = attr("statement", [([FunctionCallStatement, RegisterAffectationStatement], ";"), IfStatement])
 
 class Event(List):
     grammar = "event", name(), "()", attr("block", Block)
@@ -106,12 +115,15 @@ class BlockEntry:
 class CantalInterpreter:
     STATEMENTS_LIMIT_PER_FRAME = 100  # the interpreter cannot execute more statements per frame than this - fixes game freeze and maximum recursion depth errors
 
-    def __init__(self, name : str, code : Block, statementCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool):
+    def __init__(self, script : CantalScript, name : str, code : Block, functionsCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool, registerAffectationCallback : typing.Callable):
         self.__name = name
         self.__code = code.statements
-        self.__cb = statementCallback
+        self.__functionsCb = functionsCallback
         self.__conditionCb = conditionCallback
+        self.__registerAffectationCb = registerAffectationCallback
         self.__loop = loop
+
+        self.script = script
 
         self.__statementsForCurrentFrame = 0
         self.__waitingForNewFrame = False  # is the interpreter waiting for a new frame to continue ?
@@ -148,7 +160,8 @@ class CantalInterpreter:
         currentStatement = currentBlock.code[currentBlock.statementNumber].statement
 
         # If statement
-        if type(currentStatement) == IfStatement:
+        statementType = type(currentStatement)
+        if statementType == IfStatement:
             # Evaluate condition
             value = False
 
@@ -162,10 +175,15 @@ class CantalInterpreter:
                 self.processCurrentStatement()
             else:
                 self.nextStatement()
-        # Actor statements
+        # Actor function statement
+        elif statementType == FunctionCallStatement:
+            self.__functionsCb(self.__name, currentStatement)
+        # Actor register affectation statement
+        elif statementType == RegisterAffectationStatement:
+            self.__registerAffectationCb(self.__name, currentStatement.register, currentStatement.value)
+            self.nextStatement();
         else:
-            self.__cb(self.__name, currentStatement)
-
+            raise Exception("Unknown statement type " + str(statementType))
 
     def nextStatement(self):
         if self.__statementsForCurrentFrame >= CantalInterpreter.STATEMENTS_LIMIT_PER_FRAME:

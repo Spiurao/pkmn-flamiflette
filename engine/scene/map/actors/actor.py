@@ -5,8 +5,9 @@ import sys
 from typing import Dict, List, Callable, Tuple
 
 from data.constants import Constants
+from engine.savemanager import SaveManager
 from engine.scene.map.cantalscript import CantalParser, CantalInterpreter, BooleanLiteral, FunctionCallStatement, \
-    StringLiteral, IntegerLiteral
+    StringLiteral, IntegerLiteral, Register, Literal, Symbol
 from engine.timer import Timer
 
 
@@ -48,6 +49,9 @@ class Actor:
         # List of regular conditions
         # name associated to the function
         self.__cantalFunctions = {}
+
+        # Cantal variables
+        self.__cantalVariables = {}
 
         # Default Cantal functions
         self.registerCantalConditionFunction("inParameters", self.cantalIsInParameters)
@@ -109,7 +113,7 @@ class Actor:
                     if eventName in self.interpreters:
                         raise Exception("Duplicate event " + eventName)
 
-                    self.interpreters[eventName] = CantalInterpreter(eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop")
+                    self.interpreters[eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop", self.cantalRegisterAffectationCallback)
 
             except FileNotFoundError:
                 raise Exception("Could not find a script named " + self.__script)
@@ -126,6 +130,38 @@ class Actor:
             raise Exception("Unknown Cantal function " + function.name)
 
         self.__cantalFunctions[function.name](interpreter, function.params.params)
+
+    def getConstantForInterpreter(self, interpreter, constant):
+        constantsTable = self.interpreters[interpreter].script.constantsTable
+        if not constant in constantsTable:
+            raise Exception("Unknown constant " + constant)
+
+        return constantsTable[constant]
+
+    def cantalRegisterAffectationCallback(self, interpreter:str, register : Register, value : Literal):
+            regType = register.type
+            regName = register.name
+
+            if type(regName) == Symbol:
+                # Assume it's a constant
+                regName = str(regName)
+                regName = self.getConstantForInterpreter(interpreter, regName)
+            else:
+                regName = regName.getValue()
+
+            if regType == "parameters":
+                self.__parameters[regName] = value.literal.getValue()
+            elif regType == "variables":
+                self.__cantalVariables[regName] = value.literal.getValue()
+            elif regType == "savedVariables":
+                if self.__name == None:
+                    raise Exception("The event must have a name to be able to use savedVariables register")
+                SaveManager.setCurrentSaveValue(self.getScene().getMapName() + "." + self.__name + "." + regName, value.literal.getValue())
+            elif regType == "messageParameters":
+                pass # TODO Implement this - store the parameters for a later message call
+            else:
+                raise Exception("Unknown register type " + regType)
+
 
     def unload(self):
         self.despawn()  # just to be sure
