@@ -1,7 +1,6 @@
 import typing
 
 from pypeg2 import *
-from pypeg2.xmlast import thing2xml
 
 from engine.graphics.charset import Charset
 

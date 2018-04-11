@@ -149,8 +149,7 @@ class Actor:
             self.__spawned = True
             self.__scene.spawnActor(self, self.__posX, self.__posY)
 
-            if "event.loop" in self.interpreters and self.interpreters["event.loop"] is not None:
-                self.interpreters["event.loop"].run()
+            self.runInterpreter("event.loop")
 
     def despawn(self):
         if self.__spawned:
@@ -177,13 +176,16 @@ class Actor:
         self.__posX = x
         self.__posY = y
 
+    def runInterpreter(self, interpreter):
+        if interpreter in self.interpreters and self.interpreters[interpreter] is not None:
+            self.interpreters[interpreter].run()
+
     '''
     Fired when the character faces the actor
     and presses the action button
     '''
     def onActionPressed(self):
-        if "event.actionPressed" in self.interpreters and self.interpreters["event.actionPressed"] is not None:
-            self.interpreters["event.actionPressed"].run()
+        self.runInterpreter("event.actionPressed")
 
     '''
     Fired when the character walks on the tile
@@ -193,8 +195,7 @@ class Actor:
     Always fired after onCharacterTouchEvent()
     '''
     def onCharacterEnteredTile(self):
-        if "event.characterEnteredTile" in self.interpreters and self.interpreters["event.characterEnteredTile"] is not None:
-            self.interpreters["event.characterEnteredTile"].run()
+        self.runInterpreter("event.characterEnteredTile")
 
     '''
     Fired when the character is on a tile near the actor and
@@ -204,8 +205,7 @@ class Actor:
     Always fired before onCharacterEnteredTile()
     '''
     def onCharacterTouchEvent(self):
-        if "event.characterTouchEvent" in self.interpreters and self.interpreters["event.characterTouchEvent"] is not None:
-            self.interpreters["event.characterTouchEvent"].run()
+        self.runInterpreter("event.characterTouchEvent")
 
     def interpreterTimerCallback(self, tag):
         self.interpreterTimers[tag] = None
