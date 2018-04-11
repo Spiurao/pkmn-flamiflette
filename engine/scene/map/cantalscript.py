@@ -152,6 +152,16 @@ class CantalInterpreter:
         self.__running = True
         self.processCurrentStatement()
 
+    def evaluateBooleanExpression(self, expression) -> bool:
+        expressionType = type(expression)
+
+        if expressionType == BooleanLiteral:
+            return expression.getValue()
+        elif expressionType == FunctionCallStatement:
+            return self.__conditionCb(self.__name, expression)
+
+
+
     def processCurrentStatement(self):
         if not self.__running:
             return
@@ -163,14 +173,7 @@ class CantalInterpreter:
         statementType = type(currentStatement)
         if statementType == IfStatement:
             # Evaluate condition
-            value = False
-
-            if type(currentStatement.expression.expression) == BooleanLiteral:
-                value = currentStatement.expression.expression.getValue()
-            elif type(currentStatement.expression.expression) == FunctionCallStatement:
-                value = self.__conditionCb(self.__name, currentStatement.expression.expression)
-
-            if value:
+            if self.evaluateBooleanExpression(currentStatement.expression.expression):
                 self.__blockStack.append(BlockEntry(currentStatement.block.statements))
                 self.processCurrentStatement()
             else:
