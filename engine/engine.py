@@ -5,6 +5,7 @@ import pygame
 
 from engine.scene.scene import Scene
 from engine.sound.sfx import SFX
+from engine.strings import Strings
 
 
 class Engine:
@@ -43,6 +44,9 @@ class Engine:
 
         # sfx loading
         SFX.load()
+
+        # strings loading
+        Strings.load(self)
 
         # fonts
         from data.constants import Constants
@@ -119,6 +123,7 @@ class Engine:
         Textures.unload()
 
         SFX.unload()
+        Strings.unload()
 
     def exit(self):
         self.__running = False
