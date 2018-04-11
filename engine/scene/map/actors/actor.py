@@ -36,11 +36,16 @@ class Actor:
 
         self.lastUpdateDate = 0  # the last time this actor was updated and drawn
 
+        self.currentState = None # name of the current state
+
         # used to keep references to interpreters
+        # state name -> interpreter name
         self.interpreters = {}
 
-        # used to keep references to interpreters timers
+        # used to keep references to interpreters timers for current state
         self.interpreterTimers = {}
+
+        self.__cantalScript = None  # the CantalScript instance of this event
 
         # List of the condition functions
         # name associated to boolean function
@@ -58,7 +63,6 @@ class Actor:
         # No conditional
 
         self.registerCantalFunction("wait", self.cantalWait)
-        self.registerCantalFunction("setParameter", self.cantalSetParameter)
         self.registerCantalFunction("print", self.cantalPrint)
 
     def registerCantalConditionFunction(self, name, cb):
@@ -76,24 +80,58 @@ class Actor:
     def update(self, dt : int, events : List[pygame.event.Event]):
         # Notify interpreters that a new frame has been displayed
         # so that they can continue running the scripts
-        for i in self.interpreters:
-            interpreter = self.interpreters[i]
-            if interpreter is not None:
-                interpreter.newFrame()
+        if self.__script is not None:
+            for i in self.interpreters[self.currentState]:
+                interpreter = self.interpreters[self.currentState][i]
+                if interpreter is not None:
+                    interpreter.newFrame()
 
-        # Interpreters timers
-        for t in self.interpreterTimers:
-            timer = self.interpreterTimers[t]
-            if timer is not None:
-                timer.update(dt)  # will self-delete in callback
+            # Interpreters timers
+            for t in self.interpreterTimers:
+                timer = self.interpreterTimers[t]
+                if timer is not None:
+                    timer.update(dt)  # will self-delete in callback
 
     def isSpawned(self) -> bool:
         return self.__spawned
+
+    def activateRightState(self):
+        if self.__script is None:
+            return
+
+        try:
+            # Take the first interpreter we find
+            currentStateInterpreters = next(iter(self.interpreters.values()))
+            interpreter = next(iter(currentStateInterpreters.values()))
+
+            # Get the first state we find
+            found = False
+            for state in self.__cantalScript.states:
+                stateName = str(state.name)
+                stateExpression = state.condition
+
+                if interpreter.evaluateBooleanExpression(stateExpression):
+                    # Activate the newly found state
+                    if stateName != self.currentState:
+                        if self.currentState is not None:
+                            for i in self.interpreters[self.currentState]:
+                                self.interpreters[self.currentState][i].reset()
+                        self.interpreterTimers = {}
+                        self.currentState = stateName
+                        self.runInterpreter("event.loop")
+                    found = True
+                    break
+
+            if not found:
+                raise Exception("Could not activate any state for event " + str(self.__name))
+        except StopIteration:
+            raise Exception("Could not activate any state for event " + str(self.__name))
 
     def load(self):
         # Load CantalScript file
         if self.__script is not None:
             try:
+                # Load the script
                 scriptKey = self.getScene().getMapName() + "." + self.__script + ".cantalscript"
 
                 if scriptKey not in Actor.CANTAL_CACHE:
@@ -102,18 +140,27 @@ class Actor:
 
                 scriptData = Actor.CANTAL_CACHE[scriptKey]
 
-                for event in scriptData.events:
-                    eventName = event.name
+                self.__cantalScript = scriptData
 
-                    if eventName not in Actor.CANTAL_EVENTS_LIST:
-                        raise Exception("Unknown event " + eventName)
+                for state in scriptData.states:
+                    stateName = str(state.name)
+                    if not stateName in self.interpreters:
+                        self.interpreters[stateName] = {}
 
-                    eventName = "event." + eventName
+                    for event in state.events:
+                        eventName = event.name
 
-                    if eventName in self.interpreters:
-                        raise Exception("Duplicate event " + eventName)
+                        if eventName not in Actor.CANTAL_EVENTS_LIST:
+                            raise Exception("Unknown event " + eventName)
 
-                    self.interpreters[eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop", self.cantalRegisterAffectationCallback, self.cantalRegisterCallback)
+                        eventName = "event." + eventName
+
+                        if eventName in self.interpreters:
+                            raise Exception("Duplicate event " + eventName)
+
+                        self.interpreters[stateName][eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop", self.cantalRegisterAffectationCallback, self.cantalRegisterCallback)
+
+                # The right state will be activated on spawn
 
             except FileNotFoundError:
                 raise Exception("Could not find a script named " + self.__script)
@@ -131,16 +178,16 @@ class Actor:
 
         self.__cantalFunctions[function.name](interpreter, function.params.params)
 
-    def getConstantForInterpreter(self, interpreter, constant):
-        constantsTable = self.interpreters[interpreter].script.constantsTable
+    def getConstant(self, constant):
+        constantsTable = self.__cantalScript.constantsTable
         if not constant in constantsTable:
             raise Exception("Unknown constant " + constant)
 
         return constantsTable[constant]
 
-    def cantalRegisterCallback(self, interpreter : str, register : Register):
+    def cantalRegisterCallback(self, register : Register):
         regType = register.type
-        regName = self.getRegName(interpreter, register.name)
+        regName = self.getRegName(register.name)
 
         try:
             if regType == "parameters":
@@ -154,41 +201,42 @@ class Actor:
         except KeyError:
             return None
 
-
-    def getRegName(self, interpreter : str, regName : str):
+    def getRegName(self, regName : str):
         if type(regName) == Symbol:
             # Assume it's a constant
             regName = str(regName)
-            return self.getConstantForInterpreter(interpreter, regName)
+            return self.getConstant(regName)
         else:
             # String literal
             return regName.getValue()
 
-    def cantalRegisterAffectationCallback(self, interpreter:str, register : Register, value : Literal):
-            regType = register.type
-            regName = self.getRegName(interpreter, register.name)
+    def cantalRegisterAffectationCallback(self, register : Register, value : Literal):
+        regType = register.type
+        regName = self.getRegName(register.name)
 
-            if regType == "parameters":
-                self.__parameters[regName] = value.literal.getValue()
-            elif regType == "variables":
-                self.__cantalVariables[regName] = value.literal.getValue()
-            elif regType == "savedVariables":
-                if self.__name == None:
-                    raise Exception("The event must have a name to be able to use savedVariables register")
-                SaveManager.setCurrentSaveValue(self.getScene().getMapName() + "." + self.__name + "." + regName, value.literal.getValue())
-            elif regType == "messageParameters":
-                pass # TODO Implement this - store the parameters for a later message call
-            else:
-                raise Exception("Unknown register type " + regType)
+        if regType == "parameters":
+            self.__parameters[regName] = value.literal.getValue()
+        elif regType == "variables":
+            self.__cantalVariables[regName] = value.literal.getValue()
+        elif regType == "savedVariables":
+            if self.__name == None:
+                raise Exception("The event must have a name to be able to use savedVariables register")
+            SaveManager.setCurrentSaveValue(self.getScene().getMapName() + "." + self.__name + "." + regName, value.literal.getValue())
+        elif regType == "messageParameters":
+            pass # TODO Implement this - store the parameters for a later message call
+        else:
+            raise Exception("Unknown register type " + regType)
 
+        self.activateRightState()
 
     def unload(self):
         self.despawn()  # just to be sure
 
-        for interpreter in self.interpreters:
-            if self.interpreters[interpreter] is not None:
-                self.interpreters[interpreter].reset()
-                self.interpreters[interpreter] = None
+        for state in self.interpreters:
+            for interpreter in self.interpreters[state]:
+                if self.interpreters[state][interpreter] is not None:
+                    self.interpreters[state][interpreter].reset()
+                    self.interpreters[state][interpreter] = None
 
     def draw(self, offsetX, offsetY):
         pass
@@ -204,7 +252,7 @@ class Actor:
             self.__spawned = True
             self.__scene.spawnActor(self, self.__posX, self.__posY)
 
-            self.runInterpreter("event.loop")
+            self.activateRightState()
 
     def despawn(self):
         if self.__spawned:
@@ -232,8 +280,8 @@ class Actor:
         self.__posY = y
 
     def runInterpreter(self, interpreter):
-        if interpreter in self.interpreters and self.interpreters[interpreter] is not None:
-            self.interpreters[interpreter].run()
+        if self.currentState in self.interpreters and interpreter in self.interpreters[self.currentState] and self.interpreters[self.currentState][interpreter] is not None:
+            self.interpreters[self.currentState][interpreter].run()
 
     '''
     Fired when the character faces the actor
@@ -264,7 +312,7 @@ class Actor:
 
     def interpreterTimerCallback(self, tag):
         self.interpreterTimers[tag] = None
-        self.interpreters[tag].nextStatement()
+        self.interpreters[self.currentState][tag].nextStatement()
 
     '''
     CantalScript conditional functions
@@ -281,17 +329,9 @@ class Actor:
 
         self.interpreterTimers[interpreter] = Timer(interpreter, duration.getValue(), self.interpreterTimerCallback)
 
-
-    def cantalSetParameter(self, interpreter, functionParams):
-        name = functionParams[0].literal
-        value = functionParams[1].literal
-
-        self.__parameters[name.getValue()] = value.getValue()
-        self.interpreters[interpreter].nextStatement()
-
     def cantalPrint(self, interpreter, functionParams):
         text = functionParams[0].literal
 
         print(text.getValue())
 
-        self.interpreters[interpreter].nextStatement()
+        self.interpreters[self.currentState][interpreter].nextStatement()

@@ -55,7 +55,7 @@ class NPCActor(Actor):
 
     def moveTweenCallback(self, tag : Any):
         self.__moving = False
-        self.interpreters[tag].nextStatement()
+        self.interpreters[self.currentState][tag].nextStatement()
 
     def setOrientation(self, orientation : int):
         self.__charset.setOrientation(orientation)
@@ -82,7 +82,7 @@ class NPCActor(Actor):
         elif degree >= -135 or degree < 135:
             self.setOrientation(Charset.ORIENTATION_LEFT)
 
-        self.interpreters[interpreter].nextStatement()
+        self.interpreters[self.currentState][interpreter].nextStatement()
 
     def cantalWalk(self, interpreter, functionParams):
 

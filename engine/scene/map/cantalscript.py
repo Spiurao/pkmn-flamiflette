@@ -83,8 +83,11 @@ class Message(List):
 class Constant(List):
     grammar = "constant", name(), "=", attr("value", Literal), ";"
 
+class State(List):
+    grammar = "state", name(), "(", attr("condition", BooleanExpression), ")", "{", attr("messages", maybe_some(Message)), attr("events", maybe_some(Event)), "}"
+
 class CantalScript(str):
-    grammar = attr("constants", maybe_some(Constant)), attr("messages", maybe_some(Message)), attr("events", maybe_some(Event))
+    grammar = attr("constants", maybe_some(Constant)), attr("states", maybe_some(State))
 
     constantsTable = {}  # constants table
 
@@ -167,10 +170,10 @@ class CantalInterpreter:
         elif expressionType == FunctionCallStatement:
             value = self.__conditionCb(self.__name, expression.expression)
         elif expressionType == Register:
-            registerValue = self.__registerValueCb(self.__name, expression.expression)
+            registerValue = self.__registerValueCb(expression.expression)
             value = registerValue is not None and type(registerValue) == bool and registerValue == True
         elif expressionType == RegisterBooleanExpression:
-            registerValue = self.__registerValueCb(self.__name, expression.expression.register)
+            registerValue = self.__registerValueCb(expression.expression.register)
             value = registerValue is not None and registerValue == expression.expression.literal.literal.getValue()
         else:
             raise Exception("Unknown boolean expression type " + str(expressionType))
@@ -203,12 +206,15 @@ class CantalInterpreter:
             self.__functionsCb(self.__name, currentStatement)
         # Actor register affectation statement
         elif statementType == RegisterAffectationStatement:
-            self.__registerAffectationCb(self.__name, currentStatement.register, currentStatement.value)
+            self.__registerAffectationCb(currentStatement.register, currentStatement.value)
             self.nextStatement();
         else:
             raise Exception("Unknown statement type " + str(statementType))
 
     def nextStatement(self):
+        if not self.__running:
+            return
+
         if self.__statementsForCurrentFrame >= CantalInterpreter.STATEMENTS_LIMIT_PER_FRAME:
             self.__waitingForNewFrame = True
             return

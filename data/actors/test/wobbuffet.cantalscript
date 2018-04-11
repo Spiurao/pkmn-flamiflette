@@ -1,34 +1,35 @@
-//TODO Replace the parameters[...] conditions by states once they're implemented
-
 constant PARAMETER_LOOK = "look";
 constant PARAMETER_WALK = "walk";
 
-message testMessage()
+state look(parameters[PARAMETER_LOOK])
 {
-    print("Received test message");
-}
-
-event loop()
-{
-    //Look at the character if enabled
-    //in the event parameters
-    if (parameters[PARAMETER_LOOK])
+    message testMessage()
     {
+        print("Look state");
+    }
+
+    event loop()
+    {
+        //Look at the character
         turnToFaceCharacter();
         wait(500);
     }
 }
 
-event actionPressed()
+state walk(parameters[PARAMETER_WALK])
 {
-    //Walk 4 tiles up and 3 tiles
-    //left if enabled in the event
-    //parameters
-    if (parameters[PARAMETER_WALK])
+    message testMessage()
     {
+        print("Walk state");
+    }
+
+    event actionPressed()
+    {
+        //Walk 4 tiles up and 3 tiles left
         walk(UP, 4);
         walk(LEFT, 3);
+
+        //Change state
         parameters[PARAMETER_LOOK] = true;
-        parameters[PARAMETER_WALK] = false;
     }
 }
