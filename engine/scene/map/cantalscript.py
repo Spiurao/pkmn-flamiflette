@@ -184,7 +184,6 @@ class CantalInterpreter:
         return value
 
 
-
     def processCurrentStatement(self):
         if not self.__running:
             return

@@ -20,7 +20,8 @@ class Actor:
         "actionPressed",
         "characterEnteredTile",
         "characterTouchEvent",
-        "loop"
+        "loop",
+        "enterState"
     ]
 
     def __init__(self, scene, x: int, y: int, parameters: Dict, script : str, name : str):
@@ -119,6 +120,7 @@ class Actor:
                         self.interpreterTimers = {}
                         self.currentState = stateName
                         self.runInterpreter("event.loop")
+                        self.runInterpreter("event.enterState")
                     found = True
                     break
 

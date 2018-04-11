@@ -5,7 +5,7 @@ state look(parameters[PARAMETER_LOOK])
 {
     message testMessage()
     {
-        print("Look state");
+        print("Hello from look state");
     }
 
     event loop()
@@ -20,7 +20,7 @@ state walk(parameters[PARAMETER_WALK])
 {
     message testMessage()
     {
-        print("Walk state");
+        print("Hello from walk state");
     }
 
     event actionPressed()
