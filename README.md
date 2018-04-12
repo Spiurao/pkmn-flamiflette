@@ -1,9 +1,13 @@
 # pkmn-flamiflette
 Pokémon Flamiflette &amp; Tartikueche
 
-## Dépendances
+## Dependencies
 * Python 3.5
-* Modules Python
+* Python Modules (`pip3 install`)
     * `msgpack`
     * `pygame`
     * `pypeg2`
+
+## Wiki
+
+https://github.com/Spiurao/pkmn-flamiflette/wiki
