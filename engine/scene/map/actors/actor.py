@@ -24,6 +24,9 @@ class Actor:
         "enterState"
     ]
 
+    VARIABLE_TYPE_NORMAL = 0
+    VARIABLE_TYPE_SAVED = 1
+
     def __init__(self, scene, x: int, y: int, parameters: Dict, script : str, name : str):
         self.__scene = scene  # the MapScene containing this actor
         self.__posX = x  # x position of this actor
@@ -59,6 +62,7 @@ class Actor:
 
         # Cantal variables
         self.__cantalVariables = {}
+        self.__cantalVariablesTypes = {}  # name -> type (saved or normal)
 
         # Default Cantal functions
 
@@ -108,7 +112,7 @@ class Actor:
                 stateName = str(state.name)
                 stateExpression = state.condition
 
-                if self.__cantalScript.evaluateBooleanExpression(stateExpression, self.cantalRegisterCallback, self.cantalConditionCallback):
+                if self.__cantalScript.evaluateBooleanExpression(stateExpression, self.cantalValueCallback, self.cantalConditionCallback):
                     # Activate the newly found state
                     if stateName != self.currentState:
                         if self.currentState is not None:
@@ -141,6 +145,15 @@ class Actor:
 
                 self.__cantalScript = scriptData
 
+                # Variables
+                for variable in scriptData.vars:
+                    if variable.name in self.__cantalVariablesTypes:
+                        raise Exception("Duplicate variable " + variable.name)
+                    if variable.saved and self.__name == None:
+                        raise Exception("The actor must have a name to be able to use saved variables")
+                    self.__cantalVariablesTypes[variable.name] = Actor.VARIABLE_TYPE_SAVED if variable.saved else Actor.VARIABLE_TYPE_NORMAL
+
+                # Interpreters
                 for state in scriptData.states:
                     stateName = str(state.name)
                     if not stateName in self.interpreters:
@@ -157,7 +170,7 @@ class Actor:
                         if eventName in self.interpreters:
                             raise Exception("Duplicate event " + eventName)
 
-                        self.interpreters[stateName][eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop", self.cantalRegisterAffectationCallback, self.cantalRegisterCallback)
+                        self.interpreters[stateName][eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop", self.cantalAffectationCallback, self.cantalValueCallback)
 
                 # The right state will be activated on spawn
 
@@ -184,23 +197,37 @@ class Actor:
 
         return constantsTable[constant]
 
-    def cantalRegisterCallback(self, register : Register):
-        regType = register.type
-        regName = self.getRegName(register.name)
+    def cantalValueCallback(self, value):
+        valueType = type(value)
+        if valueType == Register:
+            regType = value.type
+            regName = self.getRegName(value.name)
 
-        try:
-            if regType == "parameters":
-                return self.__parameters[regName]
-            elif regType == "variables":
-                return self.__cantalVariables[regName]
-            elif regType == "savedVariables":
-                return SaveManager.getCurrentSaveValue(regName)
-            elif regType == "messageParameters":
-                pass # TODO Implement this - get message parameters for message name
+            try:
+                if regType == "parameters":
+                    return self.__parameters[regName]
+                elif regType == "messageParameters":
+                    pass # TODO Implement this - get message parameters for message name
+                else:
+                    raise Exception("Unknown register " + str(regType))
+            except KeyError:
+                return None
+        elif valueType == str:
+            symbol = value
+            #Is it a constant ?
+            if symbol in self.__cantalScript.constantsTable:
+                return self.__cantalScript.constantsTable[symbol]
+            # Is it a variable ?
+            elif symbol in self.__cantalVariablesTypes:
+                vtype = self.__cantalVariablesTypes[symbol]
+                if vtype == Actor.VARIABLE_TYPE_NORMAL:
+                    return symbol in self.__cantalVariables and self.__cantalVariables[symbol]
+                elif vtype == Actor.VARIABLE_TYPE_SAVED:
+                    return SaveManager.getCurrentSaveValue(self.getScene().getMapName() + "." + self.__name + "." + symbol)
             else:
-                raise Exception("Unknown register " + str(regType))
-        except KeyError:
-            return None
+                raise Exception("Unknown symbol " + symbol)
+        else:
+            raise Exception("Unknown value type " + str(valueType))
 
     def getRegName(self, regName : str):
         if type(regName) == Symbol:
@@ -211,22 +238,32 @@ class Actor:
             # String literal
             return regName.getValue()
 
-    def cantalRegisterAffectationCallback(self, register : Register, value : Literal):
-        regType = register.type
-        regName = self.getRegName(register.name)
+    def cantalAffectationCallback(self, variable, value : Literal):
+        variableType = type(variable)
+        if variableType == Register:
+            regType = variable.type
+            regName = self.getRegName(variable.name)
 
-        if regType == "parameters":
-            self.__parameters[regName] = value.literal.getValue()
-        elif regType == "variables":
-            self.__cantalVariables[regName] = value.literal.getValue()
-        elif regType == "savedVariables":
-            if self.__name == None:
-                raise Exception("The event must have a name to be able to use savedVariables register")
-            SaveManager.setCurrentSaveValue(self.getScene().getMapName() + "." + self.__name + "." + regName, value.literal.getValue())
-        elif regType == "messageParameters":
-            pass # TODO Implement this - store the parameters for a later message call
-        else:
-            raise Exception("Unknown register type " + regType)
+            if regType == "parameters":
+                self.__parameters[regName] = value.literal.getValue()
+            elif regType == "messageParameters":
+                pass # TODO Implement this - store the parameters for a later message call
+            else:
+                raise Exception("Unknown register type " + regType)
+        elif variableType == Symbol:
+            symbol = str(variable)
+            # Is it a constant ?
+            if symbol in self.__cantalScript.constantsTable:
+                raise Exception("Cannot make an affectation to a constant")
+            elif symbol in self.__cantalVariablesTypes:
+                vtype = self.__cantalVariablesTypes[symbol]
+                if vtype == Actor.VARIABLE_TYPE_NORMAL:
+                    self.__cantalVariables[symbol] = value.literal.getValue()
+                elif vtype == Actor.VARIABLE_TYPE_SAVED:
+                    SaveManager.setCurrentSaveValue(self.getScene().getMapName() + "." + self.__name + "." + symbol,
+                                                    value.literal.getValue())
+            else:
+                raise Exception("Unknown symbol " + symbol)
 
         self.activateRightState()
 

@@ -1,5 +1,4 @@
 import typing
-from pprint import pprint
 
 from pypeg2 import *
 
@@ -66,7 +65,7 @@ class BooleanExpression(str):
     pass
 
 class AndOperator(str):
-    grammar = grammar = attr("op1", BooleanExpression), "&&", attr("op2", BooleanExpression)
+    grammar = attr("op1", BooleanExpression), "&&", attr("op2", BooleanExpression)
 
 class NotOperator(str):
     grammar = "!", attr("op", BooleanExpression)
@@ -77,14 +76,14 @@ class OrOperator(str):
 class BooleanOperator:
     grammar = "(", attr("operator", [NotOperator, AndOperator, OrOperator]), ")"
 
-class RegisterAffectationStatement(str):
-    grammar = attr("register", Register), "=", attr("value", Literal)
+class AffectationStatement(str):
+    grammar = attr("register", [Register, Symbol]), "=", attr("value", Literal)
 
 class IfStatement(str):
     grammar = "if", "(", attr("expression", BooleanExpression), ")", attr("block", Block)
 
 class Statement(List):
-    grammar = attr("statement", [([FunctionCallStatement, RegisterAffectationStatement], ";"), IfStatement])
+    grammar = attr("statement", [([FunctionCallStatement, AffectationStatement], ";"), IfStatement])
 
 class Event(List):
     grammar = "event", name(), "()", attr("block", Block)
@@ -92,18 +91,11 @@ class Event(List):
 class Message(List):
     grammar = "message", name(), "()", attr("block", Block)
 
-class Constant(List):
-    grammar = "constant", name(), "=", attr("value", Literal), ";"
-
-class State(List):
-    grammar = "state", name(), "(", attr("condition", BooleanExpression), ")", "{", attr("messages", maybe_some(Message)), attr("events", maybe_some(Event)), "}"
 
 class CantalScript(str):
-    grammar = attr("constants", maybe_some(Constant)), attr("states", maybe_some(State))
-
     constantsTable = {}  # constants table
 
-    def evaluateBooleanExpression(self, expression, registerValueCb : typing.Callable, conditionCb : typing.Callable) -> bool:
+    def evaluateBooleanExpression(self, expression, valueCb : typing.Callable, conditionCb : typing.Callable) -> bool:
         expressionType = type(expression.expression)
 
         if expressionType == BooleanLiteral:
@@ -111,20 +103,30 @@ class CantalScript(str):
         elif expressionType == FunctionCallStatement:
             return conditionCb(expression.expression)
         elif expressionType == Register:
-            registerValue = registerValueCb(expression.expression)
+            registerValue = valueCb(expression.expression)
             return registerValue is not None and type(registerValue) == bool and registerValue == True
         elif expressionType == RegisterBooleanExpression:
-            registerValue = registerValueCb(expression.expression.register)
+            registerValue = valueCb(expression.expression.register)
             return registerValue is not None and registerValue == expression.expression.literal.literal.getValue()
         elif expressionType == BooleanOperator:
             operator = expression.expression.operator
             booleanType = type(operator)
             if booleanType == AndOperator:
-                return self.evaluateBooleanExpression(operator.op1, registerValueCb, conditionCb) and self.evaluateBooleanExpression(operator.op2, registerValueCb, conditionCb)
+                return self.evaluateBooleanExpression(operator.op1, valueCb, conditionCb) and self.evaluateBooleanExpression(operator.op2, valueCb, conditionCb)
             elif booleanType == OrOperator:
-                return self.evaluateBooleanExpression(operator.op1, registerValueCb, conditionCb) or self.evaluateBooleanExpression(operator.op2, registerValueCb, conditionCb)
+                return self.evaluateBooleanExpression(operator.op1, valueCb, conditionCb) or self.evaluateBooleanExpression(operator.op2, valueCb, conditionCb)
             elif booleanType == NotOperator:
-                return not self.evaluateBooleanExpression(operator.op, registerValueCb, conditionCb)
+                return not self.evaluateBooleanExpression(operator.op, valueCb, conditionCb)
+        elif expressionType == Symbol:
+            symbol = str(expression.expression)
+            value = None
+            # Is it a constant ?
+            if symbol in self.constantsTable:
+                value = self.constantsTable[symbol]
+            # Is it a variable ?
+            else:
+                value = valueCb(symbol)
+            return value is not None and type(value) == bool and value == True
         else:
             raise Exception("Unknown boolean expression type " + str(expressionType))
 
@@ -132,9 +134,19 @@ class CantalScript(str):
         for constant in self.constants:
             self.constantsTable[constant.name] = constant.value.literal.getValue()
 
+class ConstantDeclaration(List):
+    grammar = "const", name(), "=", attr("value", Literal), ";"
+
+class VariableDeclaration(List):
+    grammar = flag("saved"), "var", name(), ";"
+
+class State(List):
+    grammar = "state", name(), "(", attr("condition", BooleanExpression), ")", "{", attr("messages", maybe_some(Message)), attr("events", maybe_some(Event)), "}"
+
 # Stupid Python
 Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
-BooleanExpression.grammar = attr("expression", [BooleanOperator, RegisterBooleanExpression, Register, FunctionCallStatement, BooleanLiteral])
+BooleanExpression.grammar = attr("expression", [BooleanOperator, RegisterBooleanExpression, Register, FunctionCallStatement, BooleanLiteral, Symbol])
+CantalScript.grammar = attr("constants", maybe_some(ConstantDeclaration)), attr("vars", maybe_some(VariableDeclaration)), attr("states", maybe_some(State))
 
 class CantalParser:
 
@@ -160,13 +172,13 @@ class BlockEntry:
 class CantalInterpreter:
     STATEMENTS_LIMIT_PER_FRAME = 100  # the interpreter cannot execute more statements per frame than this - fixes game freeze and maximum recursion depth errors
 
-    def __init__(self, script : CantalScript, name : str, code : Block, functionsCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool, registerAffectationCallback : typing.Callable, registerValueCallback : typing.Callable):
+    def __init__(self, script : CantalScript, name : str, code : Block, functionsCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool, affectationCallback : typing.Callable, valueCallback : typing.Callable):
         self.__name = name
         self.__code = code.statements
         self.__functionsCb = functionsCallback
         self.__conditionCb = conditionCallback
-        self.__registerAffectationCb = registerAffectationCallback
-        self.__registerValueCb = registerValueCallback
+        self.__affectationCb = affectationCallback
+        self.__valueCb = valueCallback
         self.__loop = loop
 
         self.script = script
@@ -209,7 +221,7 @@ class CantalInterpreter:
         statementType = type(currentStatement)
         if statementType == IfStatement:
             # Evaluate condition
-            if self.script.evaluateBooleanExpression(currentStatement.expression, self.__registerValueCb, self.__conditionCb):
+            if self.script.evaluateBooleanExpression(currentStatement.expression, self.__valueCb, self.__conditionCb):
                 self.__blockStack.append(BlockEntry(currentStatement.block.statements))
                 self.processCurrentStatement()
             else:
@@ -218,8 +230,8 @@ class CantalInterpreter:
         elif statementType == FunctionCallStatement:
             self.__functionsCb(self.__name, currentStatement)
         # Actor register affectation statement
-        elif statementType == RegisterAffectationStatement:
-            self.__registerAffectationCb(currentStatement.register, currentStatement.value)
+        elif statementType == AffectationStatement:
+            self.__affectationCb(currentStatement.register, currentStatement.value)
             self.nextStatement();
         else:
             raise Exception("Unknown statement type " + str(statementType))

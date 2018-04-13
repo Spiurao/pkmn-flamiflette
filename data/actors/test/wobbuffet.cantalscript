@@ -1,5 +1,5 @@
-constant PARAMETER_LOOK = "look";
-constant PARAMETER_WALK = "walk";
+const PARAMETER_LOOK = "look";
+const PARAMETER_WALK = "walk";
 
 state look(parameters[PARAMETER_LOOK])
 {
