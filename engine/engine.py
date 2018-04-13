@@ -32,6 +32,7 @@ class Engine:
         self.__variant = variant  # the game variant : GAME_VARIANT_1 or GAME_VARIANT_2
 
         # pygame display
+        pygame.mixer.pre_init(44100, -16, 1, 512)
         pygame.init()
         pygame.display.init()
         from data.constants import Constants
