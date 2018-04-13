@@ -153,6 +153,9 @@ class Actor:
                         raise Exception("The actor must have a name to be able to use saved variables")
                     self.__cantalVariablesTypes[variable.name] = Actor.VARIABLE_TYPE_SAVED if variable.saved else Actor.VARIABLE_TYPE_NORMAL
 
+                    if hasattr(variable, "value") and variable.value is not None:
+                        self.__cantalVariables[variable.name] = variable.value.literal.getValue()
+
                 # Interpreters
                 for state in scriptData.states:
                     stateName = str(state.name)
@@ -212,8 +215,8 @@ class Actor:
                     raise Exception("Unknown register " + str(regType))
             except KeyError:
                 return None
-        elif valueType == str:
-            symbol = value
+        elif valueType == Symbol:
+            symbol = str(value)
             #Is it a constant ?
             if symbol in self.__cantalScript.constantsTable:
                 return self.__cantalScript.constantsTable[symbol]

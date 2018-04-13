@@ -58,8 +58,21 @@ class Block(List):
 class Register(str):
     grammar = attr("type", Symbol), "[", attr("name", [Symbol, StringLiteral]) ,"]"
 
-class RegisterBooleanExpression:
-    grammar = attr("register", Register), "==", attr("literal", Literal)
+class Value(str):
+    grammar = attr("value", [Register, Symbol, Literal])
+
+    def getValue(self, valueCb):
+        valueType = type(self.value)
+        if valueType == Register or valueType == Symbol:
+            return valueCb(self.value)
+        elif valueType == Literal:
+            return self.value.literal.getValue()
+        else:
+            raise Exception("Unknown value type " + str(valueType))
+
+
+class EqualsOperator(str):
+    grammar = attr("var1", Value), "==", attr("var2", Value)
 
 class BooleanExpression(str):
     pass
@@ -74,7 +87,7 @@ class OrOperator(str):
     grammar = attr("op1", BooleanExpression), "||", attr("op2", BooleanExpression)
 
 class BooleanOperator:
-    grammar = "(", attr("operator", [NotOperator, AndOperator, OrOperator]), ")"
+    grammar = "(", attr("operator", [EqualsOperator, NotOperator, AndOperator, OrOperator]), ")"
 
 class AffectationStatement(str):
     grammar = attr("register", [Register, Symbol]), "=", attr("value", Literal)
@@ -105,9 +118,6 @@ class CantalScript(str):
         elif expressionType == Register:
             registerValue = valueCb(expression.expression)
             return registerValue is not None and type(registerValue) == bool and registerValue == True
-        elif expressionType == RegisterBooleanExpression:
-            registerValue = valueCb(expression.expression.register)
-            return registerValue is not None and registerValue == expression.expression.literal.literal.getValue()
         elif expressionType == BooleanOperator:
             operator = expression.expression.operator
             booleanType = type(operator)
@@ -117,6 +127,10 @@ class CantalScript(str):
                 return self.evaluateBooleanExpression(operator.op1, valueCb, conditionCb) or self.evaluateBooleanExpression(operator.op2, valueCb, conditionCb)
             elif booleanType == NotOperator:
                 return not self.evaluateBooleanExpression(operator.op, valueCb, conditionCb)
+            elif booleanType == EqualsOperator:
+                return operator.var1.getValue(valueCb) == operator.var2.getValue(valueCb)
+            else:
+                raise Exception("Unknown operator type " + str(booleanType))
         elif expressionType == Symbol:
             symbol = str(expression.expression)
             value = None
@@ -138,14 +152,14 @@ class ConstantDeclaration(List):
     grammar = "const", name(), "=", attr("value", Literal), ";"
 
 class VariableDeclaration(List):
-    grammar = flag("saved"), "var", name(), ";"
+    grammar = flag("saved"), "var", name(), [("=", attr("value", Literal)),""], ";"
 
 class State(List):
     grammar = "state", name(), "(", attr("condition", BooleanExpression), ")", "{", attr("messages", maybe_some(Message)), attr("events", maybe_some(Event)), "}"
 
 # Stupid Python
 Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
-BooleanExpression.grammar = attr("expression", [BooleanOperator, RegisterBooleanExpression, Register, FunctionCallStatement, BooleanLiteral, Symbol])
+BooleanExpression.grammar = attr("expression", [BooleanOperator, Register, FunctionCallStatement, BooleanLiteral, Symbol])
 CantalScript.grammar = attr("constants", maybe_some(ConstantDeclaration)), attr("vars", maybe_some(VariableDeclaration)), attr("states", maybe_some(State))
 
 class CantalParser:
@@ -203,7 +217,7 @@ class CantalInterpreter:
             self.nextStatement()
 
     def run(self):
-        if self.__running:
+        if self.__running or len(self.__code) <= 0:
             return
 
         self.__blockStack.append(BlockEntry(self.__code))
