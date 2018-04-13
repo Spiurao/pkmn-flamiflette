@@ -46,7 +46,8 @@ class Actor:
         # used to keep references to interpreters timers for current state
         self.interpreterTimers = {}
 
-        self.__cantalScript = None  # the CantalScript instance of this event
+        self.__cantalScript = None  # the CantalScript instance of this actor
+        self.__scriptKey = None  # the key of the script in the cantal cache
 
         # List of the condition functions
         # name associated to boolean function
@@ -130,13 +131,13 @@ class Actor:
         if self.__script is not None:
             try:
                 # Load the script
-                scriptKey = self.getScene().getMapName() + "." + self.__script + ".cantalscript"
+                self.__scriptKey = self.getScene().getMapName() + "." + self.__script + ".cantalscript"
 
-                if scriptKey not in Actor.CANTAL_CACHE:
+                if self.__scriptKey not in Actor.CANTAL_CACHE:
                     scriptPath = os.path.join(Constants.ACTORS_PATH, self.getScene().getMapName(), self.__script + ".cantalscript")
-                    Actor.CANTAL_CACHE[scriptKey] = CantalParser.parse(scriptPath)
+                    Actor.CANTAL_CACHE[self.__scriptKey] = CantalParser.parse(scriptPath)
 
-                scriptData = Actor.CANTAL_CACHE[scriptKey]
+                scriptData = Actor.CANTAL_CACHE[self.__scriptKey]
 
                 self.__cantalScript = scriptData
 
