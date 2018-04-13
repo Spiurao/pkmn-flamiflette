@@ -103,6 +103,31 @@ class CantalScript(str):
 
     constantsTable = {}  # constants table
 
+    def evaluateBooleanExpression(self, expression, registerValueCb : typing.Callable, conditionCb : typing.Callable) -> bool:
+        expressionType = type(expression.expression)
+
+        if expressionType == BooleanLiteral:
+            return expression.expression.getValue()
+        elif expressionType == FunctionCallStatement:
+            return conditionCb(expression.expression)
+        elif expressionType == Register:
+            registerValue = registerValueCb(expression.expression)
+            return registerValue is not None and type(registerValue) == bool and registerValue == True
+        elif expressionType == RegisterBooleanExpression:
+            registerValue = registerValueCb(expression.expression.register)
+            return registerValue is not None and registerValue == expression.expression.literal.literal.getValue()
+        elif expressionType == BooleanOperator:
+            operator = expression.expression.operator
+            booleanType = type(operator)
+            if booleanType == AndOperator:
+                return self.evaluateBooleanExpression(operator.op1, registerValueCb, conditionCb) and self.evaluateBooleanExpression(operator.op2, registerValueCb, conditionCb)
+            elif booleanType == OrOperator:
+                return self.evaluateBooleanExpression(operator.op1, registerValueCb, conditionCb) or self.evaluateBooleanExpression(operator.op2, registerValueCb, conditionCb)
+            elif booleanType == NotOperator:
+                return not self.evaluateBooleanExpression(operator.op, registerValueCb, conditionCb)
+        else:
+            raise Exception("Unknown boolean expression type " + str(expressionType))
+
     def init(self):
         for constant in self.constants:
             self.constantsTable[constant.name] = constant.value.literal.getValue()
@@ -173,32 +198,6 @@ class CantalInterpreter:
         self.__running = True
         self.processCurrentStatement()
 
-    def evaluateBooleanExpression(self, expression) -> bool:
-        expressionType = type(expression.expression)
-
-        if expressionType == BooleanLiteral:
-            return expression.expression.getValue()
-        elif expressionType == FunctionCallStatement:
-            return self.__conditionCb(self.__name, expression.expression)
-        elif expressionType == Register:
-            registerValue = self.__registerValueCb(expression.expression)
-            return registerValue is not None and type(registerValue) == bool and registerValue == True
-        elif expressionType == RegisterBooleanExpression:
-            registerValue = self.__registerValueCb(expression.expression.register)
-            return registerValue is not None and registerValue == expression.expression.literal.literal.getValue()
-        elif expressionType == BooleanOperator:
-            operator = expression.expression.operator
-            booleanType = type(operator)
-            if booleanType == AndOperator:
-                return self.evaluateBooleanExpression(operator.op1) and self.evaluateBooleanExpression(operator.op2)
-            elif booleanType == OrOperator:
-                return self.evaluateBooleanExpression(operator.op1) or self.evaluateBooleanExpression(operator.op2)
-            elif booleanType == NotOperator:
-                return not self.evaluateBooleanExpression(operator.op)
-        else:
-            raise Exception("Unknown boolean expression type " + str(expressionType))
-
-
     def processCurrentStatement(self):
         if not self.__running:
             return
@@ -210,7 +209,7 @@ class CantalInterpreter:
         statementType = type(currentStatement)
         if statementType == IfStatement:
             # Evaluate condition
-            if self.evaluateBooleanExpression(currentStatement.expression):
+            if self.script.evaluateBooleanExpression(currentStatement.expression, self.__registerValueCb, self.__conditionCb):
                 self.__blockStack.append(BlockEntry(currentStatement.block.statements))
                 self.processCurrentStatement()
             else:

@@ -101,17 +101,13 @@ class Actor:
             return
 
         try:
-            # Take the first interpreter we find
-            currentStateInterpreters = next(iter(self.interpreters.values()))
-            interpreter = next(iter(currentStateInterpreters.values()))
-
             # Get the first state we find
             found = False
             for state in self.__cantalScript.states:
                 stateName = str(state.name)
                 stateExpression = state.condition
 
-                if interpreter.evaluateBooleanExpression(stateExpression):
+                if self.__cantalScript.evaluateBooleanExpression(stateExpression, self.cantalRegisterCallback, self.cantalConditionCallback):
                     # Activate the newly found state
                     if stateName != self.currentState:
                         if self.currentState is not None:
@@ -167,12 +163,12 @@ class Actor:
             except FileNotFoundError:
                 raise Exception("Could not find a script named " + self.__script)
 
-    def cantalConditionCallback(self, interpreter, expression):
+    def cantalConditionCallback(self, expression):
         # Function calls
         if expression.name not in self.__cantalConditionFunctions:
             raise Exception("Unknown Cantal condition function " + expression.name)
 
-        return self.__cantalConditionFunctions[expression.name](interpreter, expression.params.params)
+        return self.__cantalConditionFunctions[expression.name](expression.params.params)
 
     def cantalFunctionCallback(self, interpreter, function : FunctionCallStatement):
         if function.name not in self.__cantalFunctions:
