@@ -99,7 +99,7 @@ class MulOperator:
         firstValue = self.v1.getValue(valueCb)
         secondValue = self.v2.getValue(valueCb)
 
-        return firstValue * secondValue
+        return int(firstValue * secondValue)
 
 class DivOperator:
     grammar = attr("v1", Value), "/", attr("v2", Value)
@@ -108,7 +108,7 @@ class DivOperator:
         firstValue = self.v1.getValue(valueCb)
         secondValue = self.v2.getValue(valueCb)
 
-        return firstValue / secondValue
+        return int(firstValue / secondValue)
 
 class ValueOperator:
     grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, Value])
