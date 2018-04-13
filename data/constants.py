@@ -4,7 +4,7 @@ import os
 class Constants:
 
     GAME_VARIANT_FLAMIFLETTE = Engine.GAME_VARIANT_1
-    GAME_VARIANT_TARTIKUECHEKEUCHE = Engine.GAME_VARIANT_2
+    GAME_VARIANT_TARTIKUECHE = Engine.GAME_VARIANT_2
 
     IMG_PATH = os.path.join("data", "img")
     MAPS_PATH = os.path.join("data", "maps")
@@ -20,7 +20,7 @@ class Constants:
 
     WINDOW_TITLE = {
         GAME_VARIANT_FLAMIFLETTE : "Pokémon Version Flamiflette",
-        GAME_VARIANT_TARTIKUECHEKEUCHE : "Pokémon Version Tartikuechekeuche"
+        GAME_VARIANT_TARTIKUECHE : "Pokémon Version Tartikueche"
     }
 
     FRAMERATE = 60
