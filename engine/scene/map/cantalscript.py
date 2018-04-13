@@ -59,7 +59,6 @@ class FunctionCallStatement:
     grammar = name(), "(", attr("params", FunctionParameters), ")"
 
 class Value(str):
-    grammar = attr("value", [FunctionCallStatement, Register, Literal, Symbol])
 
     def getValue(self, valueCb):
         valueType = type(self.value)
@@ -70,8 +69,55 @@ class Value(str):
         else:
             raise Exception("Unknown value type " + str(valueType))
 
+class AddOperator:
+    grammar = attr("v1", Value), "+", attr("v2", Value)
+
+    def getValue(self, valueCb):
+        firstValue = self.v1.getValue(valueCb)
+        secondValue = self.v2.getValue(valueCb)
+
+        if type(firstValue) == str:
+            secondValue = str(secondValue)
+        elif type(secondValue) == str:
+            firstValue = str(firstValue)
+
+        return firstValue + secondValue
+
+class SubOperator:
+    grammar = attr("v1", Value), "-", attr("v2", Value)
+
+    def getValue(self, valueCb):
+        firstValue = self.v1.getValue(valueCb)
+        secondValue = self.v2.getValue(valueCb)
+
+        return firstValue - secondValue
+
+class MulOperator:
+    grammar = attr("v1", Value), "*", attr("v2", Value)
+
+    def getValue(self, valueCb):
+        firstValue = self.v1.getValue(valueCb)
+        secondValue = self.v2.getValue(valueCb)
+
+        return firstValue * secondValue
+
+class DivOperator:
+    grammar = attr("v1", Value), "/", attr("v2", Value)
+
+    def getValue(self, valueCb):
+        firstValue = self.v1.getValue(valueCb)
+        secondValue = self.v2.getValue(valueCb)
+
+        return firstValue / secondValue
+
+class ValueOperator:
+    grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, Value])
+
+    def getValue(self, valueCb):
+        return self.operator.getValue(valueCb)
+
 class EqualsOperator(str):
-    grammar = attr("var1", Value), "==", attr("var2", Value)
+    grammar = attr("var1", ValueOperator), "==", attr("var2", ValueOperator)
 
 class BooleanExpression(str):
     pass
@@ -89,7 +135,7 @@ class BooleanOperator:
     grammar = "(", attr("operator", [EqualsOperator, NotOperator, AndOperator, OrOperator]), ")"
 
 class AffectationStatement(str):
-    grammar = attr("register", [Register, Symbol]), "=", attr("value", Value)
+    grammar = attr("register", [Register, Symbol]), "=", attr("value", ValueOperator)
 
 class IfStatement(str):
     grammar = "if", "(", attr("expression", BooleanExpression), ")", attr("block", Block)
@@ -161,7 +207,8 @@ class State(List):
 Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
 BooleanExpression.grammar = attr("expression", [BooleanOperator, Register, FunctionCallStatement, BooleanLiteral, Symbol])
 CantalScript.grammar = attr("constants", maybe_some(ConstantDeclaration)), attr("vars", maybe_some(VariableDeclaration)), attr("states", maybe_some(State))
-FunctionParameters.grammar = attr("params", optional(csl(Value)))
+FunctionParameters.grammar = attr("params", optional(csl(ValueOperator)))
+Value.grammar = attr("value", [FunctionCallStatement, Register, Literal, Symbol])
 
 class CantalParser:
 

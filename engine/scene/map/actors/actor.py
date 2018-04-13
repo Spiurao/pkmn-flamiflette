@@ -390,6 +390,6 @@ class Actor:
     def cantalPrint(self, interpreter, functionParams):
         text = functionParams[0].getValue(self.cantalValueCallback)
 
-        print(text)
+        print(str(text))
 
         self.interpreters[self.currentState][interpreter].nextStatement()

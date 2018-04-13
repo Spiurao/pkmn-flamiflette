@@ -39,10 +39,6 @@ class Strings:
         # Prepare the formatter
         Strings.__formatter = StringsFormatter(engine)
 
-    dict = {
-        "playerName": str(random.randint(1, 484))
-    }
-
     @staticmethod
     def getString(string, *args):
         if string not in Strings.__strings:
