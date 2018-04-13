@@ -68,6 +68,7 @@ class Actor:
         # Default Cantal functions
 
         self.registerCantalValueFunction("getString", self.cantalGetString)
+        self.registerCantalValueFunction("cantalToString", self.cantalToString)
 
         self.registerCantalFunction("wait", self.cantalWait)
         self.registerCantalFunction("print", self.cantalPrint)
@@ -367,6 +368,9 @@ class Actor:
     '''
     CantalScript values functions
     '''
+
+    def cantalToString(self, functionParams):
+        return str(functionParams[0].getValue(self.cantalValueCallback))
 
     def cantalGetString(self, functionParams):
         stringName = functionParams[0].getValue(self.cantalValueCallback)
