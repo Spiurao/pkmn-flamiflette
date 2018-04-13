@@ -35,7 +35,7 @@ class IntegerLiteral(int):
 
 class StringLiteral(str):
     quoted_string = re.compile(r'"[^"]*"')
-    grammar = attr("value", [word, quoted_string])
+    grammar = attr("value", quoted_string)
 
     def getValue(self):
         return self.value[1:-1]
@@ -46,12 +46,6 @@ class StringLiteral(str):
 class Literal(List):
     grammar = attr("literal", [OrientationLiteral, IntegerLiteral, BooleanLiteral, StringLiteral])
 
-class FunctionParameters(List):
-    grammar = attr("params", optional(csl(Literal)))
-
-class FunctionCallStatement:
-    grammar = name(), "(", attr("params", FunctionParameters), ")"
-
 class Block(List):
     pass
 
@@ -59,7 +53,7 @@ class Register(str):
     grammar = attr("type", Symbol), "[", attr("name", [Symbol, StringLiteral]) ,"]"
 
 class Value(str):
-    grammar = attr("value", [Register, Symbol, Literal])
+    grammar = attr("value", [Register, Literal, Symbol])
 
     def getValue(self, valueCb):
         valueType = type(self.value)
@@ -69,6 +63,13 @@ class Value(str):
             return self.value.literal.getValue()
         else:
             raise Exception("Unknown value type " + str(valueType))
+
+
+class FunctionParameters(List):
+    grammar = attr("params", optional(csl(Value)))
+
+class FunctionCallStatement:
+    grammar = name(), "(", attr("params", FunctionParameters), ")"
 
 
 class EqualsOperator(str):
@@ -90,7 +91,7 @@ class BooleanOperator:
     grammar = "(", attr("operator", [EqualsOperator, NotOperator, AndOperator, OrOperator]), ")"
 
 class AffectationStatement(str):
-    grammar = attr("register", [Register, Symbol]), "=", attr("value", Literal)
+    grammar = attr("register", [Register, Symbol]), "=", attr("value", Value)
 
 class IfStatement(str):
     grammar = "if", "(", attr("expression", BooleanExpression), ")", attr("block", Block)
@@ -245,7 +246,7 @@ class CantalInterpreter:
             self.__functionsCb(self.__name, currentStatement)
         # Actor register affectation statement
         elif statementType == AffectationStatement:
-            self.__affectationCb(currentStatement.register, currentStatement.value)
+            self.__affectationCb(currentStatement.register, currentStatement.value.getValue(self.__valueCb))
             self.nextStatement();
         else:
             raise Exception("Unknown statement type " + str(statementType))

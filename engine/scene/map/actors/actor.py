@@ -241,14 +241,14 @@ class Actor:
             # String literal
             return regName.getValue()
 
-    def cantalAffectationCallback(self, variable, value : Literal):
+    def cantalAffectationCallback(self, variable, value):
         variableType = type(variable)
         if variableType == Register:
             regType = variable.type
             regName = self.getRegName(variable.name)
 
             if regType == "parameters":
-                self.__parameters[regName] = value.literal.getValue()
+                self.__parameters[regName] = value
             elif regType == "messageParameters":
                 pass # TODO Implement this - store the parameters for a later message call
             else:
@@ -261,10 +261,10 @@ class Actor:
             elif symbol in self.__cantalVariablesTypes:
                 vtype = self.__cantalVariablesTypes[symbol]
                 if vtype == Actor.VARIABLE_TYPE_NORMAL:
-                    self.__cantalVariables[symbol] = value.literal.getValue()
+                    self.__cantalVariables[symbol] = value
                 elif vtype == Actor.VARIABLE_TYPE_SAVED:
                     SaveManager.setCurrentSaveValue(self.getScene().getMapName() + "." + self.__name + "." + symbol,
-                                                    value.literal.getValue())
+                                                    value)
             else:
                 raise Exception("Unknown symbol " + symbol)
 
@@ -366,13 +366,13 @@ class Actor:
     '''
 
     def cantalWait(self, interpreter, functionParams):
-        duration = functionParams[0].literal
+        duration = functionParams[0].getValue(self.cantalValueCallback)
 
         self.interpreterTimers[interpreter] = Timer(interpreter, duration.getValue(), self.interpreterTimerCallback)
 
     def cantalPrint(self, interpreter, functionParams):
-        text = functionParams[0].literal
+        text = functionParams[0].getValue(self.cantalValueCallback)
 
-        print(text.getValue())
+        print(text)
 
         self.interpreters[self.currentState][interpreter].nextStatement()

@@ -86,8 +86,8 @@ class NPCActor(Actor):
 
     def cantalWalk(self, interpreter, functionParams):
 
-        orientation = functionParams[0].literal.getValue()
-        stepsCount = functionParams[1].literal.getValue()
+        orientation = functionParams[0].getValue(self.cantalValueCallback)
+        stepsCount = functionParams[1].getValue(self.cantalValueCallback)
 
         self.__charset.setOrientation(orientation)
 
