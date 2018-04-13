@@ -50,27 +50,25 @@ class Block(List):
     pass
 
 class Register(str):
-    grammar = attr("type", Symbol), "[", attr("name", [Symbol, StringLiteral]) ,"]"
+    grammar = attr("type", Symbol), "[", attr("name", [StringLiteral, Symbol]) ,"]"
+
+class FunctionParameters(List):
+    pass
+
+class FunctionCallStatement:
+    grammar = name(), "(", attr("params", FunctionParameters), ")"
 
 class Value(str):
-    grammar = attr("value", [Register, Literal, Symbol])
+    grammar = attr("value", [FunctionCallStatement, Register, Literal, Symbol])
 
     def getValue(self, valueCb):
         valueType = type(self.value)
-        if valueType == Register or valueType == Symbol:
+        if valueType == Register or valueType == Symbol or valueType == FunctionCallStatement:
             return valueCb(self.value)
         elif valueType == Literal:
             return self.value.literal.getValue()
         else:
             raise Exception("Unknown value type " + str(valueType))
-
-
-class FunctionParameters(List):
-    grammar = attr("params", optional(csl(Value)))
-
-class FunctionCallStatement:
-    grammar = name(), "(", attr("params", FunctionParameters), ")"
-
 
 class EqualsOperator(str):
     grammar = attr("var1", Value), "==", attr("var2", Value)
@@ -115,7 +113,8 @@ class CantalScript(str):
         if expressionType == BooleanLiteral:
             return expression.expression.getValue()
         elif expressionType == FunctionCallStatement:
-            return conditionCb(expression.expression)
+            value = conditionCb(expression.expression)
+            return value is not None and type(value) == bool and value == True
         elif expressionType == Register:
             registerValue = valueCb(expression.expression)
             return registerValue is not None and type(registerValue) == bool and registerValue == True
@@ -162,6 +161,7 @@ class State(List):
 Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
 BooleanExpression.grammar = attr("expression", [BooleanOperator, Register, FunctionCallStatement, BooleanLiteral, Symbol])
 CantalScript.grammar = attr("constants", maybe_some(ConstantDeclaration)), attr("vars", maybe_some(VariableDeclaration)), attr("states", maybe_some(State))
+FunctionParameters.grammar = attr("params", optional(csl(Value)))
 
 class CantalParser:
 

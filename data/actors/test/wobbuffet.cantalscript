@@ -1,6 +1,8 @@
 const PARAMETER_LOOK = "look";
 const PARAMETER_WALK = "walk";
 
+var message;
+
 state look(parameters[PARAMETER_LOOK])
 {
     message testMessage()

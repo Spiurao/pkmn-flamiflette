@@ -1,4 +1,5 @@
 import json
+import random
 
 from data.savedatafields import SaveDataFields
 from engine.savemanager import SaveManager
@@ -9,10 +10,16 @@ class StringsFormatter:
         self.__engine = engine
 
     def __format__(self, format_spec):
+        value = None
         if format_spec == "playerName":
-            return SaveManager.getCurrentSaveValue(SaveDataFields.PLAYER_NAME)
+            value = SaveManager.getCurrentSaveValue(SaveDataFields.PLAYER_NAME)
         else:
             raise Exception("Unknown format placeholder " + format_spec)
+
+        if value is None:
+            value = "n/a"
+
+        return value
 
 
 class Strings:
@@ -32,12 +39,18 @@ class Strings:
         # Prepare the formatter
         Strings.__formatter = StringsFormatter(engine)
 
+    dict = {
+        "playerName": str(random.randint(1, 484))
+    }
+
     @staticmethod
-    def getString(string):
+    def getString(string, *args):
         if string not in Strings.__strings:
             raise Exception("Unknown string " + string)
 
-        return Strings.__strings[string].format(Strings.__formatter)
+        result = Strings.__strings[string].format(*args)
+
+        return result
 
 
     @staticmethod

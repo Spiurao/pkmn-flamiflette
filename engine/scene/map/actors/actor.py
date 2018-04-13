@@ -8,6 +8,7 @@ from data.constants import Constants
 from engine.savemanager import SaveManager
 from engine.scene.map.cantalscript import CantalParser, CantalInterpreter, BooleanLiteral, FunctionCallStatement, \
     StringLiteral, IntegerLiteral, Register, Literal, Symbol
+from engine.strings import Strings
 from engine.timer import Timer
 
 
@@ -53,8 +54,8 @@ class Actor:
         self.__scriptKey = None  # the key of the script in the cantal cache
 
         # List of the condition functions
-        # name associated to boolean function
-        self.__cantalConditionFunctions = {}
+        # name associated to data function
+        self.__cantalValueFunctions = {}
 
         # List of regular conditions
         # name associated to the function
@@ -66,13 +67,13 @@ class Actor:
 
         # Default Cantal functions
 
-        # No conditional
+        self.registerCantalValueFunction("getString", self.cantalGetString)
 
         self.registerCantalFunction("wait", self.cantalWait)
         self.registerCantalFunction("print", self.cantalPrint)
 
-    def registerCantalConditionFunction(self, name, cb):
-        self.__cantalConditionFunctions[name] = cb
+    def registerCantalValueFunction(self, name, cb):
+        self.__cantalValueFunctions[name] = cb
 
     def registerCantalFunction(self, name, cb):
         self.__cantalFunctions[name] = cb
@@ -215,6 +216,11 @@ class Actor:
                     raise Exception("Unknown register " + str(regType))
             except KeyError:
                 return None
+        elif valueType == FunctionCallStatement:
+            functionCall = str(value.name)
+            if not functionCall in self.__cantalValueFunctions:
+                raise Exception("Unknown function " + functionCall)
+            return self.__cantalValueFunctions[functionCall](value.params.params)
         elif valueType == Symbol:
             symbol = str(value)
             #Is it a constant ?
@@ -288,6 +294,9 @@ class Actor:
     def getPosY(self) -> int:
         return self.__posY
 
+    def getEngine(self):
+        return self.getScene().getEngine()
+
     def spawn(self):
         if not self.__spawned:
             self.__spawned = True
@@ -356,10 +365,18 @@ class Actor:
         self.interpreters[self.currentState][tag].nextStatement()
 
     '''
-    CantalScript conditional functions
+    CantalScript values functions
     '''
 
-    # None
+    def cantalGetString(self, functionParams):
+        stringName = functionParams[0].getValue(self.cantalValueCallback)
+
+        vars = []
+
+        for value in functionParams[1:]:
+            vars.append(str(value.getValue(self.cantalValueCallback)))
+
+        return Strings.getString(stringName, *vars)
 
     '''
     CantalScript methods
