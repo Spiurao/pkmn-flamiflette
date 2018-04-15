@@ -116,7 +116,7 @@ class DivOperator:
         return int(firstValue / secondValue)
 
 class EqualsOperator(str):
-    grammar = "(", attr("var1", ValueOperator), "==", attr("var2", ValueOperator), ")"
+    grammar = attr("var1", ValueOperator), "==", attr("var2", ValueOperator)
 
     def getValue(self, valueCb):
         return self.var1.getValue(valueCb) == self.var2.getValue(valueCb)
@@ -141,6 +141,9 @@ class OrOperator(str):
 
 class BooleanOperator:
     grammar = "(", attr("operator", [EqualsOperator, NotOperator, AndOperator, OrOperator]), ")"
+
+    def getValue(self, valueCb):
+        return self.operator.getValue(valueCb)
 
 class AffectationStatement(str):
     grammar = attr("register", [Register, Symbol]), "=", attr("value", ValueOperator)
