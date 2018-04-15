@@ -118,17 +118,26 @@ class DivOperator:
 class EqualsOperator(str):
     grammar = "(", attr("var1", ValueOperator), "==", attr("var2", ValueOperator), ")"
 
-class BooleanExpression(str):
-    pass
+    def getValue(self, valueCb):
+        return self.var1.getValue(valueCb) == self.var2.getValue(valueCb)
 
 class AndOperator(str):
-    grammar = attr("op1", BooleanExpression), "&&", attr("op2", BooleanExpression)
+    grammar = attr("op1", ValueOperator), "&&", attr("op2", ValueOperator)
+
+    def getValue(self, valueCb):
+        return self.var1.getValue(valueCb) and self.var2.getValue(valueCb)
 
 class NotOperator(str):
-    grammar = "!", attr("op", BooleanExpression)
+    grammar = "!", attr("op", ValueOperator)
+
+    def getValue(self, valueCb):
+        return not self.op.getValue(valueCb)
 
 class OrOperator(str):
-    grammar = attr("op1", BooleanExpression), "||", attr("op2", BooleanExpression)
+    grammar = attr("op1", ValueOperator), "||", attr("op2", ValueOperator)
+
+    def getValue(self, valueCb):
+        return self.var1.getValue(valueCb) or self.var2.getValue(valueCb)
 
 class BooleanOperator:
     grammar = "(", attr("operator", [EqualsOperator, NotOperator, AndOperator, OrOperator]), ")"
@@ -137,7 +146,7 @@ class AffectationStatement(str):
     grammar = attr("register", [Register, Symbol]), "=", attr("value", ValueOperator)
 
 class IfStatement(str):
-    grammar = "if", "(", attr("expression", BooleanExpression), ")", attr("block", Block)
+    grammar = "if", "(", attr("expression", ValueOperator), ")", attr("block", Block)
 
 class Statement(List):
     grammar = attr("statement", [([FunctionCallStatement, AffectationStatement], ";"), IfStatement])
@@ -148,36 +157,19 @@ class Event(List):
 class Message(List):
     grammar = "message", name(), "()", attr("block", Block)
 
-
 class CantalScript(str):
     constantsTable = {}  # constants table
 
-    def evaluateBooleanExpression(self, expression, valueCb : typing.Callable) -> bool:
-        expressionType = type(expression.expression)
+    def evaluateBooleanValue(self, value, valueCb : typing.Callable) -> bool:
+        expressionType = type(value)
 
-        if expressionType == BooleanLiteral:
-            return expression.expression.getValue()
-        elif expressionType == FunctionCallStatement:
-            value = valueCb(expression.expression)
+        if expressionType == BooleanLiteral or expressionType == BooleanOperator or expressionType == ValueOperator:
+            return value.getValue(valueCb)
+        elif expressionType == FunctionCallStatement or expressionType == Register:
+            value = valueCb(value)
             return value is not None and type(value) == bool and value == True
-        elif expressionType == Register:
-            registerValue = valueCb(expression.expression)
-            return registerValue is not None and type(registerValue) == bool and registerValue == True
-        elif expressionType == BooleanOperator:
-            operator = expression.expression.operator
-            booleanType = type(operator)
-            if booleanType == AndOperator:
-                return self.evaluateBooleanExpression(operator.op1, valueCb) and self.evaluateBooleanExpression(operator.op2, valueCb)
-            elif booleanType == OrOperator:
-                return self.evaluateBooleanExpression(operator.op1, valueCb) or self.evaluateBooleanExpression(operator.op2, valueCb)
-            elif booleanType == NotOperator:
-                return not self.evaluateBooleanExpression(operator.op, valueCb)
-            elif booleanType == EqualsOperator:
-                return operator.var1.getValue(valueCb) == operator.var2.getValue(valueCb)
-            else:
-                raise Exception("Unknown operator type " + str(booleanType))
         elif expressionType == Symbol:
-            symbol = str(expression.expression)
+            symbol = str(value)
             value = None
             # Is it a constant ?
             if symbol in self.constantsTable:
@@ -200,15 +192,14 @@ class VariableDeclaration(List):
     grammar = flag("saved"), "var", name(), [("=", attr("value", Literal)),""], ";"
 
 class State(List):
-    grammar = "state", name(), "(", attr("condition", BooleanExpression), ")", "{", attr("messages", maybe_some(Message)), attr("events", maybe_some(Event)), "}"
+    grammar = "state", name(), "(", attr("condition", ValueOperator), ")", "{", attr("messages", maybe_some(Message)), attr("events", maybe_some(Event)), "}"
 
 # Stupid Python
 Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
-BooleanExpression.grammar = attr("expression", [BooleanOperator, Register, FunctionCallStatement, BooleanLiteral, Symbol])
 CantalScript.grammar = attr("constants", maybe_some(ConstantDeclaration)), attr("vars", maybe_some(VariableDeclaration)), attr("states", maybe_some(State))
 FunctionParameters.grammar = attr("params", optional(csl(ValueOperator)))
 Value.grammar = attr("value", [FunctionCallStatement, Register, Literal, Symbol])
-ValueOperator.grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, Value])
+ValueOperator.grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, BooleanOperator, Value])
 
 
 class CantalParser:
@@ -283,7 +274,7 @@ class CantalInterpreter:
         statementType = type(currentStatement)
         if statementType == IfStatement:
             # Evaluate condition
-            if self.script.evaluateBooleanExpression(currentStatement.expression, self.__valueCb, self.__conditionCb):
+            if self.script.evaluateBooleanValue(currentStatement.expression, self.__valueCb, self.__conditionCb):
                 self.__blockStack.append(BlockEntry(currentStatement.block.statements))
                 self.processCurrentStatement()
             else:

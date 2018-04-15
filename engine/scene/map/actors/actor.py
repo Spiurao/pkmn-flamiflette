@@ -114,7 +114,7 @@ class Actor:
                 stateName = str(state.name)
                 stateExpression = state.condition
 
-                if self.__cantalScript.evaluateBooleanExpression(stateExpression, self.cantalValueCallback):
+                if self.__cantalScript.evaluateBooleanValue(stateExpression, self.cantalValueCallback):
                     # Activate the newly found state
                     if stateName != self.currentState:
                         if self.currentState is not None:
