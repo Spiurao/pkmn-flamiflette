@@ -274,7 +274,7 @@ class CantalInterpreter:
         statementType = type(currentStatement)
         if statementType == IfStatement:
             # Evaluate condition
-            if self.script.evaluateBooleanValue(currentStatement.expression, self.__valueCb, self.__conditionCb):
+            if self.script.evaluateBooleanValue(currentStatement.expression, self.__valueCb):
                 self.__blockStack.append(BlockEntry(currentStatement.block.statements))
                 self.processCurrentStatement()
             else:
