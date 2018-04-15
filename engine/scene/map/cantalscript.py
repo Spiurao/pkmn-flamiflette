@@ -58,6 +58,11 @@ class FunctionParameters(List):
 class FunctionCallStatement:
     grammar = name(), "(", attr("params", FunctionParameters), ")"
 
+class ValueOperator:
+
+    def getValue(self, valueCb):
+        return self.operator.getValue(valueCb)
+
 class Value(str):
 
     def getValue(self, valueCb):
@@ -70,7 +75,7 @@ class Value(str):
             raise Exception("Unknown value type " + str(valueType))
 
 class AddOperator:
-    grammar = attr("v1", Value), "+", attr("v2", Value)
+    grammar = "(", attr("v1", ValueOperator), "+", attr("v2", ValueOperator), ")"
 
     def getValue(self, valueCb):
         firstValue = self.v1.getValue(valueCb)
@@ -84,7 +89,7 @@ class AddOperator:
         return firstValue + secondValue
 
 class SubOperator:
-    grammar = attr("v1", Value), "-", attr("v2", Value)
+    grammar = "(", attr("v1", ValueOperator), "-", attr("v2", ValueOperator), ")"
 
     def getValue(self, valueCb):
         firstValue = self.v1.getValue(valueCb)
@@ -93,7 +98,7 @@ class SubOperator:
         return firstValue - secondValue
 
 class MulOperator:
-    grammar = attr("v1", Value), "*", attr("v2", Value)
+    grammar = "(", attr("v1", ValueOperator), "*", attr("v2", ValueOperator), ")"
 
     def getValue(self, valueCb):
         firstValue = self.v1.getValue(valueCb)
@@ -102,7 +107,7 @@ class MulOperator:
         return int(firstValue * secondValue)
 
 class DivOperator:
-    grammar = attr("v1", Value), "/", attr("v2", Value)
+    grammar = "(", attr("v1", ValueOperator), "/", attr("v2", ValueOperator), ")"
 
     def getValue(self, valueCb):
         firstValue = self.v1.getValue(valueCb)
@@ -110,14 +115,8 @@ class DivOperator:
 
         return int(firstValue / secondValue)
 
-class ValueOperator:
-    grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, Value])
-
-    def getValue(self, valueCb):
-        return self.operator.getValue(valueCb)
-
 class EqualsOperator(str):
-    grammar = attr("var1", ValueOperator), "==", attr("var2", ValueOperator)
+    grammar = "(", attr("var1", ValueOperator), "==", attr("var2", ValueOperator), ")"
 
 class BooleanExpression(str):
     pass
@@ -209,6 +208,8 @@ BooleanExpression.grammar = attr("expression", [BooleanOperator, Register, Funct
 CantalScript.grammar = attr("constants", maybe_some(ConstantDeclaration)), attr("vars", maybe_some(VariableDeclaration)), attr("states", maybe_some(State))
 FunctionParameters.grammar = attr("params", optional(csl(ValueOperator)))
 Value.grammar = attr("value", [FunctionCallStatement, Register, Literal, Symbol])
+ValueOperator.grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, Value])
+
 
 class CantalParser:
 
