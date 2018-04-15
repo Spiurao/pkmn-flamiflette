@@ -152,13 +152,13 @@ class Message(List):
 class CantalScript(str):
     constantsTable = {}  # constants table
 
-    def evaluateBooleanExpression(self, expression, valueCb : typing.Callable, conditionCb : typing.Callable) -> bool:
+    def evaluateBooleanExpression(self, expression, valueCb : typing.Callable) -> bool:
         expressionType = type(expression.expression)
 
         if expressionType == BooleanLiteral:
             return expression.expression.getValue()
         elif expressionType == FunctionCallStatement:
-            value = conditionCb(expression.expression)
+            value = valueCb(expression.expression)
             return value is not None and type(value) == bool and value == True
         elif expressionType == Register:
             registerValue = valueCb(expression.expression)
@@ -167,11 +167,11 @@ class CantalScript(str):
             operator = expression.expression.operator
             booleanType = type(operator)
             if booleanType == AndOperator:
-                return self.evaluateBooleanExpression(operator.op1, valueCb, conditionCb) and self.evaluateBooleanExpression(operator.op2, valueCb, conditionCb)
+                return self.evaluateBooleanExpression(operator.op1, valueCb) and self.evaluateBooleanExpression(operator.op2, valueCb)
             elif booleanType == OrOperator:
-                return self.evaluateBooleanExpression(operator.op1, valueCb, conditionCb) or self.evaluateBooleanExpression(operator.op2, valueCb, conditionCb)
+                return self.evaluateBooleanExpression(operator.op1, valueCb) or self.evaluateBooleanExpression(operator.op2, valueCb)
             elif booleanType == NotOperator:
-                return not self.evaluateBooleanExpression(operator.op, valueCb, conditionCb)
+                return not self.evaluateBooleanExpression(operator.op, valueCb)
             elif booleanType == EqualsOperator:
                 return operator.var1.getValue(valueCb) == operator.var2.getValue(valueCb)
             else:
@@ -235,11 +235,10 @@ class BlockEntry:
 class CantalInterpreter:
     STATEMENTS_LIMIT_PER_FRAME = 100  # the interpreter cannot execute more statements per frame than this - fixes game freeze and maximum recursion depth errors
 
-    def __init__(self, script : CantalScript, name : str, code : Block, functionsCallback : typing.Callable, conditionCallback : typing.Callable, loop : bool, affectationCallback : typing.Callable, valueCallback : typing.Callable):
+    def __init__(self, script : CantalScript, name : str, code : Block, functionsCallback : typing.Callable, loop : bool, affectationCallback : typing.Callable, valueCallback : typing.Callable):
         self.__name = name
         self.__code = code.statements
         self.__functionsCb = functionsCallback
-        self.__conditionCb = conditionCallback
         self.__affectationCb = affectationCallback
         self.__valueCb = valueCallback
         self.__loop = loop

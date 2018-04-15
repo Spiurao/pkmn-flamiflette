@@ -63,7 +63,7 @@ class NPCActor(Actor):
     '''
     CantalScript methods
     '''
-    def cantalTurnToFaceCharacter(self, interpreter, functionParameters):
+    def cantalTurnToFaceCharacter(self, interpreter):
         characterPosition = self.getScene().getCharacterPosition()
 
         degree = math.degrees(math.atan2(characterPosition[1] - self.getPosY(), characterPosition[0] - self.getPosX()))
@@ -84,11 +84,7 @@ class NPCActor(Actor):
 
         self.interpreters[self.currentState][interpreter].nextStatement()
 
-    def cantalWalk(self, interpreter, functionParams):
-
-        orientation = functionParams[0].getValue(self.cantalValueCallback)
-        stepsCount = functionParams[1].getValue(self.cantalValueCallback)
-
+    def cantalWalk(self, interpreter, orientation, stepsCount):
         self.__charset.setOrientation(orientation)
 
         # TODO Walk animation

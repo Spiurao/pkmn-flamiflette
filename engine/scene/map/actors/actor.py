@@ -7,7 +7,7 @@ from typing import Dict, List, Callable, Tuple
 from data.constants import Constants
 from engine.savemanager import SaveManager
 from engine.scene.map.cantalscript import CantalParser, CantalInterpreter, BooleanLiteral, FunctionCallStatement, \
-    StringLiteral, IntegerLiteral, Register, Literal, Symbol
+    StringLiteral, IntegerLiteral, Register, Literal, Symbol, Value
 from engine.strings import Strings
 from engine.timer import Timer
 
@@ -114,7 +114,7 @@ class Actor:
                 stateName = str(state.name)
                 stateExpression = state.condition
 
-                if self.__cantalScript.evaluateBooleanExpression(stateExpression, self.cantalValueCallback, self.cantalConditionCallback):
+                if self.__cantalScript.evaluateBooleanExpression(stateExpression, self.cantalValueCallback):
                     # Activate the newly found state
                     if stateName != self.currentState:
                         if self.currentState is not None:
@@ -175,25 +175,22 @@ class Actor:
                         if eventName in self.interpreters:
                             raise Exception("Duplicate event " + eventName)
 
-                        self.interpreters[stateName][eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, self.cantalConditionCallback, eventName == "event.loop", self.cantalAffectationCallback, self.cantalValueCallback)
+                        self.interpreters[stateName][eventName] = CantalInterpreter(scriptData, eventName, event.block, self.cantalFunctionCallback, eventName == "event.loop", self.cantalAffectationCallback, self.cantalValueCallback)
 
                 # The right state will be activated on spawn
 
             except FileNotFoundError:
                 raise Exception("Could not find a script named " + self.__script)
 
-    def cantalConditionCallback(self, expression):
-        # Function calls
-        if expression.name not in self.__cantalConditionFunctions:
-            raise Exception("Unknown Cantal condition function " + expression.name)
-
-        return self.__cantalConditionFunctions[expression.name](expression.params.params)
-
     def cantalFunctionCallback(self, interpreter, function : FunctionCallStatement):
         if function.name not in self.__cantalFunctions:
             raise Exception("Unknown Cantal function " + function.name)
 
-        self.__cantalFunctions[function.name](interpreter, function.params.params)
+        fargs = []
+        for value in function.params.params:
+            fargs.append(value.getValue(self.cantalValueCallback))
+
+        self.__cantalFunctions[function.name](interpreter, *fargs)
 
     def getConstant(self, constant):
         constantsTable = self.__cantalScript.constantsTable
@@ -221,7 +218,12 @@ class Actor:
             functionCall = str(value.name)
             if not functionCall in self.__cantalValueFunctions:
                 raise Exception("Unknown function " + functionCall)
-            return self.__cantalValueFunctions[functionCall](value.params.params)
+
+            fargs = []
+            for value in value.params.params:
+                fargs.append(value.getValue(self.cantalValueCallback))
+
+            return self.__cantalValueFunctions[functionCall](*fargs)
         elif valueType == Symbol:
             symbol = str(value)
             #Is it a constant ?
@@ -369,31 +371,19 @@ class Actor:
     CantalScript values functions
     '''
 
-    def cantalToString(self, functionParams):
-        return str(functionParams[0].getValue(self.cantalValueCallback))
+    def cantalToString(self, value):
+        return str(value)
 
-    def cantalGetString(self, functionParams):
-        stringName = functionParams[0].getValue(self.cantalValueCallback)
-
-        vars = []
-
-        for value in functionParams[1:]:
-            vars.append(str(value.getValue(self.cantalValueCallback)))
-
-        return Strings.getString(stringName, *vars)
+    def cantalGetString(self, stringName : Value, *args):
+        return Strings.getString(stringName, *args)
 
     '''
     CantalScript methods
     '''
 
-    def cantalWait(self, interpreter, functionParams):
-        duration = functionParams[0].getValue(self.cantalValueCallback)
+    def cantalWait(self, interpreter : str, duration):
+        self.interpreterTimers[interpreter] = Timer(interpreter, duration, self.interpreterTimerCallback)
 
-        self.interpreterTimers[interpreter] = Timer(interpreter, duration.getValue(), self.interpreterTimerCallback)
-
-    def cantalPrint(self, interpreter, functionParams):
-        text = functionParams[0].getValue(self.cantalValueCallback)
-
+    def cantalPrint(self, interpreter : str, text):
         print(str(text))
-
         self.interpreters[self.currentState][interpreter].nextStatement()
