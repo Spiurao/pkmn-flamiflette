@@ -11,115 +11,115 @@
     {
      "120":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "121":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "122":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "128":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "129":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "130":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "136":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "137":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "138":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "187":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "400":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "401":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "402":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "408":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "409":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "410":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "416":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "417":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "418":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "424":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "425":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "426":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "432":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "433":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "434":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "440":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "441":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "442":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "448":
         {
@@ -167,55 +167,55 @@
         },
      "496":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "497":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "498":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "499":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "500":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "504":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "505":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "506":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "507":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "508":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "512":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "513":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         },
      "514":
         {
-         "collision":"top;bottom;right;left"
+         "collision":"up;down;right;left"
         }
     },
  "tilepropertytypes":

@@ -256,11 +256,11 @@ class MapScene(Scene):
 
                             if len(collisionStr) > 0:
                                 for flag in collisionStr.split(";"):
-                                    if flag == "top":
+                                    if flag == "up":
                                         tile.collision = (True, tile.collision[1], tile.collision[2], tile.collision[3])
                                     elif flag == "right":
                                         tile.collision = (tile.collision[0], True, tile.collision[2], tile.collision[3])
-                                    elif flag == "bottom":
+                                    elif flag == "down":
                                         tile.collision = (tile.collision[0], tile.collision[1], True, tile.collision[3])
                                     elif flag == "left":
                                         tile.collision = (tile.collision[0], tile.collision[1], tile.collision[2], True)

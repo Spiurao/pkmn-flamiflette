@@ -9,142 +9,142 @@
  <tile id="114" type="aboveActors"/>
  <tile id="120">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="121">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="122">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="128">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="129">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="130">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="136">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="137">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="138">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="187">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="400">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="401">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="402">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="408">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="409">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="410">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="416">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="417">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="418">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="424">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="425">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="426">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="432">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="433">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="434">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="440">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="441">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="442">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="448">
@@ -206,67 +206,67 @@
  </tile>
  <tile id="496">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="497">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="498">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="499">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="500">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="504">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="505">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="506">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="507">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="508">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="512">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="513">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
  <tile id="514">
   <properties>
-   <property name="collision" value="top;bottom;right;left"/>
+   <property name="collision" value="up;down;right;left"/>
   </properties>
  </tile>
 </tileset>
