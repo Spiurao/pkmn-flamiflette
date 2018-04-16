@@ -528,6 +528,7 @@ class MapScene(Scene):
                     self.__characterMoving = True
                     self.__inputsBlocked = True
                 else:
+                    self.__characterCharset.resetStep()
                     self.playBump()
             elif keys[pygame.K_RIGHT]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_RIGHT)
@@ -541,6 +542,7 @@ class MapScene(Scene):
                     self.__characterMoving = True
                     self.__inputsBlocked = True
                 else:
+                    self.__characterCharset.resetStep()
                     self.playBump()
             elif keys[pygame.K_UP]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_UP)
@@ -554,6 +556,7 @@ class MapScene(Scene):
                     self.__characterMoving = True
                     self.__inputsBlocked = True
                 else:
+                    self.__characterCharset.resetStep()
                     self.playBump()
             elif keys[pygame.K_DOWN]:
                 self.__characterCharset.setOrientation(Charset.ORIENTATION_DOWN)
@@ -567,6 +570,7 @@ class MapScene(Scene):
                     self.__characterMoving =  True
                     self.__inputsBlocked = True
                 else:
+                    self.__characterCharset.resetStep()
                     self.playBump()
             elif self.__characterMoving:
                 self.__characterMoving = False
