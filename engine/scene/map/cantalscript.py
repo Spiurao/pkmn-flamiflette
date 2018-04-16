@@ -58,6 +58,10 @@ class FunctionParameters(List):
 class FunctionCallStatement:
     grammar = name(), "(", attr("params", FunctionParameters), ")"
 
+class ValueSymbol(Symbol):
+    def getValue(self, valueCb):
+        return valueCb(self)
+
 class ValueOperator:
 
     def getValue(self, valueCb):
@@ -163,27 +167,6 @@ class Message(List):
 class CantalScript(str):
     constantsTable = {}  # constants table
 
-    def evaluateBooleanValue(self, value, valueCb : typing.Callable) -> bool:
-        expressionType = type(value)
-
-        if expressionType == BooleanLiteral or expressionType == BooleanOperator or expressionType == ValueOperator:
-            return value.getValue(valueCb)
-        elif expressionType == FunctionCallStatement or expressionType == Register:
-            value = valueCb(value)
-            return value is not None and type(value) == bool and value == True
-        elif expressionType == Symbol:
-            symbol = str(value)
-            value = None
-            # Is it a constant ?
-            if symbol in self.constantsTable:
-                value = self.constantsTable[symbol]
-            # Is it a variable ?
-            else:
-                value = valueCb(symbol)
-            return value is not None and type(value) == bool and value == True
-        else:
-            raise Exception("Unknown boolean expression type " + str(expressionType))
-
     def init(self):
         for constant in self.constants:
             self.constantsTable[constant.name] = constant.value.literal.getValue()
@@ -201,7 +184,7 @@ class State(List):
 Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
 CantalScript.grammar = attr("constants", maybe_some(ConstantDeclaration)), attr("vars", maybe_some(VariableDeclaration)), attr("states", maybe_some(State))
 FunctionParameters.grammar = attr("params", optional(csl(ValueOperator)))
-Value.grammar = attr("value", [FunctionCallStatement, Register, Literal, Symbol])
+Value.grammar = attr("value", [FunctionCallStatement, Register, Literal, ValueSymbol])
 ValueOperator.grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, BooleanOperator, Value])
 
 
@@ -277,7 +260,7 @@ class CantalInterpreter:
         statementType = type(currentStatement)
         if statementType == IfStatement:
             # Evaluate condition
-            if self.script.evaluateBooleanValue(currentStatement.expression, self.__valueCb):
+            if currentStatement.expression.getValue(self.__valueCb):
                 self.__blockStack.append(BlockEntry(currentStatement.block.statements))
                 self.processCurrentStatement()
             else:

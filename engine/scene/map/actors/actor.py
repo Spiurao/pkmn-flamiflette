@@ -7,7 +7,7 @@ from typing import Dict, List, Callable, Tuple
 from data.constants import Constants
 from engine.savemanager import SaveManager
 from engine.scene.map.cantalscript import CantalParser, CantalInterpreter, BooleanLiteral, FunctionCallStatement, \
-    StringLiteral, IntegerLiteral, Register, Literal, Symbol, Value
+    StringLiteral, IntegerLiteral, Register, Literal, Symbol, Value, ValueSymbol
 from engine.strings import Strings
 from engine.timer import Timer
 
@@ -114,7 +114,7 @@ class Actor:
                 stateName = str(state.name)
                 stateExpression = state.condition
 
-                if self.__cantalScript.evaluateBooleanValue(stateExpression, self.cantalValueCallback):
+                if stateExpression.getValue(self.cantalValueCallback):
                     # Activate the newly found state
                     if stateName != self.currentState:
                         if self.currentState is not None:
@@ -224,7 +224,7 @@ class Actor:
                 fargs.append(value.getValue(self.cantalValueCallback))
 
             return self.__cantalValueFunctions[functionCall](*fargs)
-        elif valueType == Symbol:
+        elif valueType == ValueSymbol:
             symbol = str(value)
             #Is it a constant ?
             if symbol in self.__cantalScript.constantsTable:
