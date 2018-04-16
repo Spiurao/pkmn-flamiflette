@@ -67,6 +67,12 @@ class ValueOperator:
     def getValue(self, valueCb):
         return self.operator.getValue(valueCb)
 
+class TernaryValue:
+    grammar = "(", attr("condition", ValueOperator), "?", attr("v1", ValueOperator), ":", attr("v2", ValueOperator), ")"
+
+    def getValue(self, valueCb):
+        return self.v1.getValue(valueCb) if self.condition.getValue(valueCb) else self.v2.getValue(valueCb)
+
 class Value(str):
 
     def getValue(self, valueCb):
@@ -185,7 +191,7 @@ Block.grammar = "{", attr("statements", maybe_some(Statement)), "}"
 CantalScript.grammar = attr("constants", maybe_some(ConstantDeclaration)), attr("vars", maybe_some(VariableDeclaration)), attr("states", maybe_some(State))
 FunctionParameters.grammar = attr("params", optional(csl(ValueOperator)))
 Value.grammar = attr("value", [FunctionCallStatement, Register, Literal, ValueSymbol])
-ValueOperator.grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, BooleanOperator, Value])
+ValueOperator.grammar = attr("operator", [AddOperator, SubOperator, DivOperator, MulOperator, BooleanOperator, TernaryValue, Value])
 
 
 class CantalParser:
