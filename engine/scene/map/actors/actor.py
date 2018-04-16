@@ -92,7 +92,7 @@ class Actor:
             for i in self.interpreters[self.currentState]:
                 interpreter = self.interpreters[self.currentState][i]
                 if interpreter is not None:
-                    interpreter.newFrame()
+                    interpreter.onNewFrame()
 
             # Interpreters timers
             for t in self.interpreterTimers:

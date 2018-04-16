@@ -236,7 +236,7 @@ class CantalInterpreter:
 
         self.__shouldLoop = False
 
-    def newFrame(self):
+    def onNewFrame(self):
         self.__statementsForCurrentFrame = 0
 
         if self.__shouldLoop:
