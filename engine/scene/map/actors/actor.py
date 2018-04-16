@@ -156,6 +156,8 @@ class Actor:
                     self.__cantalVariablesTypes[variable.name] = Actor.VARIABLE_TYPE_SAVED if variable.saved else Actor.VARIABLE_TYPE_NORMAL
 
                     if hasattr(variable, "value") and variable.value is not None:
+                        if variable.saved:
+                            raise Exception("Saved variables cannot have a default value")
                         self.__cantalVariables[variable.name] = variable.value.literal.getValue()
 
                 # Interpreters
