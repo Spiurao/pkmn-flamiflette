@@ -155,14 +155,17 @@ class BooleanOperator:
     def getValue(self, valueCb):
         return self.operator.getValue(valueCb)
 
-class AffectationStatement(str):
+class StandardAffectationStatement(str):
     grammar = attr("register", [Register, Symbol]), "=", attr("value", ValueOperator)
+
+class StateAffectationStatement(str):
+    grammar = attr("register", [Register, Symbol]), "$=", attr("value", ValueOperator)
 
 class IfStatement(str):
     grammar = "if", "(", attr("expression", ValueOperator), ")", attr("block", Block)
 
 class Statement(List):
-    grammar = attr("statement", [([FunctionCallStatement, AffectationStatement], ";"), IfStatement])
+    grammar = attr("statement", [([FunctionCallStatement, StateAffectationStatement, StandardAffectationStatement], ";"), IfStatement])
 
 class Event(List):
     grammar = "event", name(), "()", attr("block", Block)
@@ -277,9 +280,12 @@ class CantalInterpreter:
         elif statementType == FunctionCallStatement:
             self.__functionsCb(self.__name, currentStatement)
         # Actor register affectation statement
-        elif statementType == AffectationStatement:
-            self.__affectationCb(currentStatement.register, currentStatement.value.getValue(self.__valueCb))
-            self.nextStatement();
+        elif statementType == StandardAffectationStatement:
+            self.__affectationCb(currentStatement.register, currentStatement.value.getValue(self.__valueCb), False)
+            self.nextStatement()
+        elif statementType == StateAffectationStatement:
+            self.__affectationCb(currentStatement.register, currentStatement.value.getValue(self.__valueCb), True)
+            self.nextStatement()
         else:
             raise Exception("Unknown statement type " + str(statementType))
 

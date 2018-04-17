@@ -30,6 +30,6 @@ state walk(parameters[PARAMETER_WALK])
         walk(LEFT, 3);
 
         //Change state
-        parameters[PARAMETER_LOOK] = true;
+        parameters[PARAMETER_LOOK] $= true;
     }
 }

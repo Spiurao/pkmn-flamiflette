@@ -252,7 +252,7 @@ class Actor:
             # String literal
             return regName.getValue()
 
-    def cantalAffectationCallback(self, variable, value):
+    def cantalAffectationCallback(self, variable, value, triggerStateChange):
         variableType = type(variable)
         if variableType == Register:
             regType = variable.type
@@ -279,7 +279,8 @@ class Actor:
             else:
                 raise Exception("Unknown symbol " + symbol)
 
-        self.activateRightState()
+        if triggerStateChange:
+            self.activateRightState()
 
     def unload(self):
         self.despawn()  # just to be sure
