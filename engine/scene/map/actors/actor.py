@@ -72,6 +72,7 @@ class Actor:
 
         self.registerCantalFunction("wait", self.cantalWait)
         self.registerCantalFunction("print", self.cantalPrint)
+        self.registerCantalFunction("triggerStateChange", self.cantalTriggerStateChange)
 
     def registerCantalValueFunction(self, name, cb):
         self.__cantalValueFunctions[name] = cb
@@ -389,4 +390,8 @@ class Actor:
 
     def cantalPrint(self, interpreter : str, text):
         print(str(text))
+        self.interpreters[self.currentState][interpreter].nextStatement()
+
+    def cantalTriggerStateChange(self, interpreter : str):
+        self.activateRightState()
         self.interpreters[self.currentState][interpreter].nextStatement()
