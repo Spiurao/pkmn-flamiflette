@@ -4,9 +4,10 @@ import pygame
 from pygame.surface import Surface
 
 from engine.graphics.fontmanager import FontManager
+from engine.graphics.frame import Frame
 
 
-class DialogRenderer:
+class DialogFrame:
 
     # TODO Add choices here
     # TODO Have a list of texts instead
@@ -26,8 +27,9 @@ class DialogRenderer:
         self.__firstUpdate = True  # first update should wait for the next frame
 
         # Loading
-        self.__surface = FontManager.getFont(DialogRenderer.FONT).render(self.__text, True, (0, 0, 0, 0))
-        self.__caretPosition = (self.__boundaries[2] + self.__boundaries[0] - DialogRenderer.PADDING, self.__boundaries[3] + self.__boundaries[1] - DialogRenderer.PADDING, 20, 20)  # TODO A true caret
+        self.__frame = Frame(boundaries, self.__window)
+        self.__surface = FontManager.getFont(DialogFrame.FONT).render(self.__text, True, (0, 0, 0, 0))
+        self.__caretPosition = (self.__boundaries[2] + self.__boundaries[0] - DialogFrame.PADDING, self.__boundaries[3] + self.__boundaries[1] - DialogFrame.PADDING, 20, 20)  # TODO A true caret
 
 
     def update(self, dt, events):
@@ -40,14 +42,13 @@ class DialogRenderer:
 
     def draw(self):
         # Draw frame
-        # TODO A true frame
-        pygame.draw.rect(self.__window, (255, 255, 255), self.__boundaries)
+        self.__frame.draw()
 
         # Draw the caret
         pygame.draw.rect(self.__window, (0, 0, 0), self.__caretPosition)
 
         # Draw text
-        self.__window.blit(self.__surface, (self.__boundaries[0] + DialogRenderer.PADDING, self.__boundaries[1] + DialogRenderer.PADDING))
+        self.__window.blit(self.__surface, (self.__boundaries[0] + DialogFrame.PADDING, self.__boundaries[1] + DialogFrame.PADDING))
 
 
 
