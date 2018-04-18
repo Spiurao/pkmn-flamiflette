@@ -109,7 +109,7 @@ class SubOperator:
         firstValue = self.v1.getValue(valueCb)
         secondValue = self.v2.getValue(valueCb)
 
-        return firstValue - secondValue
+        return int(firstValue - secondValue)
 
 class MulOperator:
     grammar = "(", attr("v1", ValueOperator), "*", attr("v2", ValueOperator), ")"
@@ -166,16 +166,28 @@ class BooleanOperator:
         return self.operator.getValue(valueCb)
 
 class StandardAffectationStatement(str):
-    grammar = attr("register", [Register, Symbol]), "=", attr("value", ValueOperator)
+    grammar = attr("register", [Register, ValueSymbol]), "=", attr("value", ValueOperator)
+
+class MulAffectationStatement(str):
+    grammar = attr("register", [Register, ValueSymbol]), "*=", attr("value", ValueOperator)
+
+class DivAffectationStatement(str):
+    grammar = attr("register", [Register, ValueSymbol]), "/=", attr("value", ValueOperator)
+
+class AddAffectationStatement(str):
+    grammar = attr("register", [Register, ValueSymbol]), "+=", attr("value", ValueOperator)
+
+class SubAffectationStatement(str):
+    grammar = attr("register", [Register, ValueSymbol]), "-=", attr("value", ValueOperator)
 
 class StateAffectationStatement(str):
-    grammar = attr("register", [Register, Symbol]), "$=", attr("value", ValueOperator)
+    grammar = attr("register", [Register, ValueSymbol]), "$=", attr("value", ValueOperator)
 
 class IfStatement(str):
     grammar = "if", "(", attr("expression", ValueOperator), ")", attr("block", Block)
 
 class Statement(List):
-    grammar = attr("statement", [([FunctionCallStatement, StateAffectationStatement, StandardAffectationStatement], ";"), IfStatement])
+    grammar = attr("statement", [([FunctionCallStatement, StateAffectationStatement, StandardAffectationStatement, MulAffectationStatement, DivAffectationStatement, MulAffectationStatement, SubAffectationStatement], ";"), IfStatement])
 
 class Event(List):
     grammar = "event", name(), "()", attr("block", Block)
@@ -292,6 +304,28 @@ class CantalInterpreter:
         # Actor register affectation statement
         elif statementType == StandardAffectationStatement:
             self.__affectationCb(currentStatement.register, currentStatement.value.getValue(self.__valueCb), False)
+            self.nextStatement()
+        elif statementType == MulAffectationStatement:
+            oldValue = currentStatement.register.getValue(self.__valueCb)
+            self.__affectationCb(currentStatement.register, int(oldValue * currentStatement.value.getValue(self.__valueCb)), False)
+            self.nextStatement()
+        elif statementType == DivAffectationStatement:
+            oldValue = currentStatement.register.getValue(self.__valueCb)
+            self.__affectationCb(currentStatement.register, int(oldValue / currentStatement.value.getValue(self.__valueCb)), False)
+            self.nextStatement()
+        elif statementType == SubAffectationStatement:
+            oldValue = currentStatement.register.getValue(self.__valueCb)
+            self.__affectationCb(currentStatement.register, int(oldValue - currentStatement.value.getValue(self.__valueCb)), False)
+            self.nextStatement()
+        elif statementType == AddAffectationStatement:
+            oldValue = currentStatement.register.getValue(self.__valueCb)
+            operand = currentStatement.value.getValue(self.__valueCb)
+            result = None
+            if type(oldValue) == str or type(operand) == str:
+                result = str(oldValue) + str(operand)
+            else:
+                result = oldValue + operand
+            self.__affectationCb(currentStatement.register, result, False)
             self.nextStatement()
         elif statementType == StateAffectationStatement:
             self.__affectationCb(currentStatement.register, currentStatement.value.getValue(self.__valueCb), True)
