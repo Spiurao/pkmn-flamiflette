@@ -125,6 +125,12 @@ class DivOperator:
 
         return int(firstValue / secondValue)
 
+class DifferentOperator(str):
+    grammar = attr("var1", ValueOperator), "!=", attr("var2", ValueOperator)
+
+    def getValue(self, valueCb):
+        return self.var1.getValue(valueCb) != self.var2.getValue(valueCb)
+
 class EqualsOperator(str):
     grammar = attr("var1", ValueOperator), "==", attr("var2", ValueOperator)
 
@@ -150,7 +156,7 @@ class OrOperator(str):
         return self.var1.getValue(valueCb) or self.var2.getValue(valueCb)
 
 class BooleanOperator:
-    grammar = "(", attr("operator", [EqualsOperator, NotOperator, AndOperator, OrOperator]), ")"
+    grammar = "(", attr("operator", [EqualsOperator, DifferentOperator, NotOperator, AndOperator, OrOperator]), ")"
 
     def getValue(self, valueCb):
         return self.operator.getValue(valueCb)
