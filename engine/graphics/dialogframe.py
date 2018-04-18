@@ -15,37 +15,37 @@ class Text(pypeg2.List):
     pass
 
 class BoldText(pypeg2.List):
-    grammar = "<b>", Text, "</b>"
+    grammar = "<b>", attr("text", Text), "</b>"
 
 class UnderlineText(pypeg2.List):
-    grammar = "<u>", Text, "</u>"
+    grammar = "<u>", attr("text", Text), "</u>"
 
 class ShakingText(pypeg2.List):
-    grammar = "<shaking>", Text, "</shaking>"
+    grammar = "<shaking>", attr("text", Text), "</shaking>"
 
 class StrikeText(pypeg2.List):
-    grammar = "<strike>", Text, "</strike>"
+    grammar = "<strike>", attr("text", Text), "</strike>"
 
 class ItalicText(pypeg2.List):
-    grammar = "<i>", Text, "</i>"
+    grammar = "<i>", attr("text", Text), "</i>"
 
 class WavingText(pypeg2.List):
-    grammar = "<waving>", Text, "</waving>"
+    grammar = "<waving>", attr("text", Text), "</waving>"
 
 class SmallText(pypeg2.List):
-    grammar = "<small>", Text, "</small>"
+    grammar = "<small>", attr("text", Text), "</small>"
 
 class BigText(pypeg2.List):
-    grammar = "<big>", Text, "</big>"
+    grammar = "<big>", attr("text", Text), "</big>"
 
 class SlowText(pypeg2.List):
-    grammar = "<slow>", Text, "</slow>"
+    grammar = "<slow>", attr("text", Text), "</slow>"
 
 class FastText(pypeg2.List):
-    grammar = "<fast>", Text, "</fast>"
+    grammar = "<fast>", attr("text", Text), "</fast>"
 
 class ColoredText(pypeg2.List):
-    grammar = "<color ", pypeg2.Symbol, ">", Text, "</color>"
+    grammar = "<color ", pypeg2.Symbol, ">", attr("text", Text), "</color>"
 
 # Ugh not this again
 Text.grammar = attr("text", contiguous(maybe_some([SlowText, FastText, SmallText, BigText, ColoredText, WavingText, StrikeText, ShakingText, ItalicText, BoldText, UnderlineText,
@@ -54,14 +54,12 @@ Text.grammar = attr("text", contiguous(maybe_some([SlowText, FastText, SmallText
 class DialogFrame:
 
     # TODO Add choices here
-    # TODO Have a list of texts instead
-
-    # TODO In order : rendering, rich text, word wrapping, "scrolling", letter by letter rendering
-
+    # TODO In order : true word wrapping, more rich text rendering, "scrolling", letter by letter rendering, caret at right position
     # TODO Add sound
 
-    # TODO Move the caret at the end of the text for each "page"
 
+    LINE_HEIGHT = 40
+    DEFAULT_TEXT_COLOR = (0, 0, 0, 0)
     FONT = "Emerald32Regular"
 
     CARET_TIMER_DURATION = 100
@@ -80,12 +78,48 @@ class DialogFrame:
 
         # Loading
         self.__frame = Frame(boundaries, self.__window)
-        self.__surface = FontManager.getFont(DialogFrame.FONT).render(self.__text, True, (0, 0, 0, 0))
         self.__caretPosition = (self.__boundaries[2] + self.__boundaries[0] - Frame.PADDING*2, self.__boundaries[3] + self.__boundaries[1] - Frame.PADDING*2, 20, 20)
 
-        # Rich text parsing
+        # Rich text parsing and rendering
         self.__tree = parse(self.__text, Text)
-        
+        self.__lines = [[]]  # list of lines containing a list of things to draw (surface, info about this surface)
+        self.__surfaces = []
+        self.__states = {}
+
+        self.buildRichText(self.__tree)
+
+        xOffset = 0
+        for surface in self.__surfaces:
+            if xOffset + surface.get_width() <= self.__boundaries[2] - Frame.FRAME_THICKNESS*2:
+                self.__lines[-1].append(surface)
+                xOffset += surface.get_width()
+            else:
+                xOffset = surface.get_width()
+                self.__lines.append([])
+                self.__lines[-1].append(surface)
+
+    def stateEnabled(self, name):
+        return name in self.__states and self.__states[name]
+
+    def buildRichText(self, thing):
+        for text in thing.text:
+            textType = type(text)
+            if textType == str:
+                font = FontManager.getFont(DialogFrame.FONT)
+
+                font.set_bold(self.stateEnabled("BoldText"))
+                font.set_italic(self.stateEnabled("ItalicText"))
+                font.set_underline(self.stateEnabled("UnderlineText"))
+
+                # TODO Add other states
+
+                surface = font.render(text, True, DialogFrame.DEFAULT_TEXT_COLOR)
+                self.__surfaces.append(surface)
+            else:
+                typeStr = textType.__name__
+                self.__states[typeStr] = True
+                self.buildRichText(text.text)
+                self.__states[typeStr] = False
 
     def caretTimerCb(self, tag):
         self.__caretStep = (self.__caretStep + 1) % 4
@@ -109,7 +143,14 @@ class DialogFrame:
         self.__window.blit(self.__caretTexture, self.__caretPosition, (0, self.__caretStep, 32, 32))
 
         # Draw text
-        self.__window.blit(self.__surface, (self.__boundaries[0] + Frame.PADDING, self.__boundaries[1] + Frame.PADDING))
+        offsetX = 0
+        offsetY = 0
+        for line in self.__lines:
+            for surface in line:
+                self.__window.blit(surface, (self.__boundaries[0] + Frame.PADDING + offsetX, self.__boundaries[1] + Frame.PADDING + offsetY))
+                offsetX += surface.get_width()
+            offsetX = 0
+            offsetY += DialogFrame.LINE_HEIGHT
 
 
 
