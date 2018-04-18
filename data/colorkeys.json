@@ -1,5 +1,7 @@
 {
   "tilesets.overworld" : [255, 255, 255],
   "charsets.wobbuffet": [25, 117, 85],
-  "charsets.character" : [25, 117, 85]
+  "charsets.character" : [25, 117, 85],
+  "gui.frame" : [255, 216, 0],
+  "gui.caret" : [255, 216, 0]
 }

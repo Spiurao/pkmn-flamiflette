@@ -97,7 +97,8 @@ class MapScene(Scene):
         self.__events = None  # pygame events
 
         self.__dialogFrame = None  # the DialogFrame for the current dialog
-        self.__dialogBoundaries = (0, int((2/3)*self.getEngine().getResolution()[1]), self.getEngine().getResolution()[0], int((1/3) * self.getEngine().getResolution()[1]))
+        dialogHeight = int((1/3) * self.getEngine().getResolution()[1])
+        self.__dialogBoundaries = (0, self.getEngine().getResolution()[1] - dialogHeight, self.getEngine().getResolution()[0], dialogHeight)
         self.__dialogCallback = None  # to notify the actor that the dialog has ended
         self.__dialogCallbackPayload = None  # data passed to the dialog callback (typically the name of the interpreter)
 
@@ -199,7 +200,7 @@ class MapScene(Scene):
 
         print("     Tileset name : " + self.__tilesetName)
 
-        self.__tilesetTexture = Textures.getTextures()["tilesets." + self.__tilesetName]
+        self.__tilesetTexture = Textures.getTexture("tilesets." + self.__tilesetName)
 
         # Load player charset
         self.__characterCharset.load()

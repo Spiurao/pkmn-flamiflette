@@ -40,7 +40,7 @@ class Strings:
             stringsName = f[size:len(f) - 4]
             stringsName = stringsName.replace(os.path.sep, ".")
 
-            with open(f) as file:
+            with open(f, "r", encoding='utf-8') as file:
                 strings = json.loads(file.read())
 
                 for string in strings:

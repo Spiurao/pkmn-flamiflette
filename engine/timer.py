@@ -18,3 +18,7 @@ class Timer:
         if self.__runningSince >= self.__duration:
             self.alive = False
             self.__callback(self.__tag)
+
+    def restart(self):
+        self.__runningSince = 0
+        self.alive = True

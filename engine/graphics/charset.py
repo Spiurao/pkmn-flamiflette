@@ -14,7 +14,7 @@ class Charset:
 
     @staticmethod
     def ofTexture(texture: pygame.Surface, orientation: int):
-        return Charset(Textures.getTextures()[texture], orientation)
+        return Charset(Textures.getTexture(texture), orientation)
 
     def __init__(self, texture: pygame.Surface, orientation: int):
         self.__texture = texture  # the texture surface

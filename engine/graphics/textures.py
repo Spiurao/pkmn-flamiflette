@@ -34,5 +34,5 @@ class Textures:
         Textures.__textures = {}
 
     @staticmethod
-    def getTextures() -> List[pygame.Surface]:
-        return Textures.__textures
+    def getTexture(name : str) -> pygame.Surface:
+        return Textures.__textures[name]

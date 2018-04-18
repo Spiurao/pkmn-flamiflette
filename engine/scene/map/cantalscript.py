@@ -38,7 +38,7 @@ class StringLiteral(str):
     grammar = attr("value", quoted_string)
 
     def getValue(self):
-        return self.value[1:-1]
+        return str(self.value[1:-1])
 
     def __repr__(self):
         return self.getValue()
@@ -227,7 +227,7 @@ class CantalParser:
     @staticmethod
     def parse(scriptPath : str) -> CantalScript:
         result = None
-        with open(scriptPath, "r") as f:
+        with open(scriptPath, "r", encoding='utf-8') as f:
             result = parse(f.read(), CantalScript, None, whitespace, CantalParser.COMMENTS_GRAMMAR)
 
         result.init()
