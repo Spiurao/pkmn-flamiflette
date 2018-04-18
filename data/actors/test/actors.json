@@ -30,5 +30,15 @@
       "orientation":0,
       "walk":true
     }
+  },
+  {
+    "positionX":9,
+    "positionY":8,
+    "type": "NPC",
+    "script":"dialogtest",
+    "parameters":{
+      "charset":"charsets.wobbuffet",
+      "orientation":0
+    }
   }
 ]

@@ -354,7 +354,7 @@ class CantalInterpreter:
                     self.__shouldLoop = True
                 self.reset()
             else:
-                self.nextStatement();
+                self.nextStatement()
         else:
             self.processCurrentStatement()
 

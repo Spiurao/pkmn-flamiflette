@@ -1,10 +1,11 @@
 import importlib
 import math
-from typing import Tuple, List
+from typing import Tuple, List, Callable, Dict
 
 import pygame
 
 from data.constants import Constants
+from engine.graphics.dialogrenderer import DialogRenderer
 from engine.graphics.textures import Textures, Engine
 from engine.graphics.charset import Charset
 from engine.scene.map.actors.actor import Actor
@@ -95,8 +96,36 @@ class MapScene(Scene):
         self.__dt = 0  # delta-time given by pygame clock
         self.__events = None  # pygame events
 
+        self.__dialogRenderer = None  # the DialogRenderer for the current dialog frame
+        self.__dialogBoundaries = (0, int((2/3)*self.getEngine().getResolution()[1]), self.getEngine().getResolution()[0], int((1/3) * self.getEngine().getResolution()[1]))
+        self.__dialogCallback = None  # to notify the actor that the dialog has ended
+        self.__dialogCallbackPayload = None  # data passed to the dialog callback (typically the name of the interpreter)
+
     def getTileSize(self) -> int:
         return self.__tileSize
+
+    def showDialog(self, text : str, cb : Callable, payload : Dict):
+        if self.__dialogRenderer is not None:
+            return
+
+        self.lockInputs()
+        self.__dialogCallback = cb
+        self.__dialogCallbackPayload = payload
+        self.__dialogRenderer = DialogRenderer(self.__window, self.__dialogBoundaries, text, self.onDialogEnd)
+
+    def onDialogEnd(self, choiceResult : int):
+        self.__dialogRenderer = None
+
+        callback = self.__dialogCallback
+        payload = self.__dialogCallbackPayload
+
+        self.__dialogCallback = None
+        self.__dialogCallbackPayload = None
+
+        if callback is not None:
+            callback(payload)
+
+        self.unlockInputs()
 
     def getCharacterPosition(self) -> Tuple:
         return (self.__characterX, self.__characterY)
@@ -389,6 +418,10 @@ class MapScene(Scene):
         # Second layer
         self.drawMatrix(self.__tilesMatrix1)
 
+        # Dialog
+        if self.__dialogRenderer is not None:
+            self.__dialogRenderer.draw()
+
     def canCameraMoveLeft(self) -> bool:
         return self.__drawRectX > 0
 
@@ -577,6 +610,10 @@ class MapScene(Scene):
                 self.__characterCharset.resetStep()
             else:
                 self.__touchEventProcessed = False
+
+        # Dialog renderer
+        if self.__dialogRenderer is not None:
+            self.__dialogRenderer.update(dt, events)
 
     def canBump(self, tag):
         self.__bumpPlayed = False

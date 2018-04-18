@@ -75,6 +75,7 @@ class Actor:
         self.registerCantalFunction("triggerStateChange", self.cantalTriggerStateChange)
         self.registerCantalFunction("lockInputs", self.cantalLockInputs)
         self.registerCantalFunction("unlockInputs", self.cantalUnlockInputs)
+        self.registerCantalFunction("showDialog", self.cantalShowDialog)
 
     def registerCantalValueFunction(self, name, cb):
         self.__cantalValueFunctions[name] = cb
@@ -134,6 +135,10 @@ class Actor:
                 raise Exception("Could not activate any state for event " + str(self.__name))
         except StopIteration:
             raise Exception("Could not activate any state for event " + str(self.__name))
+
+    def dialogCallback(self, payload):
+        interpreter = payload["interpreter"]
+        self.interpreters[self.currentState][interpreter].nextStatement()
 
     def load(self):
         # Load CantalScript file
@@ -409,3 +414,10 @@ class Actor:
     def cantalUnlockInputs(self, interpreter : str):
         self.getScene().unlockInputs()
         self.interpreters[self.currentState][interpreter].nextStatement()
+
+    def cantalShowDialog(self, interpreter : str, dialogString : str, *args):
+        string = Strings.getString(dialogString, *args)
+        payload = {
+            "interpreter" : interpreter
+        }
+        self.getScene().showDialog(string, self.dialogCallback, payload)

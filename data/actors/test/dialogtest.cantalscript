@@ -1,0 +1,10 @@
+state default(true)
+{
+    event actionPressed()
+    {
+        turnToFaceCharacter();
+        showDialog("maps.test.wobbuffet_dialog", "WOOOOBUUUUFFEEET");
+        showDialog("maps.test.wobbuffet_dialog", "Wobbu ?");
+        print("Dialog finished");
+    }
+}

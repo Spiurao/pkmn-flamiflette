@@ -18,7 +18,7 @@ class FontManager:
 
     # File name, size, style
     FONT_FACES = {
-        "Emerald18Regular" : ("Emerald", 18, FontStyle.REGULAR),
+        "Emerald26Regular" : ("Emerald", 26, FontStyle.REGULAR),
         "Emerald32Bold" : ("Emerald", 32, FontStyle.BOLD)
     }
 
