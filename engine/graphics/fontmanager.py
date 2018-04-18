@@ -13,7 +13,7 @@ class FontStyle(Enum):
 class FontManager:
 
     FONT_FILES = {
-        "Emerald" : "Pokémon Emerald Pro.ttf"
+        "Emerald" : "Emerald.ttf"
     }
 
     # File name, size, style
