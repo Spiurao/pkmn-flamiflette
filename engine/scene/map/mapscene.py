@@ -44,7 +44,7 @@ class MapScene(Scene):
         self.__tilesMatrix0 = []  # matrix of Tile objects to draw below the actors
         self.__tilesMatrix1 = []  # matrix of Tile objects surfaces to draw above the actors
 
-        self.__inputsBlocked = False  # self-explanatory
+        self.__inputsLocks = 0  # number of times the inputs have been locked - inputs are blocked if this is > 0
 
         self.__window = self.getEngine().getWindow()  # the game window
 
@@ -492,7 +492,7 @@ class MapScene(Scene):
         if self.__bumpTimer is not None:
             self.__bumpTimer.update(dt)
 
-        if not self.__inputsBlocked:
+        if self.__inputsLocks == 0:
 
             orientation = self.__characterCharset.getOrientation()
 
@@ -526,7 +526,7 @@ class MapScene(Scene):
                     else:
                         self.__characterTween = Tween("pq", self.__characterOffsetX, self.__characterOffsetX.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
-                    self.__inputsBlocked = True
+                    self.__inputsLocks += 1
                 else:
                     self.__characterCharset.resetStep()
                     self.playBump()
@@ -540,7 +540,7 @@ class MapScene(Scene):
                     else:
                         self.__characterTween = Tween("pd", self.__characterOffsetX, self.__characterOffsetX.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
-                    self.__inputsBlocked = True
+                    self.__inputsLocks += 1
                 else:
                     self.__characterCharset.resetStep()
                     self.playBump()
@@ -554,7 +554,7 @@ class MapScene(Scene):
                     else:
                         self.__characterTween = Tween("pz", self.__characterOffsetY, self.__characterOffsetY.value - self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving = True
-                    self.__inputsBlocked = True
+                    self.__inputsLocks += 1
                 else:
                     self.__characterCharset.resetStep()
                     self.playBump()
@@ -568,7 +568,7 @@ class MapScene(Scene):
                     else:
                         self.__characterTween = Tween("ps", self.__characterOffsetY, self.__characterOffsetY.value + self.__tileSize, MapScene.CAMERA_MOVEMENT_DURATION, Easing.easingLinear, self.tweensCallback)
                     self.__characterMoving =  True
-                    self.__inputsBlocked = True
+                    self.__inputsLocks += 1
                 else:
                     self.__characterCharset.resetStep()
                     self.playBump()
@@ -632,6 +632,12 @@ class MapScene(Scene):
             actor.onCharacterTouchEvent()
             self.__touchEventProcessed = True
 
+    def lockInputs(self):
+        self.__inputsLocks += 1
+
+    def unlockInputs(self):
+        self.__inputsLocks -= 1
+
     def tweensCallback(self, tag):
         if tag == "cs":
             self.__drawRectY += 1
@@ -682,5 +688,5 @@ class MapScene(Scene):
 
             self.onCharacterEnteredTile()
 
-        self.__inputsBlocked = False
+        self.__inputsLocks -= 1
 

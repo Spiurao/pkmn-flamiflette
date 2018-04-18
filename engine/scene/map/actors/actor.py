@@ -73,6 +73,8 @@ class Actor:
         self.registerCantalFunction("wait", self.cantalWait)
         self.registerCantalFunction("print", self.cantalPrint)
         self.registerCantalFunction("triggerStateChange", self.cantalTriggerStateChange)
+        self.registerCantalFunction("lockInputs", self.cantalLockInputs)
+        self.registerCantalFunction("unlockInputs", self.cantalUnlockInputs)
 
     def registerCantalValueFunction(self, name, cb):
         self.__cantalValueFunctions[name] = cb
@@ -394,4 +396,12 @@ class Actor:
 
     def cantalTriggerStateChange(self, interpreter : str):
         self.activateRightState()
+        self.interpreters[self.currentState][interpreter].nextStatement()
+
+    def cantalLockInputs(self, interpreter : str):
+        self.getScene().lockInputs()
+        self.interpreters[self.currentState][interpreter].nextStatement()
+
+    def cantalUnlockInputs(self, interpreter : str):
+        self.getScene().unlockInputs()
         self.interpreters[self.currentState][interpreter].nextStatement()
