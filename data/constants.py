@@ -16,7 +16,7 @@ class Constants:
     SFX_PATH = os.path.join("data", "sfx")
 
     COLOR_KEYS_PATH = os.path.join("data", "colorkeys.json")
-    STRINGS_PATH = os.path.join("data", "strings.json")
+    STRINGS_PATH = os.path.join("data", "strings")
 
     WINDOW_TITLE = {
         GAME_VARIANT_FLAMIFLETTE : "Pokémon Version Flamiflette",

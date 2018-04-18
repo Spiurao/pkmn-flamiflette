@@ -1,4 +1,6 @@
+import glob
 import json
+import os
 import random
 
 from data.savedatafields import SaveDataFields
@@ -33,8 +35,16 @@ class Strings:
 
         # Load the strings
         from data.constants import Constants
-        with open(Constants.STRINGS_PATH) as f:
-            Strings.__strings = json.loads(f.read())
+        size = len(Constants.STRINGS_PATH) + 1
+        for f in glob.iglob(os.path.join(Constants.STRINGS_PATH, '**', '*.json'), recursive=True):
+            stringsName = f[size:len(f) - 4]
+            stringsName = stringsName.replace(os.path.sep, ".")
+
+            with open(f) as file:
+                strings = json.loads(file.read())
+
+                for string in strings:
+                    Strings.__strings[stringsName + string] = strings[string]
 
         # Prepare the formatter
         Strings.__formatter = StringsFormatter(engine)
