@@ -3,8 +3,7 @@ state default(true)
     event actionPressed()
     {
         turnToFaceCharacter();
-        showDialog("maps.test.wobbuffet_dialog", "Je m'appelle Wobbuffet. Ce texte est inutilement long pour tester le word wrapping ainsi que la pagination. Sayonara !");
-        showDialog("maps.test.wobbuffet_dialog", "Wobbu ? Ce texte est là pour tester l'enchaînement de dialogues");
+        showDialog("maps.test.wobbuffet_dialog");
         print("Dialog finished");
     }
 }

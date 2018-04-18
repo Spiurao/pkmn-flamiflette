@@ -14,7 +14,7 @@ class DialogFrame:
     # TODO Add choices here
     # TODO Have a list of texts instead
 
-    # TODO In order : rendering, word wrapping, "scrolling", rich text, letter by letter rendering
+    # TODO In order : rendering, rich text, word wrapping, "scrolling", letter by letter rendering
 
     # TODO Add sound
 
