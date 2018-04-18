@@ -159,9 +159,13 @@ class Actor:
                     self.__cantalVariablesTypes[variable.name] = Actor.VARIABLE_TYPE_SAVED if variable.saved else Actor.VARIABLE_TYPE_NORMAL
 
                     if hasattr(variable, "value") and variable.value is not None:
+                        defaultValue = variable.value.literal.getValue()
                         if variable.saved:
-                            raise Exception("Saved variables cannot have a default value")
-                        self.__cantalVariables[variable.name] = variable.value.literal.getValue()
+                            savedVariableName = self.getScene().getMapName() + "." + self.__name + "." + variable.name
+                            if SaveManager.getCurrentSaveValue(savedVariableName) is None:
+                                SaveManager.setCurrentSaveValue(savedVariableName, defaultValue)
+                        else:
+                            self.__cantalVariables[variable.name] = defaultValue
 
                 # Interpreters
                 for state in scriptData.states:
