@@ -14,6 +14,7 @@ class Constants:
     ACTORS_PATH = os.path.join("data", "actors")
     BGM_PATH = os.path.join("data", "bgm")
     SFX_PATH = os.path.join("data", "sfx")
+    FONTS_PATH = os.path.join("data", "fonts")
 
     COLOR_KEYS_PATH = os.path.join("data", "colorkeys.json")
     STRINGS_PATH = os.path.join("data", "strings")
@@ -25,8 +26,6 @@ class Constants:
 
     FRAMERATE = 60
     RESOLUTION = (800, 608)
-
-    FONT_NAME = "System"
 
     MASTER_VOLUME = 1.0
     BGM_VOLUME = 0.1

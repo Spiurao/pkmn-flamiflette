@@ -3,6 +3,7 @@ from typing import Tuple, List
 
 import pygame
 
+from engine.graphics.fontmanager import FontManager
 from engine.scene.scene import Scene
 from engine.sound.sfx import SFX
 from engine.strings import Strings
@@ -50,8 +51,7 @@ class Engine:
         Strings.load(self)
 
         # fonts
-        from data.constants import Constants
-        self.__font32 = pygame.font.SysFont(Constants.FONT_NAME, 32)
+        FontManager.load()
 
     def invalidateDrawOrder(self):
         if len(self.__sceneStack) > 0:
@@ -125,6 +125,7 @@ class Engine:
 
         SFX.unload()
         Strings.unload()
+        FontManager.unload()
 
     def exit(self):
         self.__running = False
@@ -144,8 +145,8 @@ class Engine:
 
         # FPS Counter
         if Engine.SHOW_FPS_COUNTER:
-            fpsCount = str(self.__clock.get_fps())[:4]
-            fpsCounter = self.__font32.render(fpsCount, 0, (255, 255, 255))
+            fpsCount = str(self.__clock.get_fps())[:4] + " FPS"
+            fpsCounter = FontManager.getFont("Emerald32Bold").render(fpsCount, 0, (255, 255, 255))
             self.__window.blit(fpsCounter, (10, 10))
 
     def onTransitionFinish(self):
