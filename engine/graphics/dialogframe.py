@@ -49,7 +49,12 @@ class ColoredText(pypeg2.List):
 
 # Ugh not this again
 Text.grammar = attr("text", contiguous(maybe_some([SlowText, FastText, SmallText, BigText, ColoredText, WavingText, StrikeText, ShakingText, ItalicText, BoldText, UnderlineText,
-                                                   re.compile(r"[^<>*]")])))
+                                                   re.compile(r"[^<>]")])))
+
+class TextChunk:
+    def __init__(self):
+        self.text = ""
+        self.state = {}
 
 class DialogFrame:
 
@@ -83,11 +88,16 @@ class DialogFrame:
         # Rich text parsing and rendering
         self.__tree = parse(self.__text, Text)
         self.__lines = [[]]  # list of lines containing a list of things to draw (surface, info about this surface)
-        self.__surfaces = []
         self.__states = {}
+        self.__stateChanged = True
 
-        self.buildRichText(self.__tree)
+        self.__textList = []  # list of TextChunk instances
 
+        self.buildTextList(self.__tree)
+
+        # self.buildRichText(self.__tree)
+
+        '''
         xOffset = 0
         for surface in self.__surfaces:
             if xOffset + surface.get_width() <= self.__boundaries[2] - Frame.FRAME_THICKNESS*2:
@@ -97,11 +107,33 @@ class DialogFrame:
                 xOffset = surface.get_width()
                 self.__lines.append([])
                 self.__lines[-1].append(surface)
+        '''
 
     def stateEnabled(self, name):
         return name in self.__states and self.__states[name]
 
+    def buildTextList(self, thing):
+        for text in thing.text:
+            textType = type(text)
+            if textType == str:
+                if self.__stateChanged:
+                    chunk = TextChunk()
+                    chunk.state = {**self.__states}
+                    self.__textList.append(chunk)
+                    self.__stateChanged = False
+                else:
+                    self.__textList[-1].text += text
+            else:
+                self.__stateChanged = True
+                typeStr = textType.__name__
+                self.__states[typeStr] = True
+                self.buildRichText(text.text)
+                self.__states[typeStr] = False
+
+    '''
     def buildRichText(self, thing):
+        pos = 0
+        xOffset = 0
         for text in thing.text:
             textType = type(text)
             if textType == str:
@@ -111,15 +143,26 @@ class DialogFrame:
                 font.set_italic(self.stateEnabled("ItalicText"))
                 font.set_underline(self.stateEnabled("UnderlineText"))
 
-                # TODO Add other states
+                if text == " ":
+                    self.__previousWhitespacePosition = pos
+                else:
+                    self.__currentLineText += text
+                    width = font.size()
 
-                surface = font.render(text, True, DialogFrame.DEFAULT_TEXT_COLOR)
+                    if xOffset + 
+
+                    # TODO Add other states
+
+                    surface = font.render(text, True, DialogFrame.DEFAULT_TEXT_COLOR)
                 self.__surfaces.append(surface)
             else:
                 typeStr = textType.__name__
                 self.__states[typeStr] = True
                 self.buildRichText(text.text)
                 self.__states[typeStr] = False
+            pos += 1
+            
+    '''
 
     def caretTimerCb(self, tag):
         self.__caretStep = (self.__caretStep + 1) % 4
