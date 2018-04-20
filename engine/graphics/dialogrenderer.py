@@ -107,7 +107,6 @@ class DialogRenderer:
 
         self.buildChunks(self.__tree)  # fills textChunks
         self.wordWrap()  # fills wrappedTextChunks
-        self.renderText()  # fills wrappedTextChunks surfaces
 
     def setFontProperties(self, state):
         if self.stateEnabled(state, "Big"):
@@ -120,17 +119,6 @@ class DialogRenderer:
         self.__font.set_italic(self.stateEnabled(state, "Italic"))
         self.__font.set_underline(self.stateEnabled(state, "Underline"))
         self.__font.set_bold(self.stateEnabled(state, "Bold"))
-
-    def renderText(self):
-        for line in self.__wrappedTextChunks:
-            for chunk in line:
-                self.setFontProperties(chunk.state)
-
-                # TODO Add other states here
-
-                chunk.surface = self.__font.render(chunk.text, True, DialogRenderer.DEFAULT_TEXT_COLOR)
-
-        lastChunk = self.__wrappedTextChunks[-1][-1]
 
     def wordWrap(self):
         xOffset = 0
@@ -154,6 +142,7 @@ class DialogRenderer:
                         newChunk.text = text
                         newChunk.state = chunk.state
                         newChunk.yOffset = chunk.yOffset
+                        newChunk.surface = self.__font.render(newChunk.text, True, DialogRenderer.DEFAULT_TEXT_COLOR)
                         self.__wrappedTextChunks[-1].append(newChunk)
 
                     self.__wrappedTextChunks.append([])
@@ -168,6 +157,7 @@ class DialogRenderer:
                 newChunk.text = text
                 newChunk.state = chunk.state
                 newChunk.yOffset = chunk.yOffset
+                newChunk.surface = self.__font.render(newChunk.text, True, DialogRenderer.DEFAULT_TEXT_COLOR)
                 self.__wrappedTextChunks[-1].append(newChunk)
 
     def stateEnabled(self, state, name):
