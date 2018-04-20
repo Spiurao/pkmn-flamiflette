@@ -56,6 +56,7 @@ class TextChunk:
         self.text = ""
         self.surface = None
         self.state = {}
+        self.yOffset = 0
 
 class DialogFrame:
 
@@ -83,7 +84,11 @@ class DialogFrame:
         self.__caretStep = 0  # the current step in the caret texture
         self.__caretTimer = Timer("caret", DialogFrame.CARET_TIMER_DURATION, self.caretTimerCb)
 
-        self.__font = FontManager.getFont(DialogFrame.FONT)
+        self.__regularFont = FontManager.getFont(DialogFrame.FONT + "Regular")
+        self.__smallFont = FontManager.getFont(DialogFrame.FONT + "Small")
+        self.__bigFont = FontManager.getFont(DialogFrame.FONT + "Big")
+
+        self.__font = self.__regularFont
 
         self.__linesMax = int((self.__boundaries[3] - Frame.PADDING * 2) / (self.__font.size("H")[1]))
 
@@ -106,6 +111,13 @@ class DialogFrame:
         self.renderText()  # fills wrappedTextChunks surfaces
 
     def setFontProperties(self, state):
+        if self.stateEnabled(state, "Big"):
+            self.__font = self.__bigFont
+        elif self.stateEnabled(state, "Small"):
+            self.__font = self.__smallFont
+        else:
+            self.__font = self.__regularFont
+
         self.__font.set_italic(self.stateEnabled(state, "Italic"))
         self.__font.set_underline(self.stateEnabled(state, "Underline"))
         self.__font.set_bold(self.stateEnabled(state, "Bold"))
@@ -142,6 +154,7 @@ class DialogFrame:
                         newChunk = TextChunk()
                         newChunk.text = text
                         newChunk.state = chunk.state
+                        newChunk.yOffset = chunk.yOffset
                         self.__wrappedTextChunks[-1].append(newChunk)
 
                     self.__wrappedTextChunks.append([])
@@ -155,6 +168,7 @@ class DialogFrame:
                 newChunk = TextChunk()
                 newChunk.text = text
                 newChunk.state = chunk.state
+                newChunk.yOffset = chunk.yOffset
                 self.__wrappedTextChunks[-1].append(newChunk)
 
     def stateEnabled(self, state, name):
@@ -167,6 +181,12 @@ class DialogFrame:
                 if self.__stateChanged:
                     chunk = TextChunk()
                     chunk.state = {**self.__states}
+
+                    if self.stateEnabled(chunk.state, "Small"):
+                        chunk.yOffset = 10
+                    elif self.stateEnabled(chunk.state, "Big"):
+                        chunk.yOffset = -10
+
                     self.__textChunks.append(chunk)
                     self.__stateChanged = False
 
@@ -212,9 +232,10 @@ class DialogFrame:
         xOffset = 0
         lastYOffset = 0
         lastXOffset = 0
+
         for line in self.__wrappedTextChunks[self.__currentLine:self.__currentLine+self.__linesMax]:
             for chunk in line:
-                self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset, self.__boundaries[1] + Frame.PADDING + yOffset + DialogFrame.Y_OFFSET))
+                self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset, self.__boundaries[1] + Frame.PADDING + yOffset + DialogFrame.Y_OFFSET + chunk.yOffset))
                 xOffset += chunk.surface.get_width()
             lastYOffset = yOffset
             yOffset += DialogFrame.LINE_HEIGHT
@@ -223,7 +244,6 @@ class DialogFrame:
 
         # Draw the caret
         self.__window.blit(self.__caretTexture, (lastXOffset + 32, self.__boundaries[1] + Frame.PADDING + lastYOffset), (0, self.__caretStep, 32, 32))
-        #self.__window.blit(self.__caretTexture, (self.__boundaries[0] + Frame.PADDING + xOffset + self.__relativeCaretPosition[0], self.__boundaries[1] + Frame.PADDING + yOffset + DialogFrame.Y_OFFSET + self.__relativeCaretPosition[1]), )
 
 
 

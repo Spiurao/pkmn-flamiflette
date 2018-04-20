@@ -17,8 +17,11 @@ class FontManager:
     }
 
     # File name, size, style
+    # font style is dynamically applied by the dialog renderer for dialog fonts
     FONT_FACES = {
-        "Dialog": ("Emerald", 32, FontStyle.REGULAR),  # font style is dynamically applied by the dialog renderer
+        "DialogSmall": ("Emerald", 20, FontStyle.REGULAR),
+        "DialogBig": ("Emerald", 42, FontStyle.REGULAR),
+        "DialogRegular": ("Emerald", 32, FontStyle.REGULAR),
         "Emerald32Regular" : ("Emerald", 32, FontStyle.REGULAR),
         "Emerald32Bold" : ("Emerald", 32, FontStyle.BOLD)
     }
