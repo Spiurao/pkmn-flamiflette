@@ -54,18 +54,20 @@ Text.grammar = attr("text", contiguous(maybe_some([SlowText, FastText, SmallText
 class TextChunk:
     def __init__(self):
         self.text = ""
+        self.surface = None
         self.state = {}
 
 class DialogFrame:
 
     # TODO Add choices here
-    # TODO In order : true word wrapping, more rich text rendering, "scrolling", letter by letter rendering, caret at right position
+    # TODO In order : caret ar right position, more rich text rendering, "scrolling", letter by letter rendering
     # TODO Add sound
-
 
     LINE_HEIGHT = 40
     DEFAULT_TEXT_COLOR = (0, 0, 0, 0)
-    FONT = "Emerald32Regular"
+    FONT = "Dialog"
+
+    Y_OFFSET = -4
 
     CARET_TIMER_DURATION = 100
 
@@ -81,38 +83,83 @@ class DialogFrame:
         self.__caretStep = 0  # the current step in the caret texture
         self.__caretTimer = Timer("caret", DialogFrame.CARET_TIMER_DURATION, self.caretTimerCb)
 
+        self.__font = FontManager.getFont(DialogFrame.FONT)
+
+        self.__linesMax = int((self.__boundaries[3] - Frame.PADDING * 2) / (self.__font.size("H")[1]))
+
         # Loading
         self.__frame = Frame(boundaries, self.__window)
         self.__caretPosition = (self.__boundaries[2] + self.__boundaries[0] - Frame.PADDING*2, self.__boundaries[3] + self.__boundaries[1] - Frame.PADDING*2, 20, 20)
 
         # Rich text parsing and rendering
         self.__tree = parse(self.__text, Text)
-        self.__lines = [[]]  # list of lines containing a list of things to draw (surface, info about this surface)
         self.__states = {}
         self.__stateChanged = True
 
         self.__textChunks = []  # list of TextChunk instances
+        self.__wrappedTextChunks = [[]]
 
-        self.buildTextList(self.__tree)
+        self.__currentLine = 0
+        self.__alive = True
 
-        # self.buildRichText(self.__tree)
+        self.buildChunks(self.__tree)  # fills textChunks
+        self.wordWrap()  # fills wrappedTextChunks
+        self.renderText()  # fills wrappedTextChunks surfaces
 
-        '''
+    def setFontProperties(self, state):
+        self.__font.set_italic(self.stateEnabled(state, "Italic"))
+        self.__font.set_underline(self.stateEnabled(state, "Underline"))
+        self.__font.set_bold(self.stateEnabled(state, "Bold"))
+
+    def renderText(self):
+        for line in self.__wrappedTextChunks:
+            for chunk in line:
+                self.setFontProperties(chunk.state)
+
+                # TODO Add other states here
+
+                chunk.surface = self.__font.render(chunk.text, True, DialogFrame.DEFAULT_TEXT_COLOR)
+
+    def wordWrap(self):
         xOffset = 0
-        for surface in self.__surfaces:
-            if xOffset + surface.get_width() <= self.__boundaries[2] - Frame.FRAME_THICKNESS*2:
-                self.__lines[-1].append(surface)
-                xOffset += surface.get_width()
-            else:
-                xOffset = surface.get_width()
-                self.__lines.append([])
-                self.__lines[-1].append(surface)
-        '''
+        for chunk in self.__textChunks:
+            self.setFontProperties(chunk.state)
 
-    def stateEnabled(self, name):
-        return name in self.__states and self.__states[name]
+            text = ""
 
-    def buildTextList(self, thing):
+            words = chunk.text.split(" ")
+            for word in words:
+                word = word + " "
+                wordLength = self.__font.size(word)[0]
+
+                if wordLength + xOffset <= self.__boundaries[2] - Frame.PADDING * 2:
+                    text += word
+                    xOffset += wordLength
+                else:
+                    text = text[:-1]
+                    if text != "":
+                        newChunk = TextChunk()
+                        newChunk.text = text
+                        newChunk.state = chunk.state
+                        self.__wrappedTextChunks[-1].append(newChunk)
+
+                    self.__wrappedTextChunks.append([])
+
+                    text = word
+                    xOffset = wordLength
+
+            text = text[:-1]
+
+            if text != "":
+                newChunk = TextChunk()
+                newChunk.text = text
+                newChunk.state = chunk.state
+                self.__wrappedTextChunks[-1].append(newChunk)
+
+    def stateEnabled(self, state, name):
+        return name in state and state[name]
+
+    def buildChunks(self, thing):
         for text in thing.text:
             textType = type(text)
             if textType == str:
@@ -124,10 +171,14 @@ class DialogFrame:
 
                 self.__textChunks[-1].text += text
             else:
-                self.__stateChanged = True
                 typeStr = textType.__name__[:-4]
+
+                self.__stateChanged = True
                 self.__states[typeStr] = True
-                self.buildTextList(text.text)
+
+                self.buildChunks(text.text)
+
+                self.__stateChanged = True
                 self.__states[typeStr] = False
 
 
@@ -142,10 +193,16 @@ class DialogFrame:
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        self.__endCb(0)
+                        self.__currentLine += self.__linesMax
+                        if self.__currentLine > len(self.__wrappedTextChunks):
+                            self.__alive = False
+                            self.__endCb(0)
         self.__firstUpdate = False
 
     def draw(self):
+        if not self.__alive:
+            return
+
         # Draw frame
         self.__frame.draw()
 
@@ -153,7 +210,14 @@ class DialogFrame:
         self.__window.blit(self.__caretTexture, self.__caretPosition, (0, self.__caretStep, 32, 32))
 
         # Draw text
-        pass
+        yOffset = 0
+        xOffset = 0
+        for line in self.__wrappedTextChunks[self.__currentLine:self.__currentLine+self.__linesMax]:
+            for chunk in line:
+                self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset, self.__boundaries[1] + Frame.PADDING + yOffset + DialogFrame.Y_OFFSET))
+                xOffset += chunk.surface.get_width()
+            yOffset += DialogFrame.LINE_HEIGHT
+            xOffset = 0
 
 
 
