@@ -58,7 +58,7 @@ class TextChunk:
         self.state = {}
         self.yOffset = 0
 
-class DialogFrame:
+class DialogRenderer:
 
     # TODO Add choices here
     # TODO In order : more rich text rendering, "scrolling", letter by letter rendering
@@ -72,8 +72,8 @@ class DialogFrame:
 
     CARET_TIMER_DURATION = 100
 
-    def __init__(self, window : Surface, boundaries : Tuple, text : str, endCallback : Callable):
-        self.__boundaries = boundaries
+    def __init__(self, window : Surface, frame : Frame, text : str, endCallback : Callable):
+        self.__boundaries = frame.rect
         self.__text = text
         self.__endCb = endCallback
         self.__window = window
@@ -82,18 +82,17 @@ class DialogFrame:
 
         self.__caretTexture = Textures.getTexture("gui.caret")
         self.__caretStep = 0  # the current step in the caret texture
-        self.__caretTimer = Timer("caret", DialogFrame.CARET_TIMER_DURATION, self.caretTimerCb)
+        self.__caretTimer = Timer("caret", DialogRenderer.CARET_TIMER_DURATION, self.caretTimerCb)
 
-        self.__regularFont = FontManager.getFont(DialogFrame.FONT + "Regular")
-        self.__smallFont = FontManager.getFont(DialogFrame.FONT + "Small")
-        self.__bigFont = FontManager.getFont(DialogFrame.FONT + "Big")
+        self.__regularFont = FontManager.getFont(DialogRenderer.FONT + "Regular")
+        self.__smallFont = FontManager.getFont(DialogRenderer.FONT + "Small")
+        self.__bigFont = FontManager.getFont(DialogRenderer.FONT + "Big")
 
         self.__font = self.__regularFont
 
         self.__linesMax = int((self.__boundaries[3] - Frame.PADDING * 2) / (self.__font.size("H")[1]))
 
-        # Loading
-        self.__frame = Frame(boundaries, self.__window)
+        self.__frame = frame
 
         # Rich text parsing and rendering
         self.__tree = parse(self.__text, Text)
@@ -129,7 +128,7 @@ class DialogFrame:
 
                 # TODO Add other states here
 
-                chunk.surface = self.__font.render(chunk.text, True, DialogFrame.DEFAULT_TEXT_COLOR)
+                chunk.surface = self.__font.render(chunk.text, True, DialogRenderer.DEFAULT_TEXT_COLOR)
 
         lastChunk = self.__wrappedTextChunks[-1][-1]
 
@@ -235,10 +234,10 @@ class DialogFrame:
 
         for line in self.__wrappedTextChunks[self.__currentLine:self.__currentLine+self.__linesMax]:
             for chunk in line:
-                self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset, self.__boundaries[1] + Frame.PADDING + yOffset + DialogFrame.Y_OFFSET + chunk.yOffset))
+                self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset, self.__boundaries[1] + Frame.PADDING + yOffset + DialogRenderer.Y_OFFSET + chunk.yOffset))
                 xOffset += chunk.surface.get_width()
             lastYOffset = yOffset
-            yOffset += DialogFrame.LINE_HEIGHT
+            yOffset += DialogRenderer.LINE_HEIGHT
             lastXOffset = xOffset
             xOffset = 0
 

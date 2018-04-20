@@ -27,12 +27,12 @@ class Frame:
     FILL_COLOR = (248, 248, 248)
 
     def __init__(self, rect : Tuple, window : Surface):
-        self.__rect = rect
+        self.rect = rect
         self.__texture = Textures.getTexture("gui.frame")
         self.__window = window
 
-        self.__size = (self.__rect[2], self.__rect[3])
-        self.__pos = (self.__rect[0], self.__rect[1])
+        self.__size = (self.rect[2], self.rect[3])
+        self.__pos = (self.rect[0], self.rect[1])
 
         self.__surface = pygame.Surface(self.__size, pygame.SRCALPHA, 32)
 
