@@ -91,7 +91,7 @@ class DialogFrame:
         self.__states = {}
         self.__stateChanged = True
 
-        self.__textList = []  # list of TextChunk instances
+        self.__textChunks = []  # list of TextChunk instances
 
         self.buildTextList(self.__tree)
 
@@ -119,50 +119,17 @@ class DialogFrame:
                 if self.__stateChanged:
                     chunk = TextChunk()
                     chunk.state = {**self.__states}
-                    self.__textList.append(chunk)
+                    self.__textChunks.append(chunk)
                     self.__stateChanged = False
-                else:
-                    self.__textList[-1].text += text
+
+                self.__textChunks[-1].text += text
             else:
                 self.__stateChanged = True
-                typeStr = textType.__name__
+                typeStr = textType.__name__[:-4]
                 self.__states[typeStr] = True
-                self.buildRichText(text.text)
+                self.buildTextList(text.text)
                 self.__states[typeStr] = False
 
-    '''
-    def buildRichText(self, thing):
-        pos = 0
-        xOffset = 0
-        for text in thing.text:
-            textType = type(text)
-            if textType == str:
-                font = FontManager.getFont(DialogFrame.FONT)
-
-                font.set_bold(self.stateEnabled("BoldText"))
-                font.set_italic(self.stateEnabled("ItalicText"))
-                font.set_underline(self.stateEnabled("UnderlineText"))
-
-                if text == " ":
-                    self.__previousWhitespacePosition = pos
-                else:
-                    self.__currentLineText += text
-                    width = font.size()
-
-                    if xOffset + 
-
-                    # TODO Add other states
-
-                    surface = font.render(text, True, DialogFrame.DEFAULT_TEXT_COLOR)
-                self.__surfaces.append(surface)
-            else:
-                typeStr = textType.__name__
-                self.__states[typeStr] = True
-                self.buildRichText(text.text)
-                self.__states[typeStr] = False
-            pos += 1
-            
-    '''
 
     def caretTimerCb(self, tag):
         self.__caretStep = (self.__caretStep + 1) % 4
@@ -186,14 +153,7 @@ class DialogFrame:
         self.__window.blit(self.__caretTexture, self.__caretPosition, (0, self.__caretStep, 32, 32))
 
         # Draw text
-        offsetX = 0
-        offsetY = 0
-        for line in self.__lines:
-            for surface in line:
-                self.__window.blit(surface, (self.__boundaries[0] + Frame.PADDING + offsetX, self.__boundaries[1] + Frame.PADDING + offsetY))
-                offsetX += surface.get_width()
-            offsetX = 0
-            offsetY += DialogFrame.LINE_HEIGHT
+        pass
 
 
 
