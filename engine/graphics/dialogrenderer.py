@@ -64,6 +64,11 @@ class DialogRenderer:
     # TODO In order : more rich text rendering, "scrolling", letter by letter rendering
     # TODO Add sound
 
+    STATE_PARSING = 0
+    STATE_CHUNKING = 1
+    STATE_WRAPPING = 2
+    STATE_READY = 3
+
     LINE_HEIGHT = 40
     DEFAULT_TEXT_COLOR = (0, 0, 0, 0)
     FONT = "Dialog"
@@ -77,8 +82,6 @@ class DialogRenderer:
         self.__text = text
         self.__endCb = endCallback
         self.__window = window
-
-        self.__firstUpdate = True  # first update should wait for the next frame
 
         self.__caretTexture = Textures.getTexture("gui.caret")
         self.__caretStep = 0  # the current step in the caret texture
@@ -94,8 +97,8 @@ class DialogRenderer:
 
         self.__frame = frame
 
-        # Rich text parsing and rendering
-        self.__tree = parse(self.__text, Text)
+        self.__state = DialogRenderer.STATE_PARSING
+
         self.__states = {}
         self.__stateChanged = True
 
@@ -104,9 +107,6 @@ class DialogRenderer:
 
         self.__currentLine = 0
         self.__alive = True
-
-        self.buildChunks(self.__tree)  # fills textChunks
-        self.wordWrap()  # fills wrappedTextChunks
 
     def setFontProperties(self, state):
         if self.stateEnabled(state, "Big"):
@@ -199,7 +199,16 @@ class DialogRenderer:
     def update(self, dt, events):
         self.__caretTimer.update(dt)
 
-        if not self.__firstUpdate:
+        if self.__state == DialogRenderer.STATE_PARSING:
+            self.__tree = parse(self.__text, Text)
+            self.__state = DialogRenderer.STATE_CHUNKING
+        elif self.__state == DialogRenderer.STATE_CHUNKING:
+            self.buildChunks(self.__tree)
+            self.__state = DialogRenderer.STATE_WRAPPING
+        elif self.__state == DialogRenderer.STATE_WRAPPING:
+            self.wordWrap()
+            self.__state = DialogRenderer.STATE_READY
+        elif self.__state == DialogRenderer.STATE_READY:
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
@@ -207,7 +216,6 @@ class DialogRenderer:
                         if self.__currentLine > len(self.__wrappedTextChunks):
                             self.__alive = False
                             self.__endCb(0)
-        self.__firstUpdate = False
 
     def draw(self):
         if not self.__alive:
@@ -215,6 +223,9 @@ class DialogRenderer:
 
         # Draw frame
         self.__frame.draw()
+
+        if self.__state != DialogRenderer.STATE_READY:
+            return
 
         # Draw text
         yOffset = 0
