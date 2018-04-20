@@ -60,7 +60,7 @@ class TextChunk:
 class DialogFrame:
 
     # TODO Add choices here
-    # TODO In order : caret ar right position, more rich text rendering, "scrolling", letter by letter rendering
+    # TODO In order : more rich text rendering, "scrolling", letter by letter rendering
     # TODO Add sound
 
     LINE_HEIGHT = 40
@@ -89,7 +89,6 @@ class DialogFrame:
 
         # Loading
         self.__frame = Frame(boundaries, self.__window)
-        self.__caretPosition = (self.__boundaries[2] + self.__boundaries[0] - Frame.PADDING*2, self.__boundaries[3] + self.__boundaries[1] - Frame.PADDING*2, 20, 20)
 
         # Rich text parsing and rendering
         self.__tree = parse(self.__text, Text)
@@ -119,6 +118,8 @@ class DialogFrame:
                 # TODO Add other states here
 
                 chunk.surface = self.__font.render(chunk.text, True, DialogFrame.DEFAULT_TEXT_COLOR)
+
+        lastChunk = self.__wrappedTextChunks[-1][-1]
 
     def wordWrap(self):
         xOffset = 0
@@ -206,18 +207,24 @@ class DialogFrame:
         # Draw frame
         self.__frame.draw()
 
-        # Draw the caret
-        self.__window.blit(self.__caretTexture, self.__caretPosition, (0, self.__caretStep, 32, 32))
-
         # Draw text
         yOffset = 0
         xOffset = 0
+        lastYOffset = 0
+        lastXOffset = 0
         for line in self.__wrappedTextChunks[self.__currentLine:self.__currentLine+self.__linesMax]:
             for chunk in line:
                 self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset, self.__boundaries[1] + Frame.PADDING + yOffset + DialogFrame.Y_OFFSET))
                 xOffset += chunk.surface.get_width()
+            lastYOffset = yOffset
             yOffset += DialogFrame.LINE_HEIGHT
+            lastXOffset = xOffset
             xOffset = 0
+
+        # Draw the caret
+        self.__window.blit(self.__caretTexture, (lastXOffset + 32, self.__boundaries[1] + Frame.PADDING + lastYOffset), (0, self.__caretStep, 32, 32))
+        #self.__window.blit(self.__caretTexture, (self.__boundaries[0] + Frame.PADDING + xOffset + self.__relativeCaretPosition[0], self.__boundaries[1] + Frame.PADDING + yOffset + DialogFrame.Y_OFFSET + self.__relativeCaretPosition[1]), )
+
 
 
 
