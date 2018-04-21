@@ -15,6 +15,13 @@ class Tween:
         self.easing = easing
         self.cb = cb
 
+    def reverse(self):
+        self.alive = True
+        self.runningSince = 0
+        oldInitialValue = self.initialValue
+        self.initialValue = self.targetValue
+        self.targetValue = oldInitialValue
+
     def update(self, dt : int):
         if not self.alive:
             return
@@ -37,4 +44,6 @@ class Tween:
                     self.targetValue
                 )
             self.alive = False
-            self.cb(self.tag)
+
+            if self.cb is not None:
+                self.cb(self.tag)

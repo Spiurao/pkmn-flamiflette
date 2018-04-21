@@ -11,6 +11,10 @@ from engine.graphics.fontmanager import FontManager
 from engine.graphics.frame import Frame
 from engine.graphics.textures import Textures
 from engine.timer import Timer
+from engine.tween.easing import Easing
+from engine.tween.tween import Tween
+from engine.tween.tweensubject import TweenSubject
+
 
 class Text(pypeg2.List):
     pass
@@ -58,8 +62,8 @@ class TextChunk:
         self.surface = None
         self.state = {}
         self.yOffset = 0  # used to compensate the big and small text size
-        self.animationXOffset = 0  # used to animate letters
-        self.animationYOffset = 0
+        self.animationXOffset = TweenSubject(0)  # used to animate letters
+        self.animationYOffset = TweenSubject(0)
 
 class DialogRenderer:
 
@@ -80,6 +84,11 @@ class DialogRenderer:
 
     CARET_TIMER_DURATION = 100
     SHAKING_TIMER_DURATION = 20
+    WAVING_TIMER_DURATION = 400
+
+    WAVING_X_AMPLITUDE = 3
+    WAVING_Y_AMPLITUDE = 8
+    WAVING_OFFSET = 10  # ms offset between each letter
 
     def __init__(self, window : Surface, frame : Frame, text : str, endCallback : Callable):
         self.__boundaries = frame.rect
@@ -114,11 +123,12 @@ class DialogRenderer:
         self.__alive = True
 
         self.__shakingChunks = []
+        self.__wavingChunksTweens = []
 
     def shakingTimerCb(self, tag):
         for chunk in self.__shakingChunks:
-            chunk.animationXOffset = random.randint(-2, 2)
-            chunk.animationYOffset = random.randint(-2, 2)
+            chunk.animationXOffset.value = random.randint(-2, 2)
+            chunk.animationYOffset.value = random.randint(-2, 2)
         self.__shakingTimer.restart()
 
     def setFontProperties(self, state):
@@ -138,8 +148,8 @@ class DialogRenderer:
         newChunk.text = text
         newChunk.state = chunk.state
         newChunk.yOffset = chunk.yOffset
-        newChunk.animationXOffset = chunk.animationXOffset
-        newChunk.animationYOffset = chunk.animationYOffset
+        newChunk.animationXOffset = TweenSubject(chunk.animationXOffset.value)
+        newChunk.animationYOffset = TweenSubject(chunk.animationYOffset.value)
         newChunk.surface = self.__font.render(newChunk.text, True, DialogRenderer.DEFAULT_TEXT_COLOR)
         return newChunk
 
@@ -150,6 +160,27 @@ class DialogRenderer:
                 newChunk = self.createNewChunk(chunk, letter)
                 self.__shakingChunks.append(newChunk)
                 list.append(newChunk)
+            return list
+        elif self.stateEnabled(chunk.state, "Waving"):
+            list = []
+            letterIndex = 0
+            for letter in text:
+                newChunk = self.createNewChunk(chunk, letter)
+                newChunk.animationXOffset.value = -DialogRenderer.WAVING_X_AMPLITUDE
+                newChunk.animationYOffset.value = -DialogRenderer.WAVING_Y_AMPLITUDE
+
+                xtween = Tween(None, newChunk.animationXOffset, DialogRenderer.WAVING_X_AMPLITUDE, DialogRenderer.WAVING_TIMER_DURATION, Easing.easingInOutSine, None)
+                xtween.runningSince = xtween.duration/2  # fast forward half the time to offset X and Y animations
+
+                ytween = Tween(None, newChunk.animationYOffset, DialogRenderer.WAVING_Y_AMPLITUDE, DialogRenderer.WAVING_TIMER_DURATION, Easing.easingInOutSine, None)
+
+                xtween.runningSince += DialogRenderer.WAVING_OFFSET * letterIndex
+                ytween.runningSince += DialogRenderer.WAVING_OFFSET * letterIndex
+
+                self.__wavingChunksTweens.append(xtween)
+                self.__wavingChunksTweens.append(ytween)
+                list.append(newChunk)
+                letterIndex += 1
             return list
         else:
             return [self.createNewChunk(chunk, text)]
@@ -241,6 +272,11 @@ class DialogRenderer:
         self.__caretTimer.update(dt)
         self.__shakingTimer.update(dt)
 
+        for tween in self.__wavingChunksTweens:
+            tween.update(dt)
+            if not tween.alive:
+                tween.reverse()
+
         # Keys
         if self.__state == DialogRenderer.STATE_PARSING:
             self.__tree = parse(self.__text, Text)
@@ -278,7 +314,7 @@ class DialogRenderer:
 
         for line in self.__wrappedTextChunks[self.__currentLine:self.__currentLine+self.__linesMax]:
             for chunk in line:
-                self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset + chunk.animationXOffset, self.__boundaries[1] + Frame.PADDING + yOffset + DialogRenderer.Y_OFFSET + chunk.yOffset + chunk.animationYOffset))
+                self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset + chunk.animationXOffset.value, self.__boundaries[1] + Frame.PADDING + yOffset + DialogRenderer.Y_OFFSET + chunk.yOffset + chunk.animationYOffset.value))
                 xOffset += chunk.surface.get_width()
             lastYOffset = yOffset
             yOffset += DialogRenderer.LINE_HEIGHT
