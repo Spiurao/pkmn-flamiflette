@@ -127,8 +127,8 @@ class DialogRenderer:
 
     def shakingTimerCb(self, tag):
         for chunk in self.__shakingChunks:
-            chunk.animationXOffset.value = random.randint(-2, 2)
-            chunk.animationYOffset.value = random.randint(-2, 2)
+            chunk.animationXOffset.value = random.randint(-1, 1)
+            chunk.animationYOffset.value = random.randint(-1, 1)
         self.__shakingTimer.restart()
 
     def setFontProperties(self, state):
