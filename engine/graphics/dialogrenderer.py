@@ -84,11 +84,11 @@ class DialogRenderer:
 
     CARET_TIMER_DURATION = 100
     SHAKING_TIMER_DURATION = 20
-    WAVING_TIMER_DURATION = 400
+    WAVING_TIMER_DURATION = 600
 
     WAVING_X_AMPLITUDE = 3
     WAVING_Y_AMPLITUDE = 8
-    WAVING_OFFSET = 10  # ms offset between each letter
+    WAVING_OFFSET = 15  # ms offset between each letter
 
     def __init__(self, window : Surface, frame : Frame, text : str, endCallback : Callable):
         self.__boundaries = frame.rect
@@ -151,6 +151,7 @@ class DialogRenderer:
         newChunk.animationXOffset = TweenSubject(chunk.animationXOffset.value)
         newChunk.animationYOffset = TweenSubject(chunk.animationYOffset.value)
         newChunk.surface = self.__font.render(newChunk.text, True, DialogRenderer.DEFAULT_TEXT_COLOR)
+
         return newChunk
 
     def createNewChunks(self, chunk, text):
@@ -314,7 +315,13 @@ class DialogRenderer:
 
         for line in self.__wrappedTextChunks[self.__currentLine:self.__currentLine+self.__linesMax]:
             for chunk in line:
-                self.__window.blit(chunk.surface, (self.__boundaries[0] + Frame.PADDING + xOffset + chunk.animationXOffset.value, self.__boundaries[1] + Frame.PADDING + yOffset + DialogRenderer.Y_OFFSET + chunk.yOffset + chunk.animationYOffset.value))
+                cx = self.__boundaries[0] + Frame.PADDING + xOffset + chunk.animationXOffset.value
+                cy = self.__boundaries[1] + Frame.PADDING + yOffset + DialogRenderer.Y_OFFSET + chunk.yOffset + chunk.animationYOffset.value
+                self.__window.blit(chunk.surface, (cx, cy))
+
+                if self.stateEnabled(chunk.state, "Strike"):
+                    pygame.draw.rect(self.__window, DialogRenderer.DEFAULT_TEXT_COLOR, (cx - 4, cy + 2 + chunk.surface.get_height()/2, chunk.surface.get_width() + 4, 2))  # TODO Put right text color here
+
                 xOffset += chunk.surface.get_width()
             lastYOffset = yOffset
             yOffset += DialogRenderer.LINE_HEIGHT

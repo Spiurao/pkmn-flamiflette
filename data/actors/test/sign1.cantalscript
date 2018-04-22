@@ -1,0 +1,8 @@
+state default(true)
+{
+    event actionPressed()
+    {
+        //TODO getCharacterOrientation
+        showDialog("maps.test.sign1");
+    }
+}

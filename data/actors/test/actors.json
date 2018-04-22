@@ -8,6 +8,11 @@
     "positionY" : 36
   },
   {
+    "positionX" : 16,
+    "positionY" : 28,
+    "script":"sign1"
+  },
+  {
     "positionX":6,
     "positionY":4,
     "type": "NPC",
