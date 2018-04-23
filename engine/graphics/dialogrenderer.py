@@ -68,7 +68,7 @@ class CharacterChunk:
 class DialogRenderer:
 
     # TODO Add choices here
-    # TODO In order : letter by letter rendering, skip text, more rich text rendering
+    # TODO In order : more rich text rendering
     # TODO Add sound
 
     STATE_PARSING = 0
@@ -257,12 +257,25 @@ class DialogRenderer:
             self.__characterTimer.update(dt)
             for event in events:
                 if event.type == pygame.KEYDOWN:
-                    if (event.key == pygame.K_RETURN) and ((self.__currentlyDrawingLine == self.__currentPageOffset + self.__linesMax) or (not self.__characterTimer.alive)):
-                        self.__currentPageOffset += self.__linesMax
-                        self.__currentlyDrawingLine = self.__currentPageOffset
-                        if self.__currentPageOffset > len(self.__lines):
-                            self.__alive = False
-                            self.__endCb(0)
+                    if (event.key == pygame.K_RETURN):
+                        if self.hasReachedEndOfPage():
+                            self.__currentPageOffset += self.__linesMax
+                            self.__currentlyDrawingLine = self.__currentPageOffset
+                            if self.__currentPageOffset > len(self.__lines):
+                                self.__alive = False
+                                self.__endCb(0)
+                        else:
+                            # TODO Disallow this if we're drawing slow text
+                            for line in range(self.__currentlyDrawingLine, self.__currentPageOffset + self.__linesMax):
+                                if line >= len(self.__lines):
+                                    break
+                                self.__linesCharactersIndex[line] = len(self.__lines[line])
+
+
+
+
+    def hasReachedEndOfPage(self):
+        return (self.__currentlyDrawingLine == self.__currentPageOffset + self.__linesMax) or (not self.__characterTimer.alive)
 
     def characterTimerCb(self, tag):
         if self.__currentlyDrawingLine == self.__currentPageOffset + self.__linesMax:
@@ -322,7 +335,7 @@ class DialogRenderer:
 
 
         # Draw the caret
-        if (self.__currentlyDrawingLine == self.__currentPageOffset + self.__linesMax) or (not self.__characterTimer.alive):
+        if self.hasReachedEndOfPage():
             self.__window.blit(self.__caretTexture, (lastXOffset + 32, self.__boundaries[1] + Frame.PADDING + lastYOffset), (0, self.__caretStep, 32, 32))
 
 
