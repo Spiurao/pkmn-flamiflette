@@ -13,6 +13,9 @@ class Timer:
         self.alive = True
 
     def update(self, dt : int):
+        if not self.alive:
+            return
+
         self.__runningSince += dt
 
         if self.__runningSince >= self.__duration:

@@ -68,7 +68,7 @@ class CharacterChunk:
 class DialogRenderer:
 
     # TODO Add choices here
-    # TODO In order : letter by letter rendering, more rich text rendering
+    # TODO In order : letter by letter rendering, skip text, more rich text rendering
     # TODO Add sound
 
     STATE_PARSING = 0
@@ -84,6 +84,7 @@ class DialogRenderer:
     CARET_TIMER_DURATION = 100
     SHAKING_TIMER_DURATION = 20
     WAVING_TIMER_DURATION = 600
+    LETTER_DURATION = 20  # TODO Make this a user choice
 
     WAVING_X_AMPLITUDE = 3
     WAVING_Y_AMPLITUDE = 8
@@ -115,8 +116,10 @@ class DialogRenderer:
         self.__states = {}
 
         self.__lines = [[]]
+        self.__linesCharactersIndex = [0]
 
-        self.__currentLine = 0
+        self.__currentPageOffset = 0
+        self.__currentlyDrawingLine = 0
         self.__alive = True
 
         self.__shakingChunks = []
@@ -148,9 +151,11 @@ class DialogRenderer:
 
                 if text == "\n":
                     self.__lines.append([])
+                    self.__linesCharactersIndex.append(0)
                 elif text == "\t":
                     for x in range(0, (self.__linesMax - len(self.__lines) % self.__linesMax) + 1):
                         self.__lines.append([])
+                        self.__linesCharactersIndex.append(0)
                 elif self.__xOffset + chunk.surface.get_width() >= self.__boundaries[2] - Frame.PADDING * 2:
                     # Rewind until the previous whitespace to put the previous
                     # word on the newly created line
@@ -169,6 +174,7 @@ class DialogRenderer:
                     # Append new line and reset
                     self.__xOffset = sum(x.surface.get_width() for x in newLine)
                     self.__lines.append(newLine)
+                    self.__linesCharactersIndex.append(0)
 
                     self.__currentPosOnTheLine = len(newLine)
 
@@ -245,15 +251,35 @@ class DialogRenderer:
             self.__parserState = DialogRenderer.STATE_BUILDING
         elif self.__parserState == DialogRenderer.STATE_BUILDING:
             self.buildLines(self.__tree)
+            self.__characterTimer = Timer(None, DialogRenderer.LETTER_DURATION, self.characterTimerCb)
             self.__parserState = DialogRenderer.STATE_READY
         elif self.__parserState == DialogRenderer.STATE_READY:
+            self.__characterTimer.update(dt)
             for event in events:
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
-                        self.__currentLine += self.__linesMax
-                        if self.__currentLine > len(self.__lines):
+                    if (event.key == pygame.K_RETURN) and ((self.__currentlyDrawingLine == self.__currentPageOffset + self.__linesMax) or (not self.__characterTimer.alive)):
+                        self.__currentPageOffset += self.__linesMax
+                        self.__currentlyDrawingLine = self.__currentPageOffset
+                        if self.__currentPageOffset > len(self.__lines):
                             self.__alive = False
                             self.__endCb(0)
+
+    def characterTimerCb(self, tag):
+        if self.__currentlyDrawingLine == self.__currentPageOffset + self.__linesMax:
+            # Wait for user to press action to continue drawing lines
+            self.__characterTimer.restart()
+            return
+
+        if self.__linesCharactersIndex[self.__currentlyDrawingLine] + 1 > len(self.__lines[self.__currentlyDrawingLine]):
+            self.__currentlyDrawingLine += 1
+
+        try:
+            self.__linesCharactersIndex[self.__currentlyDrawingLine] += 1
+        except IndexError:
+            # Reached the end of the text
+            return
+
+        self.__characterTimer.restart()
 
     def draw(self):
         if not self.__alive:
@@ -270,12 +296,13 @@ class DialogRenderer:
         yOffset = 0
         lastXOffset = 0
         lastYOffset = 0
+        lineIndex = self.__currentPageOffset
 
-        for line in self.__lines[self.__currentLine:self.__currentLine + self.__linesMax]:
+        for line in self.__lines[self.__currentPageOffset:self.__currentPageOffset + self.__linesMax]:
             if len(line) == 0:
                 continue
 
-            for chunk in line:
+            for chunk in line[:self.__linesCharactersIndex[lineIndex]]:
                 cx = self.__boundaries[0] + Frame.PADDING + xOffset + chunk.animationXOffset.value
                 cy = self.__boundaries[1] + Frame.PADDING + yOffset + DialogRenderer.Y_OFFSET + chunk.yOffset + chunk.animationYOffset.value
 
@@ -285,16 +312,18 @@ class DialogRenderer:
                     pygame.draw.rect(self.__window, DialogRenderer.DEFAULT_TEXT_COLOR, (cx - 4, cy + 2 + chunk.surface.get_height() / 2, chunk.surface.get_width() + 4, 2))  # TODO Put right text color here
 
                 xOffset += chunk.surface.get_width()
+                lastXOffset = xOffset if chunk.char != " " else lastXOffset
 
             lastYOffset = yOffset
-            lastXOffset = xOffset
 
             yOffset += DialogRenderer.LINE_HEIGHT
             xOffset = 0
+            lineIndex += 1
 
 
         # Draw the caret
-        self.__window.blit(self.__caretTexture, (lastXOffset + 32, self.__boundaries[1] + Frame.PADDING + lastYOffset), (0, self.__caretStep, 32, 32))
+        if (self.__currentlyDrawingLine == self.__currentPageOffset + self.__linesMax) or (not self.__characterTimer.alive):
+            self.__window.blit(self.__caretTexture, (lastXOffset + 32, self.__boundaries[1] + Frame.PADDING + lastYOffset), (0, self.__caretStep, 32, 32))
 
 
 
