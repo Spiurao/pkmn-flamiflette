@@ -1,5 +1,6 @@
 {
   "wobbuffet_dialog": "<b>Je</b> m'appelle <shaking>Wobbuffet</shaking>. <b>Ce texte est <i>inutilement</i> long</b> pour tester le <b><u>word wrapping</u> ainsi que la <fast>pagination</fast></b>. C'est donc <strike>stupidement</strike> long, simplement parce que la police est toute, toute <small>petite</small>... <big><b>Quel dommage !</b></big> <slow>Allez, il est temps que je ferme mon cul maintenant.</slow> <waving>Sayonara !</waving>",
   "shaking_wobbuffet": "Wobbuffet dit : Il est temps de <i>tout</i> faire <shaking><big>EXPLOSER</big></shaking>\t Wobbuffet dit : <waving><i>PRAISE HIM</i></waving>",
-  "sign1":"<strike>Ecole primaire</strike>\nce cher nou mintenand"
+  "sign1":"<strike>Ecole primaire</strike>\nce cher nou mintenand",
+  "line_wrapping":"Ce texte est simplement là pour tester le word wrapping. Il est un petit peu long, rien de grave !"
 }

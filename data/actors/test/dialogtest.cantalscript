@@ -3,7 +3,7 @@ state default(true)
     event actionPressed()
     {
         turnToFaceCharacter();
-        showDialog("maps.test.shaking_wobbuffet");
+        showDialog("maps.test.wobbuffet_dialog");
         print("Dialog finished");
     }
 }

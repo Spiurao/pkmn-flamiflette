@@ -56,9 +56,9 @@ class ColoredText(pypeg2.List):
 Text.grammar = attr("text", contiguous(maybe_some([SlowText, FastText, SmallText, BigText, ColoredText, WavingText, StrikeText, ShakingText, ItalicText, BoldText, UnderlineText,
                                                    re.compile(r"[^<>]")])))
 
-class CharacterChunk:
+class TextChunk:
     def __init__(self):
-        self.char = ""
+        self.text = ""
         self.surface = None
         self.state = {}
         self.yOffset = 0  # used to compensate the big and small text size
@@ -68,12 +68,13 @@ class CharacterChunk:
 class DialogRenderer:
 
     # TODO Add choices here
-    # TODO In order : letter by letter rendering, more rich text rendering
+    # TODO In order : more rich text rendering, "scrolling", letter by letter rendering
     # TODO Add sound
 
     STATE_PARSING = 0
-    STATE_BUILDING = 1
-    STATE_READY = 2
+    STATE_CHUNKING = 1
+    STATE_WRAPPING = 2
+    STATE_READY = 3
 
     LINE_HEIGHT = 40
     DEFAULT_TEXT_COLOR = (0, 0, 0, 0)
@@ -110,97 +111,19 @@ class DialogRenderer:
 
         self.__frame = frame
 
-        self.__parserState = DialogRenderer.STATE_PARSING
+        self.__state = DialogRenderer.STATE_PARSING
 
         self.__states = {}
+        self.__stateChanged = True
 
-        self.__lines = [[]]
+        self.__textChunks = []  # list of TextChunk instances
+        self.__wrappedTextChunks = [[]]
 
         self.__currentLine = 0
         self.__alive = True
 
         self.__shakingChunks = []
         self.__wavingChunksTweens = []
-
-        # Rich text parser variables
-        self.__lastWhitespacePosOnTheLine = 0
-        self.__currentPosOnTheLine = 0
-        self.__xOffset = 0
-
-    def buildLines(self, tree):
-        for text in tree.text:
-            textType = type(text)
-            if textType == str:
-                if text == " ":
-                    self.__lastWhitespacePosOnTheLine = self.__currentPosOnTheLine
-
-                self.setFontProperties(self.__states)
-
-                chunk = CharacterChunk()
-                chunk.char = text
-                chunk.surface = self.__font.render(text, True, DialogRenderer.DEFAULT_TEXT_COLOR)  # TODO Right color
-                chunk.state = {**self.__states}
-
-                if self.stateEnabled(chunk.state, "Small"):
-                    chunk.yOffset = 10
-                elif self.stateEnabled(chunk.state, "Big"):
-                    chunk.yOffset = -5
-
-                if text == "\n":
-                    self.__lines.append([])
-                elif text == "\t":
-                    for x in range(0, (self.__linesMax - len(self.__lines) % self.__linesMax) + 1):
-                        self.__lines.append([])
-                elif self.__xOffset + chunk.surface.get_width() >= self.__boundaries[2] - Frame.PADDING * 2:
-                    # Rewind until the previous whitespace to put the previous
-                    # word on the newly created line
-                    newLine = self.__lines[-1][self.__lastWhitespacePosOnTheLine+1:self.__currentPosOnTheLine+1]
-
-                    self.__lines[-1] = self.__lines[-1][:self.__lastWhitespacePosOnTheLine+1]
-
-                    # Ignore empty new lines (overflowing whitespace)
-                    if len(newLine) > 0:
-                        # If the first char of the line is a whitespace
-                        # remove its chunk
-                        firstChar = newLine[0].char
-                        if firstChar == " ":
-                            newLine = newLine[1:]
-
-                    # Append new line and reset
-                    self.__xOffset = sum(x.surface.get_width() for x in newLine)
-                    self.__lines.append(newLine)
-
-                    self.__currentPosOnTheLine = len(newLine)
-
-                if text != "\n" and text != "\t":
-                    self.__lines[-1].append(chunk)
-                    self.__xOffset += chunk.surface.get_width()
-
-                    if self.stateEnabled(chunk.state, "Shaking"):
-                        self.__shakingChunks.append(chunk)
-                    elif self.stateEnabled(chunk.state, "Waving"):
-                        chunk.animationXOffset.value = -DialogRenderer.WAVING_X_AMPLITUDE
-                        chunk.animationYOffset.value = -DialogRenderer.WAVING_Y_AMPLITUDE
-
-                        xtween = Tween(None, chunk.animationXOffset, DialogRenderer.WAVING_X_AMPLITUDE,
-                                       DialogRenderer.WAVING_TIMER_DURATION, Easing.easingInOutSine, None)
-                        xtween.runningSince = xtween.duration / 2  # fast forward half the time to offset X and Y animations
-
-                        ytween = Tween(None, chunk.animationYOffset, DialogRenderer.WAVING_Y_AMPLITUDE,
-                                       DialogRenderer.WAVING_TIMER_DURATION, Easing.easingInOutSine, None)
-
-                        xtween.runningSince += DialogRenderer.WAVING_OFFSET * self.__currentPosOnTheLine
-                        ytween.runningSince += DialogRenderer.WAVING_OFFSET * self.__currentPosOnTheLine
-
-                        self.__wavingChunksTweens.append(xtween)
-                        self.__wavingChunksTweens.append(ytween)
-
-                self.__currentPosOnTheLine += 1
-            else:
-                typeStr = textType.__name__[:-4]
-                self.__states[typeStr] = True
-                self.buildLines(text.text)
-                self.__states[typeStr] = False
 
     def shakingTimerCb(self, tag):
         for chunk in self.__shakingChunks:
@@ -220,8 +143,124 @@ class DialogRenderer:
         self.__font.set_underline(self.stateEnabled(state, "Underline"))
         self.__font.set_bold(self.stateEnabled(state, "Bold"))
 
+    def createNewChunk(self, chunk, text):
+        newChunk = TextChunk()
+        newChunk.text = text
+        newChunk.state = chunk.state
+        newChunk.yOffset = chunk.yOffset
+        newChunk.animationXOffset = TweenSubject(chunk.animationXOffset.value)
+        newChunk.animationYOffset = TweenSubject(chunk.animationYOffset.value)
+        newChunk.surface = self.__font.render(newChunk.text, True, DialogRenderer.DEFAULT_TEXT_COLOR)
+
+        return newChunk
+
+    def createNewChunks(self, chunk, text):
+        if self.stateEnabled(chunk.state, "Shaking"):
+            list = []
+            for letter in text:
+                newChunk = self.createNewChunk(chunk, letter)
+                self.__shakingChunks.append(newChunk)
+                list.append(newChunk)
+            return list
+        elif self.stateEnabled(chunk.state, "Waving"):
+            list = []
+            letterIndex = 0
+            for letter in text:
+                newChunk = self.createNewChunk(chunk, letter)
+                newChunk.animationXOffset.value = -DialogRenderer.WAVING_X_AMPLITUDE
+                newChunk.animationYOffset.value = -DialogRenderer.WAVING_Y_AMPLITUDE
+
+                xtween = Tween(None, newChunk.animationXOffset, DialogRenderer.WAVING_X_AMPLITUDE, DialogRenderer.WAVING_TIMER_DURATION, Easing.easingInOutSine, None)
+                xtween.runningSince = xtween.duration/2  # fast forward half the time to offset X and Y animations
+
+                ytween = Tween(None, newChunk.animationYOffset, DialogRenderer.WAVING_Y_AMPLITUDE, DialogRenderer.WAVING_TIMER_DURATION, Easing.easingInOutSine, None)
+
+                xtween.runningSince += DialogRenderer.WAVING_OFFSET * letterIndex
+                ytween.runningSince += DialogRenderer.WAVING_OFFSET * letterIndex
+
+                self.__wavingChunksTweens.append(xtween)
+                self.__wavingChunksTweens.append(ytween)
+                list.append(newChunk)
+                letterIndex += 1
+            return list
+        else:
+            return [self.createNewChunk(chunk, text)]
+
+    def wordWrap(self):
+        xOffset = 0
+        for chunk in self.__textChunks:
+            self.setFontProperties(chunk.state)
+
+            text = ""
+
+            words = chunk.text.split(" ")
+            for word in words:
+                word = word + " "
+                wordLength = self.__font.size(word)[0]
+
+                isCarriageReturn = word[0:1] == "\n"
+                isPageBreak = word[0:1] == "\t"
+
+                if (wordLength + xOffset <= self.__boundaries[2] - Frame.PADDING * 2) and not (isCarriageReturn or isPageBreak):
+                    text += word
+                    xOffset += wordLength
+                else:
+                    if not (isCarriageReturn or isPageBreak):
+                        text = text[:-1]
+                        if text != "":
+                            newChunk = self.createNewChunks(chunk, text)
+                            self.__wrappedTextChunks[-1].extend(newChunk)
+
+                    if not isPageBreak:
+                        self.__wrappedTextChunks.append([])
+                    else:
+                        for x in range(0, (self.__linesMax - len(self.__wrappedTextChunks) % self.__linesMax) + 1):
+                            self.__wrappedTextChunks.append([])
+
+                    if not (isCarriageReturn or isPageBreak):
+                        text = word
+                        xOffset = wordLength
+                    else:
+                        text = ""
+                        xOffset = 0
+
+            text = text[:-1]
+
+            if text != "":
+                newChunk = self.createNewChunks(chunk, text)
+                self.__wrappedTextChunks[-1].extend(newChunk)
+
     def stateEnabled(self, state, name):
         return name in state and state[name]
+
+    def buildChunks(self, thing):
+        for text in thing.text:
+            textType = type(text)
+            if textType == str:
+                if self.__stateChanged:
+                    chunk = TextChunk()
+                    chunk.state = {**self.__states}
+
+                    if self.stateEnabled(chunk.state, "Small"):
+                        chunk.yOffset = 10
+                    elif self.stateEnabled(chunk.state, "Big"):
+                        chunk.yOffset = -5
+
+                    self.__textChunks.append(chunk)
+                    self.__stateChanged = False
+
+                self.__textChunks[-1].text += text
+            else:
+                typeStr = textType.__name__[:-4]
+
+                self.__stateChanged = True
+                self.__states[typeStr] = True
+
+                self.buildChunks(text.text)
+
+                self.__stateChanged = True
+                self.__states[typeStr] = False
+
 
     def caretTimerCb(self, tag):
         self.__caretStep = (self.__caretStep + 1) % 4
@@ -240,18 +279,21 @@ class DialogRenderer:
                 tween.reverse()
 
         # Keys
-        if self.__parserState == DialogRenderer.STATE_PARSING:
+        if self.__state == DialogRenderer.STATE_PARSING:
             self.__tree = parse(self.__text, Text)
-            self.__parserState = DialogRenderer.STATE_BUILDING
-        elif self.__parserState == DialogRenderer.STATE_BUILDING:
-            self.buildLines(self.__tree)
-            self.__parserState = DialogRenderer.STATE_READY
-        elif self.__parserState == DialogRenderer.STATE_READY:
+            self.__state = DialogRenderer.STATE_CHUNKING
+        elif self.__state == DialogRenderer.STATE_CHUNKING:
+            self.buildChunks(self.__tree)
+            self.__state = DialogRenderer.STATE_WRAPPING
+        elif self.__state == DialogRenderer.STATE_WRAPPING:
+            self.wordWrap()
+            self.__state = DialogRenderer.STATE_READY
+        elif self.__state == DialogRenderer.STATE_READY:
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.__currentLine += self.__linesMax
-                        if self.__currentLine > len(self.__lines):
+                        if self.__currentLine > len(self.__wrappedTextChunks):
                             self.__alive = False
                             self.__endCb(0)
 
@@ -262,40 +304,33 @@ class DialogRenderer:
         # Draw frame
         self.__frame.draw()
 
-        if self.__parserState != DialogRenderer.STATE_READY:
+        if self.__state != DialogRenderer.STATE_READY:
             return
 
         # Draw text
-        xOffset = 0
         yOffset = 0
-        lastXOffset = 0
+        xOffset = 0
         lastYOffset = 0
+        lastXOffset = 0
 
-        for line in self.__lines[self.__currentLine:self.__currentLine + self.__linesMax]:
-            if len(line) == 0:
-                continue
-
+        for line in self.__wrappedTextChunks[self.__currentLine:self.__currentLine+self.__linesMax]:
             for chunk in line:
                 cx = self.__boundaries[0] + Frame.PADDING + xOffset + chunk.animationXOffset.value
                 cy = self.__boundaries[1] + Frame.PADDING + yOffset + DialogRenderer.Y_OFFSET + chunk.yOffset + chunk.animationYOffset.value
-
                 self.__window.blit(chunk.surface, (cx, cy))
 
                 if self.stateEnabled(chunk.state, "Strike"):
-                    pygame.draw.rect(self.__window, DialogRenderer.DEFAULT_TEXT_COLOR, (cx - 4, cy + 2 + chunk.surface.get_height() / 2, chunk.surface.get_width() + 4, 2))  # TODO Put right text color here
+                    pygame.draw.rect(self.__window, DialogRenderer.DEFAULT_TEXT_COLOR, (cx - 4, cy + 2 + chunk.surface.get_height()/2, chunk.surface.get_width() + 4, 2))  # TODO Put right text color here
 
                 xOffset += chunk.surface.get_width()
-
             lastYOffset = yOffset
-            lastXOffset = xOffset
+            lastXOffset = lastXOffset if xOffset == 0 else xOffset
 
             yOffset += DialogRenderer.LINE_HEIGHT
             xOffset = 0
 
-
         # Draw the caret
         self.__window.blit(self.__caretTexture, (lastXOffset + 32, self.__boundaries[1] + Frame.PADDING + lastYOffset), (0, self.__caretStep, 32, 32))
-
 
 
 
