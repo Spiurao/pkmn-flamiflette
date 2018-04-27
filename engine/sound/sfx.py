@@ -14,9 +14,13 @@ class SFX:
         size = len(Constants.SFX_PATH) + 1
         for f in glob.iglob(os.path.join(Constants.SFX_PATH, '**', '*.ogg'), recursive=True):
             sfxName = f[size:len(f) - 4]
-            sound =  pygame.mixer.Sound(f)
-            sound.set_volume(Constants.MASTER_VOLUME * Constants.SFX_VOLUME)
-            SFX.__sfx[sfxName] = sound
+            try:
+                sound =  pygame.mixer.Sound(f)
+                sound.set_volume(Constants.MASTER_VOLUME * Constants.SFX_VOLUME)
+                SFX.__sfx[sfxName] = sound
+            except pygame.error as e:
+                print("Couldn't load SFX " + sfxName + " (" + str(e) + ")")
+                SFX.__sfx[sfxName] = None
 
     @staticmethod
     def unload():
@@ -27,4 +31,6 @@ class SFX:
         if sfx not in SFX.__sfx:
             raise Exception("Unknown SFX " + sfx)
 
-        SFX.__sfx[sfx].play()
+        sfx = SFX.__sfx[sfx]
+        if sfx is not None:
+            sfx.play()

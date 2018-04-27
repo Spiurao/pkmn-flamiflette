@@ -31,7 +31,7 @@ class Constants:
     # Framerate, resolution, renderer flags
     CONFIGURATIONS = {
         "windowed": (60, (800, 608), 0),
-        "switch": (60, (1280, 704), pygame.FULLSCREEN or pygame.DOUBLEBUF or pygame.HWSURFACE)
+        "switch": (60, (1280, 704), 0) #can't be (pygame.FULLSCREEN or pygame.DOUBLEBUF or pygame.HWSURFACE) because of a display bug
     }
 
     MASTER_VOLUME = 1.0

@@ -83,12 +83,15 @@ class Engine:
         return pygame.time.get_ticks()
 
     def playBGM(self, musicName):
-        # TODO If already playing the same BGM, do nothing, else make a fade out and play
-        from data.constants import Constants
-        bgmPath = os.path.join(Constants.BGM_PATH, musicName + ".mp3")
-        pygame.mixer.music.load(bgmPath)
-        pygame.mixer.music.set_volume(Constants.BGM_VOLUME * Constants.MASTER_VOLUME)
-        pygame.mixer.music.play()
+        try:
+            # TODO If already playing the same BGM, do nothing, else make a fade out and play
+            from data.constants import Constants
+            bgmPath = os.path.join(Constants.BGM_PATH, musicName + ".mp3")
+            pygame.mixer.music.load(bgmPath)
+            pygame.mixer.music.set_volume(Constants.BGM_VOLUME * Constants.MASTER_VOLUME)
+            pygame.mixer.music.play()
+        except pygame.error as e:
+            print("Unable to play BGM (" + str(e) + ")")
 
     def run(self):
         print("Running game...")
