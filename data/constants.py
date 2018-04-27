@@ -1,3 +1,5 @@
+import pygame
+
 from engine.engine import Engine
 import os
 
@@ -24,8 +26,13 @@ class Constants:
         GAME_VARIANT_TARTIKUECHE : "Pokémon Version Tartikueche"
     }
 
-    FRAMERATE = 60
-    RESOLUTION = (800, 608)
+    DEFAULT_CONFIGURATION = "windowed"
+
+    # Framerate, resolution, renderer flags
+    CONFIGURATIONS = {
+        "windowed": (60, (800, 608), 0),
+        "switch": (60, (1280, 704), pygame.FULLSCREEN or pygame.DOUBLEBUF or pygame.HWSURFACE)
+    }
 
     MASTER_VOLUME = 1.0
     BGM_VOLUME = 0.1

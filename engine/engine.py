@@ -19,8 +19,14 @@ class Engine:
 
     SHOW_FPS_COUNTER = True
 
-    def __init__(self, framerate : int, resolution : Tuple, variant : int):
+    def __init__(self, configuration : Tuple, variant : int):
         # data init
+        from data.constants import Constants
+        if configuration not in Constants.CONFIGURATIONS:
+            raise Exception("Unknown configuration " + configuration)
+
+        configuration = Constants.CONFIGURATIONS[configuration]
+
         self.__sceneStack = []  # scene stack
         self.__sceneDrawOrder = []  # pre-computed list of scenes to draw in the right order
         self.__pendingScene = None  # the scene to push after a transition
@@ -28,17 +34,16 @@ class Engine:
         self.__transitionAction = None  # what should we do after the transition ? TRANSITION_ACTION_PUSH or TRANSITION_ACTION_POP
         self.__clock = pygame.time.Clock()  # the main loop clock
         self.__running = True  # is the game running ?
-        self.__framerate = framerate  # the framerate in FPS
-        self.__resolution = resolution  # the game window resolution
+        self.__framerate = configuration[0]  # the framerate in FPS
+        self.__resolution = configuration[1]  # the game window resolution
         self.__variant = variant  # the game variant : GAME_VARIANT_1 or GAME_VARIANT_2
 
         # pygame display
         pygame.mixer.pre_init(44100, -16, 1, 512)
         pygame.init()
         pygame.display.init()
-        from data.constants import Constants
         pygame.display.set_caption(Constants.WINDOW_TITLE[self.__variant])
-        self.__window = pygame.display.set_mode(self.__resolution)
+        self.__window = pygame.display.set_mode(self.__resolution, configuration[2])
 
         # textures loading
         from engine.graphics.textures import Textures
