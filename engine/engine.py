@@ -98,7 +98,7 @@ class Engine:
                 # pygame events
                 events = pygame.event.get()
                 for event in events:
-                    if event.type == pygame.QUIT:
+                    if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                         self.exit()
 
                 # fill
